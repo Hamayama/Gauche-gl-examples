@@ -2,6 +2,7 @@
 ;;
 ;; 格闘ゲーム (Gauche-glを使用)
 ;; 2015-7-21  v1.00  初版
+;; 2015-7-21  v1.01  キャラクターの向きを修正
 ;;
 (use gl)
 (use gl.glut)
@@ -314,7 +315,7 @@
              ((2 12) 4)
              ((3 13) 5)
              ((14)   3)
-             (else (if (< *vx* 0) 2 (if (> *vx* 0) 1 0)))))
+             (else (if (< (* *dir* *vx*) 0) 2 (if (> (* *dir* *vx*) 0) 1 0)))))
   (gl-pop-matrix)
   ;; 敵を表示
   (gl-push-matrix)
@@ -324,7 +325,7 @@
              ((2 12) 4)
              ((3 13) 5)
              ((14)   3)
-             (else (if (< *rvx* 0) 2 (if (> *rvx* 0) 1 0)))))
+             (else (if (< (* *rdir* *rvx*) 0) 2 (if (> (* *rdir* *rvx*) 0) 1 0)))))
   (gl-pop-matrix)
   ;; 地面を表示
   (gl-push-matrix)
@@ -559,6 +560,7 @@
     ((0) ; 通常
      (set! *vy* (- *vy* 5))
      (if (<= *y* *miny*) (set! *vy* *stephigh*))
+     (set! *dir* (if (> *x* *rx*) -1 1))
      (cond
       ;; デモの起動直後とき
       ((and *demoflg* (<= *starttime* 300)))
@@ -568,15 +570,13 @@
          (set! *vx* 0)
          (set! *k*  (randint -1 1))
          (if (= *k* -1) (set! *vx* (+ -10 (if (> *x* *rx*) -2 0))))
-         (if (= *k*  1) (set! *vx* (+  10 (if (> *x* *rx*)  0 2))))
+         (if (= *k*  1) (set! *vx* (+  10 (if (< *x* *rx*)  2 0))))
          )
        (when (or (and (or (= *ract* 2) (= *ract* 3)) (< (abs (- *rx* *x*)) 250))
                  (= (randint 0 100) 0)
                  (and (<= (randint 0 100) 30) (< (abs (- *rx* *x*)) 250)))
          (set! *k*  (randint 0 10))
-         (if (or (= *ract* 2) (= *ract* 3))
-           (set! *dir* (- *rdir*))
-           (set! *dir* (if (> *x* *rx*) -1 1)))
+         (if (or (= *ract* 2) (= *ract* 3)) (set! *dir* (- *rdir*)))
          (cond
           ((<= *k* 3)
            (set! *act* 2)
@@ -600,13 +600,11 @@
        (when (or (hash-table-get *keystate* (char->integer #\z) #f)
                  (hash-table-get *keystate* (char->integer #\Z) #f))
          (set! *act* 2)
-         (set! *dir* (if (> *x* *rx*) -1 1))
          (set! *vx*  (* *dir* 15))
          (set! *vy*  50))
        (when (or (hash-table-get *keystate* (char->integer #\x) #f)
                  (hash-table-get *keystate* (char->integer #\X) #f))
          (set! *act* 3)
-         (set! *dir* (if (> *x* *rx*) -1 1))
          (set! *vx*  (* *dir* 25))
          (set! *vy*  20))
        )
@@ -673,6 +671,7 @@
     ((0) ; 通常
      (set! *rvy* (- *rvy* 5))
      (if (<= *ry* *miny*) (set! *rvy* *stephigh*))
+     (set! *rdir* (if (>= *rx* *x*) -1 1))
      (cond
       ;; デモの起動直後とき
       ((and *demoflg* (<= *starttime* 300)))
@@ -682,14 +681,12 @@
          (set! *rvx* 0)
          (set! *rk*  (randint -1 1))
          (if (= *rk* -1) (set! *rvx* (+ -10 (if (> *rx* *x*) -2 0))))
-         (if (= *rk*  1) (set! *rvx* (+  10 (if (> *rx* *x*)  0 2))))
+         (if (= *rk*  1) (set! *rvx* (+  10 (if (< *rx* *x*)  2 0))))
          )
        (when (or (and (or (= *act* 2) (= *act* 3)) (< (abs (- *rx* *x*)) 250))
                  (= (randint 0 100) 0))
          (set! *rk*  (randint 0 10))
-         (if (or (= *act* 2) (= *act* 3))
-           (set! *rdir* (- *dir*))
-           (set! *rdir* (if (>= *rx* *x*) -1 1)))
+         (if (or (= *act* 2) (= *act* 3)) (set! *rdir* (- *dir*)))
          (cond
           ((<= *rk* 3)
            (set! *ract* 2)
