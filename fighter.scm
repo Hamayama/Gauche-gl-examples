@@ -5,6 +5,7 @@
 ;; 2015-7-21  v1.01  キャラクターの向きを修正
 ;; 2015-7-21  v1.02  ウィンドウのタイトル修正等
 ;; 2015-7-21  v1.03  デモの起動直後の処理修正等
+;; 2015-7-21  v1.04  ウェイト時間調整の処理修正等
 ;;
 (use gl)
 (use gl.glut)
@@ -25,7 +26,7 @@
 (define *ht/2*     400) ; 画面高さ/2
 (define *chw/2*     50) ; キャラクタの幅/2
 (define *chh*      100) ; キャラクタの高さ
-(define *gdy*     -300) ; 地面の座標
+(define *gdy*     -300) ; 地面のY座標
 (define *maxx*    (- *wd/2* *chw/2*))  ; X座標最大値
 (define *minx* (- (- *wd/2* *chw/2*))) ; X座標最小値
 (define *miny*    (+ *gdy*  *chh*))    ; Y座標最小値
@@ -299,7 +300,7 @@
         (else
          (when (<= *starttime* 3000)
            (set! str1 "Fight!!")
-           (set! str2 "USE [<-] [->] [z] [x] KEY")))
+           (set! str2 "USE [<-] [->] [Z] [X] KEY")))
         ))
       ((2) ; 戦闘終了
        (set! str1 (if (= *endstate* 3) "You win!!" "You lose!!"))
@@ -437,7 +438,7 @@
                 (set! *waitflg*   #t)
                 (set! *waitkey*   '(#\s #\S)))
            ((3) (set! *scene*     1)))
-         ;; 時間待ち
+         ;; 時間待ち(タイムアップでデモへ移行)
          (case *waitstepB*
            ((0) (set! *waitstepB* 1)
                 (set! *waitflg*   #t)
@@ -536,7 +537,7 @@
     )
    )
   (glut-post-redisplay)
-  ;; ウェイト時間の調整
+  ;; ウェイト時間調整
   ;; (前回からの経過時間を測定して、ウェイト時間が一定になるように調整する)
   (let* ((tnow      (current-time))
          (tnowmsec  (+ (* (~ tnow 'second) 1000) (quotient (~ tnow 'nanosecond) 1000000)))
@@ -545,9 +546,9 @@
     (when *waitdata*
       (set! tdiffmsec (- tnowmsec *waitdata*))
       (cond
-       ((< tdiffmsec *wait*)
+       ((and (>= tdiffmsec (- *wait*)) (< tdiffmsec *wait*))
         (set! waitmsec (- *wait* tdiffmsec)))
-       ((< tdiffmsec (* *wait* 50))
+       ((and (>= tdiffmsec *wait*) (< tdiffmsec (* *wait* 50)))
         (set! waitmsec 1))
        ))
     (set! *waitdata* (+ tnowmsec waitmsec))
