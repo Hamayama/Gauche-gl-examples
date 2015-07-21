@@ -3,6 +3,7 @@
 ;; 格闘ゲーム (Gauche-glを使用)
 ;; 2015-7-21  v1.00  初版
 ;; 2015-7-21  v1.01  キャラクターの向きを修正
+;; 2015-7-21  v1.02  ウィンドウのタイトル修正等
 ;;
 (use gl)
 (use gl.glut)
@@ -596,7 +597,7 @@
        (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
          (set! *vx* (+ -10 (if (> *x* *rx*) -2 0))))
        (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
-         (set! *vx* (+  10 (if (> *x* *rx*)  0 2))))
+         (set! *vx* (+  10 (if (< *x* *rx*)  2 0))))
        (when (or (hash-table-get *keystate* (char->integer #\z) #f)
                  (hash-table-get *keystate* (char->integer #\Z) #f))
          (set! *act* 2)
@@ -771,7 +772,7 @@
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
   (glut-init-window-position 100 100)
-  (glut-create-window "model")
+  (glut-create-window "fighter")
   (init)
   (glut-display-func disp)
   (glut-reshape-func reshape)
