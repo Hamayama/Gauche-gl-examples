@@ -4,6 +4,7 @@
 ;; 2015-7-21  v1.00  初版
 ;; 2015-7-21  v1.01  キャラクターの向きを修正
 ;; 2015-7-21  v1.02  ウィンドウのタイトル修正等
+;; 2015-7-21  v1.03  デモの起動直後の処理修正等
 ;;
 (use gl)
 (use gl.glut)
@@ -559,14 +560,16 @@
   ;; アクションで場合分け
   (case *act*
     ((0) ; 通常
-     (set! *vy* (- *vy* 5))
-     (if (<= *y* *miny*) (set! *vy* *stephigh*))
-     (set! *dir* (if (> *x* *rx*) -1 1))
+     (when (not (and *demoflg* (<= *starttime* 300)))
+       (set! *vy* (- *vy* 5))
+       (if (<= *y* *miny*) (set! *vy* *stephigh*))
+       (set! *dir* (if (> *x* *rx*) -1 1)))
      (cond
       ;; デモの起動直後とき
       ((and *demoflg* (<= *starttime* 300)))
       ;; デモのとき
       (*demoflg*
+       ;; 条件と乱数で行動を決定する
        (when (<= *y* *miny*)
          (set! *vx* 0)
          (set! *k*  (randint -1 1))
@@ -592,7 +595,7 @@
        )
       ;; デモでないとき
       (else
-       ;; キー操作
+       ;; キー操作で行動を決定する
        (set! *vx* 0)
        (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
          (set! *vx* (+ -10 (if (> *x* *rx*) -2 0))))
@@ -670,14 +673,16 @@
   ;; アクションで場合分け
   (case *ract*
     ((0) ; 通常
-     (set! *rvy* (- *rvy* 5))
-     (if (<= *ry* *miny*) (set! *rvy* *stephigh*))
-     (set! *rdir* (if (>= *rx* *x*) -1 1))
+     (when (not (and *demoflg* (<= *starttime* 300)))
+       (set! *rvy* (- *rvy* 5))
+       (if (<= *ry* *miny*) (set! *rvy* *stephigh*))
+       (set! *rdir* (if (>= *rx* *x*) -1 1)))
      (cond
       ;; デモの起動直後とき
       ((and *demoflg* (<= *starttime* 300)))
       ;; その他のとき
       (else
+       ;; 条件と乱数で行動を決定する
        (when (<= *ry* *miny*)
          (set! *rvx* 0)
          (set! *rk*  (randint -1 1))
