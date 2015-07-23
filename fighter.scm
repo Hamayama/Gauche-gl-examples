@@ -6,6 +6,8 @@
 ;; 2015-7-21  v1.02  ウィンドウのタイトル修正等
 ;; 2015-7-21  v1.03  デモの起動直後の処理修正等
 ;; 2015-7-21  v1.04  ウェイト時間調整の処理修正等
+;; 2015-7-23  v1.05  コールバック内でエラーが発生すると異常終了する件の対策
+;;                   難易度調整等
 ;;
 (use gl)
 (use gl.glut)
@@ -38,6 +40,7 @@
 (define *act*        0) ; 自分のアクション
 (define *dir*        1) ; 自分の向き
 (define *ft*         0) ; 自分の硬直時間カウント用
+(define *kcount*     0) ; 自分の連続キック防止用
 (define *rk*         0) ; 敵の行動決定用
 (define *rx*      (- *maxx* 40)) ; 敵のX座標
 (define *ry*         *miny*) ; 敵のY座標
@@ -409,22 +412,23 @@
     (case *scene*
       ((0) ; スタート画面
        ;; 変数初期化
-       (set! *x*     (+ *minx* 40))
-       (set! *y*     *miny*)
-       (set! *vx*    0)
-       (set! *vy*    0)
-       (set! *act*   0)
-       (set! *dir*   1)
-       (set! *ft*    0)
-       (set! *rx*    (- *maxx* 40))
-       (set! *ry*    *miny*)
-       (set! *rvx*   0)
-       (set! *rvy*   0)
-       (set! *ract*  0)
-       (set! *rdir* -1)
-       (set! *rft*   0)
-       (set! *endstate* 0)
-       (set! *demotime* 0)
+       (set! *x*      (+ *minx* 40))
+       (set! *y*         *miny*)
+       (set! *vx*        0)
+       (set! *vy*        0)
+       (set! *act*       0)
+       (set! *dir*       1)
+       (set! *ft*        0)
+       (set! *kcount*    0)
+       (set! *rx*     (- *maxx* 40))
+       (set! *ry*        *miny*)
+       (set! *rvx*       0)
+       (set! *rvy*       0)
+       (set! *ract*      0)
+       (set! *rdir*     -1)
+       (set! *rft*       0)
+       (set! *endstate*  0)
+       (set! *demotime*  0)
        (set! *starttime* 0)
        (cond
         ;; デモのとき
@@ -558,16 +562,17 @@
 
 ;; 自分の移動
 (define (my-action)
+  (define demostart (and *demoflg* (<= *starttime* 300)))
   ;; アクションで場合分け
   (case *act*
     ((0) ; 通常
-     (when (not (and *demoflg* (<= *starttime* 300)))
+     (when (not demostart)
        (set! *vy* (- *vy* 5))
        (if (<= *y* *miny*) (set! *vy* *stephigh*))
        (set! *dir* (if (> *x* *rx*) -1 1)))
      (cond
-      ;; デモの起動直後とき
-      ((and *demoflg* (<= *starttime* 300)))
+      ;; デモの起動直後のとき(何もしない)
+      (demostart)
       ;; デモのとき
       (*demoflg*
        ;; 条件と乱数で行動を決定する
@@ -583,7 +588,7 @@
          (set! *k*  (randint 0 10))
          (if (or (= *ract* 2) (= *ract* 3)) (set! *dir* (- *rdir*)))
          (cond
-          ((<= *k* 3)
+          ((<= *k* 2)
            (set! *act* 2)
            (set! *vx*  (* *dir* 15))
            (set! *vy*  50))
@@ -602,16 +607,19 @@
          (set! *vx* (+ -10 (if (> *x* *rx*) -2 0))))
        (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
          (set! *vx* (+  10 (if (< *x* *rx*)  2 0))))
+       (when (> *kcount* 0) (dec! *kcount*) (set! *vx* 0) (set! *vy* 0))
        (when (or (hash-table-get *keystate* (char->integer #\z) #f)
                  (hash-table-get *keystate* (char->integer #\Z) #f))
          (set! *act* 2)
          (set! *vx*  (* *dir* 15))
          (set! *vy*  50))
-       (when (or (hash-table-get *keystate* (char->integer #\x) #f)
-                 (hash-table-get *keystate* (char->integer #\X) #f))
+       (when (and (<= *kcount* 0)
+                  (or (hash-table-get *keystate* (char->integer #\x) #f)
+                      (hash-table-get *keystate* (char->integer #\X) #f)))
          (set! *act* 3)
          (set! *vx*  (* *dir* 25))
-         (set! *vy*  20))
+         (set! *vy*  20)
+         (set! *kcount* 5))
        )
       )
      )
@@ -671,16 +679,17 @@
 
 ;; 敵の移動
 (define (enemy-action)
+  (define demostart (and *demoflg* (<= *starttime* 300)))
   ;; アクションで場合分け
   (case *ract*
     ((0) ; 通常
-     (when (not (and *demoflg* (<= *starttime* 300)))
+     (when (not demostart)
        (set! *rvy* (- *rvy* 5))
        (if (<= *ry* *miny*) (set! *rvy* *stephigh*))
        (set! *rdir* (if (>= *rx* *x*) -1 1)))
      (cond
-      ;; デモの起動直後とき
-      ((and *demoflg* (<= *starttime* 300)))
+      ;; デモの起動直後のとき(何もしない)
+      (demostart)
       ;; その他のとき
       (else
        ;; 条件と乱数で行動を決定する
@@ -695,7 +704,7 @@
          (set! *rk*  (randint 0 10))
          (if (or (= *act* 2) (= *act* 3)) (set! *rdir* (- *dir*)))
          (cond
-          ((<= *rk* 3)
+          ((<= *rk* 2)
            (set! *ract* 2)
            (set! *rvx*  (* *rdir* 15))
            (set! *rvy*  50))
@@ -787,6 +796,8 @@
   (glut-special-func specialkey)
   (glut-special-up-func specialkeyup)
   (glut-timer-func *wait* timer 0)
-  (glut-main-loop)
+  ;; コールバック内でエラーが発生すると異常終了する件の対策
+  (guard (ex (else (report-error ex) (exit 0)))
+    (glut-main-loop))
   0)
 
