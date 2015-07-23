@@ -8,6 +8,7 @@
 ;; 2015-7-21  v1.04  ウェイト時間調整の処理修正等
 ;; 2015-7-23  v1.05  コールバック内でエラーが発生すると異常終了する件の対策
 ;;                   難易度調整等
+;; 2015-7-24  v1.06  カウンタクリア抜け修正
 ;;
 (use gl)
 (use gl.glut)
@@ -612,7 +613,8 @@
                  (hash-table-get *keystate* (char->integer #\Z) #f))
          (set! *act* 2)
          (set! *vx*  (* *dir* 15))
-         (set! *vy*  50))
+         (set! *vy*  50)
+         (set! *kcount* 0))
        (when (and (<= *kcount* 0)
                   (or (hash-table-get *keystate* (char->integer #\x) #f)
                       (hash-table-get *keystate* (char->integer #\X) #f)))
