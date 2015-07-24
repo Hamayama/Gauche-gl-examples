@@ -9,6 +9,7 @@
 ;; 2015-7-23  v1.05  コールバック内でエラーが発生すると異常終了する件の対策
 ;;                   難易度調整等
 ;; 2015-7-24  v1.06  カウンタクリア抜け修正
+;; 2015-7-24  v1.07  書式修正等
 ;;
 (use gl)
 (use gl.glut)
@@ -21,7 +22,7 @@
 (define *width*    480) ; 画面幅(px)
 (define *height*   480) ; 画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
-(define *tanvan*   (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
+(define *tanvan*     (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
 (define *keystate*   (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
 (define *spkeystate* (make-hash-table 'eqv?)) ; 特殊キー入力状態(ハッシュテーブル)
 
@@ -95,8 +96,7 @@
   (gl-matrix-mode GL_PROJECTION)
   (gl-pop-matrix)
   (gl-matrix-mode GL_MODELVIEW)
-  (gl-enable GL_LIGHTING)
-  )
+  (gl-enable GL_LIGHTING))
 
 ;; 文字列表示(ストロークフォント)
 ;;   ・座標 (x,y) は左下が原点で (0,0)-(*width*,*height*) の範囲で指定する必要がある
@@ -118,14 +118,12 @@
         (gl-translate (- x (/. (* sw scale) 2)) y 0))
       (gl-translate x y 0))
     (gl-scale scale scale scale)
-    (string-for-each (lambda (c) (glut-stroke-character font (char->integer c))) str)
-    )
+    (string-for-each (lambda (c) (glut-stroke-character font (char->integer c))) str))
   (gl-pop-matrix)
   (gl-matrix-mode GL_PROJECTION)
   (gl-pop-matrix)
   (gl-matrix-mode GL_MODELVIEW)
-  (gl-enable GL_LIGHTING)
-  )
+  (gl-enable GL_LIGHTING))
 
 ;; 直方体(上面に原点あり)
 (define (box x y z)
@@ -144,10 +142,8 @@
       (gl-normal (~ normal i))
       (do ((j 0 (+ j 1)))
           ((>= j 4) #f)
-        (gl-vertex (~ vertex (~ face i j)))
-        ))
-    (gl-end)
-    ))
+        (gl-vertex (~ vertex (~ face i j)))))
+    (gl-end)))
 
 ;; 円柱(上面に原点あり)
 (define (cylinder r h s)
@@ -180,8 +176,7 @@
       (gl-vertex (* r x) 0   (* r z))
       (gl-vertex (* r x) -2h (* r z))
       ))
-  (gl-end)
-  )
+  (gl-end))
 
 ;; 人形モデル(頭に原点あり。大きさ100くらいに固定)
 ;;   type  タイプ(=0:自分,=1:敵)
@@ -477,8 +472,8 @@
                 (or (= *ract* 2) (= *ract* 3)))
            (set! *act*  (+ *act*  10))
            (set! *ract* (+ *ract* 10))
-           (set! *vx*  (- *vx* ))
-           (set! *rvx* (- *rvx*))
+           (set! *vx*   (- *vx* ))
+           (set! *rvx*  (- *rvx*))
            (if (< *vy*  15) (set! *vy*  15))
            (if (< *rvy* 15) (set! *rvy* 15))
            )
@@ -495,10 +490,10 @@
           ((and (or  (= *ract*  2) (= *ract*  3))
                 (not (= *act*  14)))
            (set! *endstate* 2)
-           (set! *act* 14)
-           (set! *dir* (- *rdir*))
-           (set! *vx*  (* *dir* -10))
-           (set! *vy*  50)
+           (set! *act*  14)
+           (set! *dir*  (- *rdir*))
+           (set! *vx*   (* *dir* -10))
+           (set! *vy*   50)
            )
           )
          )
@@ -672,11 +667,8 @@
        (set! *vx* 0))
      )
     )
-  (set! *x* (+ *x* *vx*))
-  (if (< *x* *minx*) (set! *x* *minx*))
-  (if (> *x* *maxx*) (set! *x* *maxx*))
-  (set! *y* (+ *y* *vy*))
-  (if (< *y* *miny*) (set! *y* *miny*))
+  (set! *x* (clamp (+ *x* *vx*) *minx* *maxx*))
+  (set! *y* (clamp (+ *y* *vy*) *miny*))
   )
 
 ;; 敵の移動
@@ -766,11 +758,8 @@
        (set! *rvx* 0))
      )
     )
-  (set! *rx* (+ *rx* *rvx*))
-  (if (< *rx* *minx*) (set! *rx* *minx*))
-  (if (> *rx* *maxx*) (set! *rx* *maxx*))
-  (set! *ry* (+ *ry* *rvy*))
-  (if (< *ry* *miny*) (set! *ry* *miny*))
+  (set! *rx* (clamp (+ *rx* *rvx*) *minx* *maxx*))
+  (set! *ry* (clamp (+ *ry* *rvy*) *miny*))
   )
 
 ;; 長方形の衝突チェック
@@ -780,8 +769,7 @@
            (< y1 (+ y2 h2))
            (< y2 (+ y1 h1)))
     #t
-    #f)
-  )
+    #f))
 
 ;; メイン処理
 (define (main args)
