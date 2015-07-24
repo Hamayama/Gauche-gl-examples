@@ -10,6 +10,7 @@
 ;;                   難易度調整等
 ;; 2015-7-24  v1.06  カウンタクリア抜け修正
 ;; 2015-7-24  v1.07  書式修正等
+;; 2015-7-24  v1.08  攻撃方向修正
 ;;
 (use gl)
 (use gl.glut)
@@ -582,14 +583,15 @@
                  (= (randint 0 100) 0)
                  (and (<= (randint 0 100) 30) (< (abs (- *rx* *x*)) 250)))
          (set! *k*  (randint 0 10))
-         (if (or (= *ract* 2) (= *ract* 3)) (set! *dir* (- *rdir*)))
          (cond
           ((<= *k* 2)
            (set! *act* 2)
+           (if (or (= *ract* 2) (= *ract* 3)) (set! *dir* (- *rdir*)))
            (set! *vx*  (* *dir* 15))
            (set! *vy*  50))
           ((<= *k* 8)
            (set! *act* 3)
+           (if (or (= *ract* 2) (= *ract* 3)) (set! *dir* (- *rdir*)))
            (set! *vx*  (* *dir* 25))
            (set! *vy*  20))
           )
@@ -607,6 +609,7 @@
        (when (or (hash-table-get *keystate* (char->integer #\z) #f)
                  (hash-table-get *keystate* (char->integer #\Z) #f))
          (set! *act* 2)
+         (if (or (= *ract* 2) (= *ract* 3)) (set! *dir* (- *rdir*)))
          (set! *vx*  (* *dir* 15))
          (set! *vy*  50)
          (set! *kcount* 0))
@@ -614,6 +617,7 @@
                   (or (hash-table-get *keystate* (char->integer #\x) #f)
                       (hash-table-get *keystate* (char->integer #\X) #f)))
          (set! *act* 3)
+         (if (or (= *ract* 2) (= *ract* 3)) (set! *dir* (- *rdir*)))
          (set! *vx*  (* *dir* 25))
          (set! *vy*  20)
          (set! *kcount* 5))
@@ -696,14 +700,15 @@
        (when (or (and (or (= *act* 2) (= *act* 3)) (< (abs (- *rx* *x*)) 250))
                  (= (randint 0 100) 0))
          (set! *rk*  (randint 0 10))
-         (if (or (= *act* 2) (= *act* 3)) (set! *rdir* (- *dir*)))
          (cond
           ((<= *rk* 2)
            (set! *ract* 2)
+           (if (or (= *act* 2) (= *act* 3)) (set! *rdir* (- *dir*)))
            (set! *rvx*  (* *rdir* 15))
            (set! *rvy*  50))
           ((<= *rk* 8)
            (set! *ract* 3)
+           (if (or (= *act* 2) (= *act* 3)) (set! *rdir* (- *dir*)))
            (set! *rvx*  (* *rdir* 25))
            (set! *rvy*  20))
           )
