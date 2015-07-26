@@ -7,6 +7,7 @@
 ;; 2015-7-15  v1.03  乱数の手続きを一部変更
 ;; 2015-7-16  v1.04  データ初期値見直し
 ;; 2015-7-20  v1.05  Caps Lock 対応
+;; 2015-7-26  v1.06  コールバック内エラー対策等
 ;;
 (use gl)
 (use gl.glut)
@@ -106,16 +107,15 @@
    ((= key (char->integer #\escape)) (exit 0))
    ;; スペースキーで次を表示(パラメータを乱数で生成)
    ((= key (char->integer #\space))
-    (let* ((rm          (randint 11 (- *rc* 1)))
-           (rd          (randint 10 rm))
-           (color-index (randint 10 15)))
-      ;; 内トロコイド曲線の座標と色を設定
-      (set! *vnum* (setup-pointers *rc* rm rd color-index *vvec* *cvec* 0))
-      ;; タイトル文字列を更新
-      (glut-set-window-title (make-title rm rd))
-      ;; 表示に時間がかかる場合は disp を glut-post-redisplay にする
-      (disp)
-      ))
+    (set! *rm*          (randint 11 (- *rc* 1)))
+    (set! *rd*          (randint 10 *rm*))
+    (set! *color-index* (randint 10 15))
+    ;; 内トロコイド曲線の座標と色を設定
+    (set! *vnum* (setup-pointers *rc* *rm* *rd* *color-index* *vvec* *cvec* 0))
+    ;; タイトル文字列を更新
+    (glut-set-window-title (make-title *rm* *rd*))
+    ;; 表示に時間がかかる場合は disp を glut-post-redisplay にする
+    (disp))
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
     (gc) (print (gc-stat)))
@@ -136,6 +136,8 @@
   (glut-display-func disp)
   (glut-reshape-func reshape)
   (glut-keyboard-func keyboard)
-  (glut-main-loop)
+  ;; コールバック内エラー対策
+  (guard (ex (else (report-error ex) (exit 0)))
+    (glut-main-loop))
   0)
 
