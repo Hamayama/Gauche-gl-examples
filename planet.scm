@@ -5,6 +5,7 @@
 ;; 2015-7-15  v1.01  星の速度を定数化
 ;; 2015-7-16  v1.02  データ初期化見直し
 ;; 2015-7-20  v1.03  Caps Lock 対応
+;; 2015-7-26  v1.04  コールバック内エラー対策
 ;;
 (use gl)
 (use gl.glut)
@@ -124,6 +125,8 @@
   (glut-reshape-func reshape)
   (glut-keyboard-func keyboard)
   (glut-timer-func *wait* timer 0)
-  (glut-main-loop)
+  ;; コールバック内エラー対策
+  (guard (ex (else (report-error ex) (exit 0)))
+    (glut-main-loop))
   0)
 
