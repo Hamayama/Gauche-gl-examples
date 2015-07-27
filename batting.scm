@@ -3,7 +3,7 @@
 ;; batting.scm
 ;;
 ;; ＜内容＞
-;;   Gauche-glを使用した、バッティングゲームです。
+;;   Gauche-gl を使用した、バッティングゲームです。
 ;;   矢印キーでカーソルを左右に移動し、
 ;;   スペースキーでボールを打ちます。
 ;;   引き付けるほど飛びます(最大199m)。ただし見逃しは0mです。
@@ -12,6 +12,8 @@
 ;; ＜履歴＞
 ;;   2015-7-27  v1.00  初版
 ;;   2015-7-27  v1.01  コメント修正のみ
+;;   2015-7-28  v1.02  空の座標修正
+;;                     いくつかの処理をクラス化
 ;;
 (use gl)
 (use gl.glut)
@@ -50,19 +52,89 @@
 (define *sc*         0) ; スコア
 (define *hs*         0) ; ハイスコア
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:打撃前,=2:打撃後,=3:結果画面)
-(define *waitflg*   #f) ; 待ち状態フラグ
-(define *waitstepA*  0) ; 待ち状態A(=0:無効,=1:キー入力待ち開始,=2:キー入力待ち中,=3:キー入力完了)
-(define *waitstepB*  0) ; 待ち状態B(=0:無効,=1:時間待ち開始,=2:時間待ち中,=3:時間待ち完了)
-(define *waittime*   0) ; 待ち時間(msec)
-(define *waitcount*  0) ; 待ち時間カウント用(msec)
-(define *waitkey*  '()) ; 待ち受けキー(文字のリストで指定)
-(define *waitdata*  #f) ; ウェイト時間調整用(msec)
 
 ;; 乱数
 ;;   (randint n1 n2)でn1以上n2以下の整数の乱数を取得する(n1,n2は整数でn1<n2であること)
 (define randint
   (let1 m (make <mersenne-twister> :seed (sys-time))
     (lambda (n1 n2) (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
+
+;; キー入力待ちクラス
+(define-class <keywaitinfo> ()
+  ((state    :init-value 0)   ; 待ち状態(=0:初期状態,=1:キー入力待ち開始,=2:キー入力待ち中,=3:キー入力完了)
+   (waitkey  :init-value '()) ; 待ち受けキー(文字のリストで指定)
+   (keystate :init-keyword :keystate :init-value (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
+   ))
+(define-method keywait ((k <keywaitinfo>) (wk <pair>) (finished-func <procedure>))
+  (case (~ k 'state)
+    ((0) (set! (~ k 'waitkey) wk)
+         (set! (~ k 'state) 1))
+    ((3) (finished-func))))
+(define-method keywait-wait ((k <keywaitinfo>))
+  (case (~ k 'state)
+    ((1) (for-each (lambda (c) (hash-table-put! (~ k 'keystate) (char->integer c) #f)) (~ k 'waitkey))
+         (set! (~ k 'state) 2))
+    ((2) (when (any (lambda (c) (hash-table-get (~ k 'keystate) (char->integer c) #f)) (~ k 'waitkey))
+           (set! (~ k 'state) 3)))))
+(define-method keywait-clear ((k <keywaitinfo>))
+  (set! (~ k 'state) 0))
+(define-method keywait-waiting? ((k <keywaitinfo>))
+  (or (= (~ k 'state) 1) (= (~ k 'state) 2)))
+(define-method keywait-finished? ((k <keywaitinfo>))
+  (= (~ k 'state) 3))
+(define *kwinfo* (make <keywaitinfo> :keystate *keystate*)) ; インスタンス生成
+
+;; 時間待ちクラス
+(define-class <timewaitinfo> ()
+  ((state        :init-value 0) ; 待ち状態(=0:初期状態,=1:時間待ち開始,=2:時間待ち中,=3:時間待ち完了)
+   (waittime     :init-value 0) ; 待ち時間(msec)
+   (waitinterval :init-keyword :waitinterval :init-value 0) ; 待ち時間インターバル(msec)
+   (waitcount    :init-value 0) ; 待ち時間カウント用(msec)
+   ))
+(define-method timewait ((t <timewaitinfo>) (wt <integer>) (finished-func <procedure>))
+  (case (~ t 'state)
+    ((0) (set! (~ t 'waittime) wt)
+         (set! (~ t 'state) 1))
+    ((3) (finished-func))))
+(define-method timewait-wait ((t <timewaitinfo>))
+  (case (~ t 'state)
+    ((1) (set! (~ t 'waitcount) 0)
+         (set! (~ t 'state) 2))
+    ((2) (set! (~ t 'waitcount) (+ (~ t 'waitcount) (~ t 'waitinterval)))
+         (when (>= (~ t 'waitcount) (~ t 'waittime))
+           (set! (~ t 'state) 3)))))
+(define-method timewait-clear ((t <timewaitinfo>))
+  (set! (~ t 'state) 0))
+(define-method timewait-waiting? ((t <timewaitinfo>))
+  (or (= (~ t 'state) 1) (= (~ t 'state) 2)))
+(define-method timewait-finished? ((t <timewaitinfo>))
+  (= (~ t 'state) 3))
+(define *twinfo* (make <timewaitinfo> :waitinterval *wait*)) ; インスタンス生成
+
+;; ウェイト時間調整クラス
+;;   (処理時間を測定して、ウェイト時間が一定になるように調整する)
+(define-class <waitmsecinfo> ()
+  ((waitdata :init-value #f) ; ウェイト時間調整用(msec)
+   (waittime :init-keyword :waittime :init-value 0)  ; ウェイト時間指定値(msec)
+   ))
+(define-method waitmsec-calc ((w <waitmsecinfo>))
+  (let* ((tnow      (current-time))
+         (tnowmsec  (+ (* (~ tnow 'second) 1000) (quotient (~ tnow 'nanosecond) 1000000)))
+         (tdiffmsec 0)
+         (wt        (~ w 'waittime))
+         (waitmsec  wt))
+    (when (~ w 'waitdata)
+      (set! tdiffmsec (- tnowmsec (~ w 'waitdata)))
+      (cond
+       ((and (>= tdiffmsec (- wt)) (< tdiffmsec wt))
+        (set! waitmsec (- wt tdiffmsec)))
+       ((and (>= tdiffmsec wt) (< tdiffmsec (* wt 50)))
+        (set! waitmsec 1))
+       ))
+    (set! (~ w 'waitdata) (+ tnowmsec waitmsec))
+    ;(print tdiffmsec " " waitmsec)
+    waitmsec))
+(define *wtinfo* (make <waitmsecinfo> :waittime *wait*)) ; インスタンス生成
 
 ;; 文字列表示(ストロークフォント)
 ;;   ・座標 (x,y) は左下が原点で (0,0)-(*width*,*height*) の範囲で指定する必要がある
@@ -91,6 +163,7 @@
   (gl-pop-matrix)
   (gl-matrix-mode GL_MODELVIEW)
   (gl-enable GL_LIGHTING))
+
 
 ;; 直方体(上面に原点あり)
 (define (box x y z)
@@ -141,6 +214,7 @@
   (box 40000 40000 10000)
   )
 
+
 ;; 初期化
 (define (init)
   (gl-clear-color 0.0 0.0 0.0 0.0)
@@ -175,7 +249,7 @@
        (set! str1 (format #f "SCORE : ~Dm" *sc*))
        (if (= *hit* 3) (set! str1 (string-append str1 " (MAXIMUM!!)")))
        (if *foul*      (set! str1 (string-append str1 " (FOUL!!)")))
-       (if (= *waitstepB* 3) (set! str2 "HIT [D] KEY")))
+       (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
       )
     (set! str3 (format #f "HI-SCORE : ~Dm" *hs*))
     (set! str4 (format #f "(X=~D Y=~D Z=~D)"
@@ -209,7 +283,7 @@
   (gl-pop-matrix)
   ;; 空を表示
   (gl-push-matrix)
-  (gl-translate 0 40000 -9999)
+  (gl-translate 0 40000 -10000)
   (sky)
   (gl-pop-matrix)
   ;; 地面を表示
@@ -266,23 +340,8 @@
 (define (timer val)
   (cond
    ;; 待ち状態のとき
-   (*waitflg*
-    ;; キー入力待ち状態のとき
-    (case *waitstepA*
-      ((1) (for-each (lambda (c) (hash-table-put! *keystate* (char->integer c) #f)) *waitkey*)
-           (set! *waitstepA* 2))
-      ((2) (when (any (lambda (c) (hash-table-get *keystate* (char->integer c) #f)) *waitkey*)
-             (set! *waitstepA* 3)
-             (set! *waitflg* #f))))
-    ;; 時間待ち状態のとき
-    (case *waitstepB*
-      ((1) (set! *waitcount* 0)
-           (set! *waitstepB* 2))
-      ((2) (set! *waitcount* (+ *waitcount* *wait*))
-           (when (>= *waitcount* *waittime*)
-             (set! *waitstepB* 3)
-             (set! *waitflg* #f))))
-    )
+   ((keywait-waiting?  *kwinfo*) (keywait-wait  *kwinfo*))
+   ((timewait-waiting? *twinfo*) (timewait-wait *twinfo*))
    ;; 待ち状態でないとき
    (else
     ;; シーン情報で場合分け
@@ -308,12 +367,10 @@
        (set! *foul*  #f)
        (set! *sc*     0)
        ;; キー入力待ち
-       (case *waitstepA*
-         ((0) (set! *waitstepA* 1)
-              (set! *waitflg*   #t)
-              (set! *waitkey*   '(#\s #\S)))
-         ((3) (set! *scene*     1)
-              (set! *waitstepA* 0)))
+       (keywait *kwinfo* '(#\s #\S)
+                (lambda ()
+                  (set! *scene* 1)
+                  (keywait-clear *kwinfo*)))
        )
       ((1) ; 打撃前
        (set! *x* (+ *x* *vx*))
@@ -367,43 +424,21 @@
        (if (< *sc*  0)    (set! *sc* 0))
        (if (> *sc*  *hs*) (set! *hs* *sc*))
        ;; 時間待ち
-       (case *waitstepB*
-         ((0) (set! *waitstepB* 1)
-              (set! *waitflg*   #t)
-              (set! *waittime*  1500))
-         ((3) 
-          ;; キー入力待ち
-          (case *waitstepA*
-            ((0) (set! *waitstepA* 1)
-                 (set! *waitflg*   #t)
-                 (set! *waitkey*   '(#\d #\D)))
-            ((3) (set! *waitstepA* 0)
-                 (set! *waitstepB* 0)
-                 (set! *scene*     0)))
-          )
-         )
+       (timewait *twinfo* 1500
+                 (lambda ()
+                   ;; キー入力待ち
+                   (keywait *kwinfo* '(#\d #\D)
+                            (lambda ()
+                              (set! *scene* 0)
+                              (timewait-clear *twinfo*)
+                              (keywait-clear  *kwinfo*)))))
        )
       )
     )
    )
   (glut-post-redisplay)
   ;; ウェイト時間調整
-  ;; (前回からの経過時間を測定して、ウェイト時間が一定になるように調整する)
-  (let* ((tnow      (current-time))
-         (tnowmsec  (+ (* (~ tnow 'second) 1000) (quotient (~ tnow 'nanosecond) 1000000)))
-         (tdiffmsec 0)
-         (waitmsec  *wait*))
-    (when *waitdata*
-      (set! tdiffmsec (- tnowmsec *waitdata*))
-      (cond
-       ((and (>= tdiffmsec (- *wait*)) (< tdiffmsec *wait*))
-        (set! waitmsec (- *wait* tdiffmsec)))
-       ((and (>= tdiffmsec *wait*) (< tdiffmsec (* *wait* 50)))
-        (set! waitmsec 1))
-       ))
-    (set! *waitdata* (+ tnowmsec waitmsec))
-    ;(print tdiffmsec " " waitmsec)
-    (glut-timer-func waitmsec timer 0))
+  (glut-timer-func (waitmsec-calc *wtinfo*) timer 0)
   )
 
 ;; メイン処理
