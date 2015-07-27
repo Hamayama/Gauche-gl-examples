@@ -13,6 +13,7 @@
 ;; 2015-7-24  v1.08  攻撃方向修正
 ;; 2015-7-25  v1.09  コメント修正のみ
 ;; 2015-7-26  v1.10  コメント修正のみ
+;; 2015-7-27  v1.11  文字列表示修正
 ;;
 (use gl)
 (use gl.glut)
@@ -90,6 +91,7 @@
   (gl-ortho 0 *width* 0 *height* -1.0 1.0)
   (gl-matrix-mode GL_MODELVIEW)
   (gl-push-matrix)
+  (gl-load-identity)
   (if hcenter
     (let1 sw (string-fold (lambda (c n) (+ (glut-bitmap-width font (char->integer c)) n)) 0 str)
       (gl-raster-pos (- x (/. sw 2)) y))
@@ -115,6 +117,7 @@
   (gl-ortho 0 *width* 0 *height* -1.0 1.0)
   (gl-matrix-mode GL_MODELVIEW)
   (gl-push-matrix)
+  (gl-load-identity)
   (let1 scale (/. size 152.38)
     (if hcenter
       (let1 sw (string-fold (lambda (c n) (+ (glut-stroke-width font (char->integer c)) n)) 0 str)
@@ -279,7 +282,7 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字表示
-  (let ((str1 "") (str2 "") (y2 34))
+  (let ((str1 "") (str2 "") (y2 68))
     ;; シーン情報で場合分け
     (case *scene*
       ((0) ; スタート画面
@@ -290,7 +293,7 @@
         (else
          (set! str1 "Ready?")
          (set! str2 "HIT [S] KEY")
-         (set! y2 33))
+         (set! y2 66))
         ))
       ((1) ; 戦闘中
        (cond
@@ -309,9 +312,9 @@
        (if (= *waitstepB* 3) (set! str2 "HIT [D] KEY")))
       )
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text str1 (/. *width* 2) (/. (* *height* 40) 50) (/. *height* 10) #t)
+    (draw-stroke-text str1 (/. *width* 2) (/. (* *height* 80) 100) (/. *height* 10) #t)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str2 (/. *width* 2) (/. (* *height* y2) 50) (/. *height* 20) #t))
+    (draw-stroke-text str2 (/. *width* 2) (/. (* *height* y2) 100) (/. *height* 20) #t))
   ;; 自分を表示
   (gl-push-matrix)
   (gl-translate *x* *y* 0)
