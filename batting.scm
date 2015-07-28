@@ -15,6 +15,7 @@
 ;;   2015-7-28  v1.02  空の座標修正
 ;;                     いくつかの処理をクラス化
 ;;   2015-7-28  v1.03  待ち状態処理修正
+;;   2015-7-28  v1.04  見逃し時のパラメータ表示修正等
 ;;
 (use gl)
 (use gl.glut)
@@ -399,9 +400,11 @@
            ))
        (when (>= *z* *zend*)
          (set! *scene* 2)
-         (set! *vx* *vx2*)
-         (set! *vy* *vy2*)
-         (set! *vz* -5))
+         (when (>= *hit* 2)
+           (set! *vx* *vx2*)
+           (set! *vy* *vy2*)
+           (set! *vz* -5))
+         )
        )
       ((2) ; 打撃後
        (cond
@@ -415,9 +418,9 @@
          (when (and (<= *vy* 0) (<= *y* (- *r*)))
            (set! *scene* 3))
          (when (>= (abs *x*) (abs (* *z* *tanvan*)))
+           (set! *scene* 3)
            (set! *hit*   2)
-           (set! *foul*  #t)
-           (set! *scene* 3))
+           (set! *foul*  #t))
          )
         )
        )
