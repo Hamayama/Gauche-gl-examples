@@ -14,6 +14,7 @@
 ;;   2015-7-27  v1.01  コメント修正のみ
 ;;   2015-7-28  v1.02  空の座標修正
 ;;                     いくつかの処理をクラス化
+;;   2015-7-28  v1.03  待ち状態処理修正
 ;;
 (use gl)
 (use gl.glut)
@@ -60,6 +61,7 @@
     (lambda (n1 n2) (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
 
 ;; キー入力待ちクラス
+;;   (現状、特殊キー(矢印キー等)は待ち受け不可)
 (define-class <keywaitinfo> ()
   ((state    :init-value 0)   ; 待ち状態(=0:初期状態,=1:キー入力待ち開始,=2:キー入力待ち中,=3:キー入力完了)
    (waitkey  :init-value '()) ; 待ち受けキー(文字のリストで指定)
@@ -70,7 +72,7 @@
     ((0) (set! (~ k 'waitkey) wk)
          (set! (~ k 'state) 1))
     ((3) (finished-func))))
-(define-method keywait-wait ((k <keywaitinfo>))
+(define-method keywait-timer ((k <keywaitinfo>))
   (case (~ k 'state)
     ((1) (for-each (lambda (c) (hash-table-put! (~ k 'keystate) (char->integer c) #f)) (~ k 'waitkey))
          (set! (~ k 'state) 2))
@@ -96,7 +98,7 @@
     ((0) (set! (~ t 'waittime) wt)
          (set! (~ t 'state) 1))
     ((3) (finished-func))))
-(define-method timewait-wait ((t <timewaitinfo>))
+(define-method timewait-timer ((t <timewaitinfo>))
   (case (~ t 'state)
     ((1) (set! (~ t 'waitcount) 0)
          (set! (~ t 'state) 2))
@@ -340,14 +342,16 @@
 (define (timer val)
   (cond
    ;; 待ち状態のとき
-   ((keywait-waiting?  *kwinfo*) (keywait-wait  *kwinfo*))
-   ((timewait-waiting? *twinfo*) (timewait-wait *twinfo*))
+   ((or (keywait-waiting? *kwinfo*) (timewait-waiting? *twinfo*))
+    (keywait-timer  *kwinfo*)
+    (timewait-timer *twinfo*)
+    )
    ;; 待ち状態でないとき
    (else
     ;; シーン情報で場合分け
     (case *scene*
       ((0) ; スタート画面
-       ;; 変数初期化
+       ;; 初期化
        (set! *x*      0)
        (set! *y*     (- *r*))
        (set! *z*      *zstart*)
