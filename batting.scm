@@ -16,6 +16,7 @@
 ;;                     いくつかの処理をクラス化
 ;;   2015-7-28  v1.03  待ち状態処理修正
 ;;   2015-7-28  v1.04  見逃し時のパラメータ表示修正等
+;;   2015-7-28  v1.05  打撃判定条件を一部修正
 ;;
 (use gl)
 (use gl.glut)
@@ -387,7 +388,7 @@
        (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
          (set! *cx* (clamp (+ *cx*  1) (- *wd/2*) *wd/2*)))
        ;; 打撃判定
-       (when (and (>= *z* (+ *zstart* 100))
+       (when (and (> *z* (- *zend* 100))
                   (hash-table-get *keystate* (char->integer #\space) #f)
                   (= *hit* 0))
          (set! *hit* 1)
