@@ -3,7 +3,7 @@
 ;; fighter.scm
 ;;
 ;; ＜内容＞
-;;   Gauche-glを使用した、簡単な格闘ゲームです。
+;;   Gauche-gl を使用した、簡単な格闘ゲームです。
 ;;   左側が自分になります。
 ;;   矢印キーで左右移動。[z]キーでパンチ。[x]キーでキックです。
 ;;   防御はありません。相打ちはノーダメージです。
@@ -28,6 +28,7 @@
 ;;   2015-7-27  v1.11  文字列表示修正
 ;;   2015-7-27  v1.12  コメント修正のみ
 ;;   2015-7-27  v1.13  コメント修正のみ
+;;   2015-7-28  v1.14  いくつかの処理をクラス化
 ;;
 (use gl)
 (use gl.glut)
@@ -52,44 +53,319 @@
 (define *maxx*    (- *wd/2* *chw/2*))  ; X座標最大値
 (define *minx* (- (- *wd/2* *chw/2*))) ; X座標最小値
 (define *miny*    (+ *gdy*  *chh*))    ; Y座標最小値
-(define *k*          0) ; 自分の行動決定用
-(define *x*       (+ *minx* 40)) ; 自分のX座標
-(define *y*          *miny*) ; 自分のY座標
-(define *vx*         0) ; 自分のX方向速度
-(define *vy*         0) ; 自分のY方向速度
-(define *act*        0) ; 自分のアクション
-(define *dir*        1) ; 自分の向き
-(define *ft*         0) ; 自分の硬直時間カウント用
-(define *kcount*     0) ; 自分の連続キック防止用
-(define *rk*         0) ; 敵の行動決定用
-(define *rx*      (- *maxx* 40)) ; 敵のX座標
-(define *ry*         *miny*) ; 敵のY座標
-(define *rvx*        0) ; 敵のX方向速度
-(define *rvy*        0) ; 敵のY方向速度
-(define *ract*       0) ; 敵のアクション
-(define *rdir*      -1) ; 敵の向き
-(define *rft*        0) ; 敵の硬直時間カウント用
-(define *endstate*   0) ; 終了状態(=1:自分の勝ち,=2:敵の勝ち,=3:自分の勝ちで終了,=4:敵の勝ちで終了)
 (define *waku*      10) ; 当たり判定調整用
 (define *fixtime*    8) ; 硬直時間
+(define *kickcount*  5) ; 連続キック防止時間
 (define *stephigh*  30) ; ステップ高さ
 (define *demoflg*   #f) ; デモフラグ
 (define *demotime*   0) ; デモ時間調整用(msec)
 (define *starttime*  0) ; スタート後経過時間(msec)
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:戦闘中,=2:戦闘終了)
-(define *waitflg*   #f) ; 待ち状態フラグ
-(define *waitstepA*  0) ; 待ち状態A(=0:無効,=1:キー入力待ち開始,=2:キー入力待ち中,=3:キー入力完了)
-(define *waitstepB*  0) ; 待ち状態B(=0:無効,=1:時間待ち開始,=2:時間待ち中,=3:時間待ち完了)
-(define *waittime*   0) ; 待ち時間(msec)
-(define *waitcount*  0) ; 待ち時間カウント用(msec)
-(define *waitkey*  '()) ; 待ち受けキー(文字のリストで指定)
-(define *waitdata*  #f) ; ウェイト時間調整用(msec)
 
 ;; 乱数
 ;;   (randint n1 n2)でn1以上n2以下の整数の乱数を取得する(n1,n2は整数でn1<n2であること)
 (define randint
   (let1 m (make <mersenne-twister> :seed (sys-time))
     (lambda (n1 n2) (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
+
+;; キー入力待ちクラス
+;;   (現状、特殊キー(矢印キー等)は待ち受け不可)
+(define-class <keywaitinfo> ()
+  ((state    :init-value 0)   ; 待ち状態(=0:初期状態,=1:キー入力待ち開始,=2:キー入力待ち中,=3:キー入力完了)
+   (waitkey  :init-value '()) ; 待ち受けキー(文字のリストで指定)
+   (keystate :init-keyword :keystate :init-value (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
+   ))
+(define-method keywait ((k <keywaitinfo>) (wk <pair>) (finished-func <procedure>))
+  (case (~ k 'state)
+    ((0) (set! (~ k 'waitkey) wk)
+         (set! (~ k 'state) 1))
+    ((3) (finished-func))))
+(define-method keywait-timer ((k <keywaitinfo>))
+  (case (~ k 'state)
+    ((1) (for-each (lambda (c) (hash-table-put! (~ k 'keystate) (char->integer c) #f)) (~ k 'waitkey))
+         (set! (~ k 'state) 2))
+    ((2) (when (any (lambda (c) (hash-table-get (~ k 'keystate) (char->integer c) #f)) (~ k 'waitkey))
+           (set! (~ k 'state) 3)))))
+(define-method keywait-clear ((k <keywaitinfo>))
+  (set! (~ k 'state) 0))
+(define-method keywait-waiting? ((k <keywaitinfo>))
+  (or (= (~ k 'state) 1) (= (~ k 'state) 2)))
+(define-method keywait-finished? ((k <keywaitinfo>))
+  (= (~ k 'state) 3))
+(define *kwinfo* (make <keywaitinfo> :keystate *keystate*)) ; インスタンス生成
+
+;; 時間待ちクラス
+(define-class <timewaitinfo> ()
+  ((state        :init-value 0) ; 待ち状態(=0:初期状態,=1:時間待ち開始,=2:時間待ち中,=3:時間待ち完了)
+   (waittime     :init-value 0) ; 待ち時間(msec)
+   (waitinterval :init-keyword :waitinterval :init-value 0) ; 待ち時間インターバル(msec)
+   (waitcount    :init-value 0) ; 待ち時間カウント用(msec)
+   ))
+(define-method timewait ((t <timewaitinfo>) (wt <integer>) (finished-func <procedure>))
+  (case (~ t 'state)
+    ((0) (set! (~ t 'waittime) wt)
+         (set! (~ t 'state) 1))
+    ((3) (finished-func))))
+(define-method timewait-timer ((t <timewaitinfo>))
+  (case (~ t 'state)
+    ((1) (set! (~ t 'waitcount) 0)
+         (set! (~ t 'state) 2))
+    ((2) (set! (~ t 'waitcount) (+ (~ t 'waitcount) (~ t 'waitinterval)))
+         (when (>= (~ t 'waitcount) (~ t 'waittime))
+           (set! (~ t 'state) 3)))))
+(define-method timewait-clear ((t <timewaitinfo>))
+  (set! (~ t 'state) 0))
+(define-method timewait-waiting? ((t <timewaitinfo>))
+  (or (= (~ t 'state) 1) (= (~ t 'state) 2)))
+(define-method timewait-finished? ((t <timewaitinfo>))
+  (= (~ t 'state) 3))
+(define *twinfo* (make <timewaitinfo> :waitinterval *wait*)) ; インスタンス生成
+
+;; ウェイト時間調整クラス
+;;   (処理時間を測定して、ウェイト時間が一定になるように調整する)
+(define-class <waitmsecinfo> ()
+  ((waitdata :init-value #f) ; ウェイト時間調整用(msec)
+   (waittime :init-keyword :waittime :init-value 0)  ; ウェイト時間指定値(msec)
+   ))
+(define-method waitmsec-calc ((w <waitmsecinfo>))
+  (let* ((tnow      (current-time))
+         (tnowmsec  (+ (* (~ tnow 'second) 1000) (quotient (~ tnow 'nanosecond) 1000000)))
+         (tdiffmsec 0)
+         (wt        (~ w 'waittime))
+         (waitmsec  wt))
+    (when (~ w 'waitdata)
+      (set! tdiffmsec (- tnowmsec (~ w 'waitdata)))
+      (cond
+       ((and (>= tdiffmsec (- wt)) (< tdiffmsec wt))
+        (set! waitmsec (- wt tdiffmsec)))
+       ((and (>= tdiffmsec wt) (< tdiffmsec (* wt 50)))
+        (set! waitmsec 1))
+       ))
+    (set! (~ w 'waitdata) (+ tnowmsec waitmsec))
+    ;(print tdiffmsec " " waitmsec)
+    waitmsec))
+(define *wtinfo* (make <waitmsecinfo> :waittime *wait*)) ; インスタンス生成
+
+;; ファイタークラス
+;;   (グローバル変数や外部の手続きに依存しているので注意)
+(define-class <fighter> ()
+  ((type     :init-value 0) ; タイプ(=0:自分,=1:敵)
+   (x        :init-value 0) ; X座標
+   (y        :init-value 0) ; Y座標
+   (vx       :init-value 0) ; X方向速度
+   (vy       :init-value 0) ; Y方向速度
+   (act      :init-value 0) ; アクション
+   (dir      :init-value 0) ; 方向
+   (ft       :init-value 0) ; 硬直時間カウント用
+   (kcount   :init-value 0) ; 連続キック防止用
+   (endstate :init-value 0) ; 終了状態(=1:自分の勝ち,=2:敵の勝ち,=3:敵の勝ちで終了)
+   ))
+(define-method fighter-init ((f1 <fighter>) (type <integer>) (x <integer>) (y <integer>) (dir <integer>))
+  (set! (~ f1 'type)     type)
+  (set! (~ f1 'x)        x)
+  (set! (~ f1 'y)        y)
+  (set! (~ f1 'vx)       0)
+  (set! (~ f1 'vy)       0)
+  (set! (~ f1 'act)      0)
+  (set! (~ f1 'dir)      dir)
+  (set! (~ f1 'ft)       0)
+  (set! (~ f1 'kcount)   0)
+  (set! (~ f1 'endstate) 0)
+  )
+(define-method fighter-finished? ((f1 <fighter>))
+  (= (~ f1 'endstate) 3))
+(define-method fighter-move ((f1 <fighter>) (f2 <fighter>))
+  (define demostart (and *demoflg* (<= *starttime* 300)))
+  ;; アクションで場合分け
+  (case (~ f1 'act)
+    ((0) ; 通常
+     (when (not demostart)
+       (set! (~ f1 'vy) (- (~ f1 'vy) 5))
+       (if (<= (~ f1 'y) *miny*) (set! (~ f1 'vy) *stephigh*))
+       (set! (~ f1 'dir) (if (> (~ f1 'x) (~ f2 'x)) -1 1)))
+     (cond
+      ;; デモの起動直後のとき(何もしない)
+      (demostart)
+      ;; タイプが自分でデモでないとき
+      ((and (= (~ f1 'type) 0) (not *demoflg*))
+       ;; キー操作で行動を決定する
+       (set! (~ f1 'vx) 0)
+       (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
+         (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0))))
+       (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
+         (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0))))
+       (when (> (~ f1 'kcount) 0) (dec! (~ f1 'kcount)) (set! (~ f1 'vx) 0) (set! (~ f1 'vy) 0))
+       (when (or (hash-table-get *keystate* (char->integer #\z) #f)
+                 (hash-table-get *keystate* (char->integer #\Z) #f))
+         (set! (~ f1 'act) 2)
+         (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
+         (set! (~ f1 'vx)     (* (~ f1 'dir) 15))
+         (set! (~ f1 'vy)     50)
+         (set! (~ f1 'kcount) 0))
+       (when (and (<= (~ f1 'kcount) 0)
+                  (or (hash-table-get *keystate* (char->integer #\x) #f)
+                      (hash-table-get *keystate* (char->integer #\X) #f)))
+         (set! (~ f1 'act) 3)
+         (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
+         (set! (~ f1 'vx)     (* (~ f1 'dir) 25))
+         (set! (~ f1 'vy)     20)
+         (set! (~ f1 'kcount) *kickcount*))
+       )
+      ;; タイプが敵かデモのとき
+      (else
+       ;; 条件と乱数で行動を決定する
+       (when (<= (~ f1 'y) *miny*)
+         (set! (~ f1 'vx) 0)
+         (let1 k (randint -1 1)
+           (if (= k -1) (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0))))
+           (if (= k  1) (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0))))
+           )
+         )
+       (when (or (and (or (= (~ f2 'act) 2) (= (~ f2 'act) 3))
+                      (< (abs (- (~ f2 'x) (~ f1 'x))) 250))
+                 (= (randint 0 100) 0)
+                 (and (= (~ f1 'type) 0)
+                      (<= (randint 0 100) 30)
+                      (< (abs (- (~ f2 'x) (~ f1 'x))) 250)))
+         (let1 k (randint 0 10)
+           (cond
+            ((<= k 2)
+             (set! (~ f1 'act) 2)
+             (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
+             (set! (~ f1 'vx) (* (~ f1 'dir) 15))
+             (set! (~ f1 'vy) 50))
+            ((<= k 8)
+             (set! (~ f1 'act) 3)
+             (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
+             (set! (~ f1 'vx) (* (~ f1 'dir) 25))
+             (set! (~ f1 'vy) 20))
+            )
+           )
+         )
+       )
+      )
+     )
+    ((2) ; パンチ
+     (cond
+      ((> (~ f1 'endstate) 0)
+       (set! (~ f1 'vx) 0)
+       (set! (~ f1 'vy) 0))
+      (else
+       (set! (~ f1 'vy) (- (~ f1 'vy) 5))
+       (if (< (~ f1 'vy) 0) (set! (~ f1 'act) 10))))
+     )
+    ((3) ; キック
+     (cond
+      ((> (~ f1 'endstate) 0)
+       (set! (~ f1 'vx) 0)
+       (set! (~ f1 'vy) 0))
+      (else
+       (set! (~ f1 'vy) (- (~ f1 'vy) 5))
+       (when (and (<= (~ f1 'y) *miny*) (< (~ f1 'vy) 0))
+         (set! (~ f1 'act) 11)
+         (set! (~ f1 'ft)  *fixtime*))))
+     )
+    ((10) ; 落下
+     (set! (~ f1 'vx) 0)
+     (set! (~ f1 'vy) (- (~ f1 'vy) 5))
+     (if (<= (~ f1 'y) *miny*) (set! (~ f1 'act) 0))
+     )
+    ((11) ; 硬直
+     (set! (~ f1 'vx) 0)
+     (dec! (~ f1 'ft))
+     (if (<= (~ f1 'ft) 0) (set! (~ f1 'act) 0))
+     )
+    ((12) ; 相打ち(パンチ)
+     (set! (~ f1 'vy) (- (~ f1 'vy) 5))
+     (if (< (~ f1 'vy) 0) (set! (~ f1 'act) 10))
+     )
+    ((13) ; 相打ち(キック)
+     (set! (~ f1 'vy) (- (~ f1 'vy) 5))
+     (when (and (<= (~ f1 'y) *miny*) (< (~ f1 'vy) 0))
+       (set! (~ f1 'act) 11)
+       (set! (~ f1 'ft)  *fixtime*))
+     )
+    ((14) ; やられ
+     (set! (~ f1 'vy) (- (~ f1 'vy) 5))
+     (when (and (<= (~ f1 'y) *miny*) (< (~ f1 'vy) 0))
+       (set! (~ f1 'endstate) 3)
+       (set! (~ f1 'vx) 0))
+     )
+    )
+  (set! (~ f1 'x) (clamp (+ (~ f1 'x) (~ f1 'vx)) *minx* *maxx*))
+  (set! (~ f1 'y) (clamp (+ (~ f1 'y) (~ f1 'vy)) *miny*))
+  )
+(define-method fighter-check ((f1 <fighter>) (f2 <fighter>))
+  ;; 衝突判定
+  (if (recthit? (+ (~ f1 'x) *waku*)
+                (+ (~ f1 'y) *waku*)
+                (- (* *chw/2* 2) (* *waku* 2))
+                (- *chh*         (* *waku* 2))
+                (+ (~ f2 'x) *waku*)
+                (+ (~ f2 'y) *waku*)
+                (- (* *chw/2* 2) (* *waku* 2))
+                (- *chh*         (* *waku* 2)))
+    (cond
+     ;; 相打ち
+     ((and (or (= (~ f1 'act) 2) (= (~ f1 'act) 3))
+           (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)))
+      (set! (~ f1 'act) (+ (~ f1 'act) 10))
+      (set! (~ f2 'act) (+ (~ f2 'act) 10))
+      (set! (~ f1 'vx)  (- (~ f1 'vx)))
+      (set! (~ f2 'vx)  (- (~ f2 'vx)))
+      (if (< (~ f1 'vy) 15) (set! (~ f1 'vy) 15))
+      (if (< (~ f2 'vy) 15) (set! (~ f2 'vy) 15))
+      )
+     ;; 自分の勝ち
+     ((and (or  (= (~ f1 'act) 2) (= (~ f1 'act) 3))
+           (not (= (~ f2 'act) 14)))
+      (set! (~ f1 'endstate) 1)
+      (set! (~ f2 'endstate) 2)
+      (set! (~ f2 'act) 14)
+      (set! (~ f2 'dir) (- (~ f1 'dir)))
+      (set! (~ f2 'vx)  (* (~ f2 'dir) -10))
+      (set! (~ f2 'vy)  50)
+      )
+     ;; 敵の勝ち
+     ((and (or  (= (~ f2 'act) 2) (= (~ f2 'act) 3))
+           (not (= (~ f1 'act) 14)))
+      (set! (~ f1 'endstate) 2)
+      (set! (~ f2 'endstate) 1)
+      (set! (~ f1 'act) 14)
+      (set! (~ f1 'dir) (- (~ f2 'dir)))
+      (set! (~ f1 'vx)  (* (~ f1 'dir) -10))
+      (set! (~ f1 'vy)  50)
+      )
+     )
+    )
+  )
+(define-method fighter-disp ((f1 <fighter>))
+  (gl-push-matrix)
+  (gl-translate (~ f1 'x) (~ f1 'y) 0)
+  (gl-rotate (* (~ f1 'dir) 90) 0 1 0)
+  (model (~ f1 'type)
+         (case (~ f1 'act)
+           ((2 12) 4)
+           ((3 13) 5)
+           ((14)   3)
+           (else (cond
+                  ((< (* (~ f1 'dir) (~ f1 'vx)) 0) 2)
+                  ((> (* (~ f1 'dir) (~ f1 'vx)) 0) 1)
+                  (else 0)))))
+  (gl-pop-matrix))
+(define *f1* (make <fighter>)) ; インスタンス生成
+(define *f2* (make <fighter>)) ; インスタンス生成
+(fighter-init *f1* 0 (+ *minx* 40) *miny*  1)
+(fighter-init *f2* 1 (- *maxx* 40) *miny* -1)
+
+;; 長方形の衝突チェック
+(define (recthit? x1 y1 w1 h1 x2 y2 w2 h2)
+  (if (and (< x1 (+ x2 w2))
+           (< x2 (+ x1 w1))
+           (< y1 (+ y2 h2))
+           (< y2 (+ y1 h1)))
+    #t
+    #f))
 
 ;; 文字列表示(ビットマップフォント)
 ;;   ・座標 (x,y) は左下が原点で (0,0)-(*width*,*height*) の範囲で指定する必要がある
@@ -144,6 +420,7 @@
   (gl-pop-matrix)
   (gl-matrix-mode GL_MODELVIEW)
   (gl-enable GL_LIGHTING))
+
 
 ;; 直方体(上面に原点あり)
 (define (box x y z)
@@ -277,6 +554,7 @@
   (box *wd/2* *ht/2* 150)
   )
 
+
 ;; 初期化
 (define (init)
   (gl-clear-color 0.0 0.0 0.0 0.0)
@@ -322,33 +600,17 @@
            (set! str2 "USE [<-] [->] [Z] [X] KEY")))
         ))
       ((2) ; 戦闘終了
-       (set! str1 (if (= *endstate* 3) "You win!!" "You lose!!"))
-       (if (= *waitstepB* 3) (set! str2 "HIT [D] KEY")))
+       (set! str1 (if (fighter-finished? *f2*) "You win!!" "You lose!!"))
+       (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
       )
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text str1 (/. *width* 2) (/. (* *height* 80) 100) (/. *height* 10) #t)
     (gl-color 1.0 1.0 0.0 1.0)
     (draw-stroke-text str2 (/. *width* 2) (/. (* *height* y2) 100) (/. *height* 20) #t))
   ;; 自分を表示
-  (gl-push-matrix)
-  (gl-translate *x* *y* 0)
-  (gl-rotate (* *dir* 90) 0 1 0)
-  (model 0 (case *act*
-             ((2 12) 4)
-             ((3 13) 5)
-             ((14)   3)
-             (else (if (< (* *dir* *vx*) 0) 2 (if (> (* *dir* *vx*) 0) 1 0)))))
-  (gl-pop-matrix)
+  (fighter-disp *f1*)
   ;; 敵を表示
-  (gl-push-matrix)
-  (gl-translate *rx* *ry* 0)
-  (gl-rotate (* *rdir* 90) 0 1 0)
-  (model 1 (case *ract*
-             ((2 12) 4)
-             ((3 13) 5)
-             ((14)   3)
-             (else (if (< (* *rdir* *rvx*) 0) 2 (if (> (* *rdir* *rvx*) 0) 1 0)))))
-  (gl-pop-matrix)
+  (fighter-disp *f2*)
   ;; 地面を表示
   (gl-push-matrix)
   (gl-translate 0 *gdy* 0)
@@ -405,45 +667,21 @@
 (define (timer val)
   (cond
    ;; 待ち状態のとき
-   (*waitflg*
-    ;; キー入力待ち状態のとき
-    (case *waitstepA*
-      ((1) (for-each (lambda (c) (hash-table-put! *keystate* (char->integer c) #f)) *waitkey*)
-           (set! *waitstepA* 2))
-      ((2) (when (any (lambda (c) (hash-table-get *keystate* (char->integer c) #f)) *waitkey*)
-             (set! *waitstepA* 3)
-             (set! *waitflg* #f))))
-    ;; 時間待ち状態のとき
-    (case *waitstepB*
-      ((1) (set! *waitcount* 0)
-           (set! *waitstepB* 2))
-      ((2) (set! *waitcount* (+ *waitcount* *wait*))
-           (when (>= *waitcount* *waittime*)
-             (set! *waitstepB* 3)
-             (set! *waitflg* #f))))
+   ((or (keywait-waiting? *kwinfo*) (timewait-waiting? *twinfo*))
+    (keywait-timer  *kwinfo*)
+    (timewait-timer *twinfo*)
+    (when (= *scene* 0)
+      (if (keywait-finished?  *kwinfo*) (timewait-clear *twinfo*))
+      (if (timewait-finished? *twinfo*) (keywait-clear  *kwinfo*)))
     )
    ;; 待ち状態でないとき
    (else
     ;; シーン情報で場合分け
     (case *scene*
       ((0) ; スタート画面
-       ;; 変数初期化
-       (set! *x*      (+ *minx* 40))
-       (set! *y*         *miny*)
-       (set! *vx*        0)
-       (set! *vy*        0)
-       (set! *act*       0)
-       (set! *dir*       1)
-       (set! *ft*        0)
-       (set! *kcount*    0)
-       (set! *rx*     (- *maxx* 40))
-       (set! *ry*        *miny*)
-       (set! *rvx*       0)
-       (set! *rvy*       0)
-       (set! *ract*      0)
-       (set! *rdir*     -1)
-       (set! *rft*       0)
-       (set! *endstate*  0)
+       ;; 初期化
+       (fighter-init *f1* 0 (+ *minx* 40) *miny*  1)
+       (fighter-init *f2* 1 (- *maxx* 40) *miny* -1)
        (set! *demotime*  0)
        (set! *starttime* 0)
        (cond
@@ -453,72 +691,30 @@
         ;; デモでないとき
         (else
          ;; キー入力待ち
-         (case *waitstepA*
-           ((0) (set! *waitstepA* 1)
-                (set! *waitflg*   #t)
-                (set! *waitkey*   '(#\s #\S)))
-           ((3) (set! *scene*     1)))
-         ;; 時間待ち(タイムアップでデモへ移行)
-         (case *waitstepB*
-           ((0) (set! *waitstepB* 1)
-                (set! *waitflg*   #t)
-                (set! *waittime*  5000))
-           ((3) (set! *scene*     1)
-                (set! *demoflg*   #t)))
+         (keywait  *kwinfo* '(#\s #\S)
+                   (lambda ()
+                     (set! *scene*   1)))
+         ;; 時間待ち
+         (timewait *twinfo* 5000
+                   (lambda ()
+                     (set! *scene*   1)
+                     (set! *demoflg* #t)))
          (when (= *scene* 1)
-           (set! *waitstepA* 0)
-           (set! *waitstepB* 0))
+           (keywait-clear  *kwinfo*)
+           (timewait-clear *twinfo*))
          )
         )
        )
       ((1) ; 戦闘中
        (if (< *starttime* 60000) (set! *starttime* (+ *starttime* *wait*)))
        ;; 自分の移動
-       (my-action)
+       (fighter-move *f1* *f2*)
        ;; 敵の移動
-       (enemy-action)
+       (fighter-move *f2* *f1*)
        ;; 衝突判定
-       (if (recthit? (+ *x*  *waku*)
-                     (+ *y*  *waku*)
-                     (- (* *chw/2* 2) (* *waku* 2))
-                     (- *chh*         (* *waku* 2))
-                     (+ *rx* *waku*)
-                     (+ *ry* *waku*)
-                     (- (* *chw/2* 2) (* *waku* 2))
-                     (- *chh*         (* *waku* 2)))
-         (cond
-          ;; 相打ち
-          ((and (or (= *act*  2) (= *act*  3))
-                (or (= *ract* 2) (= *ract* 3)))
-           (set! *act*  (+ *act*  10))
-           (set! *ract* (+ *ract* 10))
-           (set! *vx*   (- *vx* ))
-           (set! *rvx*  (- *rvx*))
-           (if (< *vy*  15) (set! *vy*  15))
-           (if (< *rvy* 15) (set! *rvy* 15))
-           )
-          ;; 自分の勝ち
-          ((and (or  (= *act*  2) (= *act*  3))
-                (not (= *ract* 14)))
-           (set! *endstate* 1)
-           (set! *ract* 14)
-           (set! *rdir* (- *dir*))
-           (set! *rvx*  (* *rdir* -10))
-           (set! *rvy*  50)
-           )
-          ;; 敵の勝ち
-          ((and (or  (= *ract*  2) (= *ract*  3))
-                (not (= *act*  14)))
-           (set! *endstate* 2)
-           (set! *act*  14)
-           (set! *dir*  (- *rdir*))
-           (set! *vx*   (* *dir* -10))
-           (set! *vy*   50)
-           )
-          )
-         )
+       (fighter-check *f1* *f2*)
        ;; 決着したとき
-       (if (>= *endstate* 3)
+       (if (or (fighter-finished? *f1*) (fighter-finished? *f2*))
          (cond
           ;; デモのとき
           (*demoflg*
@@ -537,263 +733,22 @@
        )
       ((2) ; 戦闘終了
        ;; 時間待ち
-       (case *waitstepB*
-         ((0) (set! *waitstepB* 1)
-              (set! *waitflg*   #t)
-              (set! *waittime*  1500))
-         ((3) 
-          ;; キー入力待ち
-          (case *waitstepA*
-            ((0) (set! *waitstepA* 1)
-                 (set! *waitflg*   #t)
-                 (set! *waitkey*   '(#\d #\D)))
-            ((3) (set! *waitstepA* 0)
-                 (set! *waitstepB* 0)
-                 (set! *scene*     0)))
-          )
-         )
+       (timewait *twinfo* 1500
+                 (lambda ()
+                   ;; キー入力待ち
+                   (keywait *kwinfo* '(#\d #\D)
+                            (lambda ()
+                              (set! *scene* 0)
+                              (timewait-clear *twinfo*)
+                              (keywait-clear  *kwinfo*)))))
        )
       )
     )
    )
   (glut-post-redisplay)
   ;; ウェイト時間調整
-  ;; (前回からの経過時間を測定して、ウェイト時間が一定になるように調整する)
-  (let* ((tnow      (current-time))
-         (tnowmsec  (+ (* (~ tnow 'second) 1000) (quotient (~ tnow 'nanosecond) 1000000)))
-         (tdiffmsec 0)
-         (waitmsec  *wait*))
-    (when *waitdata*
-      (set! tdiffmsec (- tnowmsec *waitdata*))
-      (cond
-       ((and (>= tdiffmsec (- *wait*)) (< tdiffmsec *wait*))
-        (set! waitmsec (- *wait* tdiffmsec)))
-       ((and (>= tdiffmsec *wait*) (< tdiffmsec (* *wait* 50)))
-        (set! waitmsec 1))
-       ))
-    (set! *waitdata* (+ tnowmsec waitmsec))
-    ;(print tdiffmsec " " waitmsec)
-    (glut-timer-func waitmsec timer 0))
+  (glut-timer-func (waitmsec-calc *wtinfo*) timer 0)
   )
-
-;; 自分の移動
-(define (my-action)
-  (define demostart (and *demoflg* (<= *starttime* 300)))
-  ;; アクションで場合分け
-  (case *act*
-    ((0) ; 通常
-     (when (not demostart)
-       (set! *vy* (- *vy* 5))
-       (if (<= *y* *miny*) (set! *vy* *stephigh*))
-       (set! *dir* (if (> *x* *rx*) -1 1)))
-     (cond
-      ;; デモの起動直後のとき(何もしない)
-      (demostart)
-      ;; デモのとき
-      (*demoflg*
-       ;; 条件と乱数で行動を決定する
-       (when (<= *y* *miny*)
-         (set! *vx* 0)
-         (set! *k*  (randint -1 1))
-         (if (= *k* -1) (set! *vx* (+ -10 (if (> *x* *rx*) -2 0))))
-         (if (= *k*  1) (set! *vx* (+  10 (if (< *x* *rx*)  2 0))))
-         )
-       (when (or (and (or (= *ract* 2) (= *ract* 3)) (< (abs (- *rx* *x*)) 250))
-                 (= (randint 0 100) 0)
-                 (and (<= (randint 0 100) 30) (< (abs (- *rx* *x*)) 250)))
-         (set! *k*  (randint 0 10))
-         (cond
-          ((<= *k* 2)
-           (set! *act* 2)
-           (if (or (= *ract* 2) (= *ract* 3)) (set! *dir* (- *rdir*)))
-           (set! *vx*  (* *dir* 15))
-           (set! *vy*  50))
-          ((<= *k* 8)
-           (set! *act* 3)
-           (if (or (= *ract* 2) (= *ract* 3)) (set! *dir* (- *rdir*)))
-           (set! *vx*  (* *dir* 25))
-           (set! *vy*  20))
-          )
-         )
-       )
-      ;; デモでないとき
-      (else
-       ;; キー操作で行動を決定する
-       (set! *vx* 0)
-       (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
-         (set! *vx* (+ -10 (if (> *x* *rx*) -2 0))))
-       (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
-         (set! *vx* (+  10 (if (< *x* *rx*)  2 0))))
-       (when (> *kcount* 0) (dec! *kcount*) (set! *vx* 0) (set! *vy* 0))
-       (when (or (hash-table-get *keystate* (char->integer #\z) #f)
-                 (hash-table-get *keystate* (char->integer #\Z) #f))
-         (set! *act* 2)
-         (if (or (= *ract* 2) (= *ract* 3)) (set! *dir* (- *rdir*)))
-         (set! *vx*  (* *dir* 15))
-         (set! *vy*  50)
-         (set! *kcount* 0))
-       (when (and (<= *kcount* 0)
-                  (or (hash-table-get *keystate* (char->integer #\x) #f)
-                      (hash-table-get *keystate* (char->integer #\X) #f)))
-         (set! *act* 3)
-         (if (or (= *ract* 2) (= *ract* 3)) (set! *dir* (- *rdir*)))
-         (set! *vx*  (* *dir* 25))
-         (set! *vy*  20)
-         (set! *kcount* 5))
-       )
-      )
-     )
-    ((2) ; パンチ
-     (cond
-      ((> *endstate* 0)
-       (set! *vx* 0)
-       (set! *vy* 0))
-      (else
-       (set! *vy* (- *vy* 5))
-       (if (< *vy* 0) (set! *act* 10))))
-     )
-    ((3) ; キック
-     (cond
-      ((> *endstate* 0)
-       (set! *vx* 0)
-       (set! *vy* 0))
-      (else
-       (set! *vy* (- *vy* 5))
-       (when (and (<= *y* *miny*) (< *vy* 0))
-         (set! *act* 11)
-         (set! *ft*  *fixtime*))))
-     )
-    ((10) ; 落下
-     (set! *vx* 0)
-     (set! *vy* (- *vy* 5))
-     (if (<= *y* *miny*) (set! *act* 0))
-     )
-    ((11) ; 硬直
-     (set! *vx* 0)
-     (dec! *ft*)
-     (if (<= *ft* 0) (set! *act* 0))
-     )
-    ((12) ; 相打ち(パンチ)
-     (set! *vy* (- *vy* 5))
-     (if (< *vy* 0) (set! *act* 10))
-     )
-    ((13) ; 相打ち(キック)
-     (set! *vy* (- *vy* 5))
-     (when (and (<= *y* *miny*) (< *vy* 0))
-       (set! *act* 11)
-       (set! *ft*  *fixtime*))
-     )
-    ((14) ; やられ
-     (set! *vy* (- *vy* 5))
-     (when (and (<= *y* *miny*) (< *vy* 0))
-       (set! *endstate* 4)
-       (set! *vx* 0))
-     )
-    )
-  (set! *x* (clamp (+ *x* *vx*) *minx* *maxx*))
-  (set! *y* (clamp (+ *y* *vy*) *miny*))
-  )
-
-;; 敵の移動
-(define (enemy-action)
-  (define demostart (and *demoflg* (<= *starttime* 300)))
-  ;; アクションで場合分け
-  (case *ract*
-    ((0) ; 通常
-     (when (not demostart)
-       (set! *rvy* (- *rvy* 5))
-       (if (<= *ry* *miny*) (set! *rvy* *stephigh*))
-       (set! *rdir* (if (>= *rx* *x*) -1 1)))
-     (cond
-      ;; デモの起動直後のとき(何もしない)
-      (demostart)
-      ;; その他のとき
-      (else
-       ;; 条件と乱数で行動を決定する
-       (when (<= *ry* *miny*)
-         (set! *rvx* 0)
-         (set! *rk*  (randint -1 1))
-         (if (= *rk* -1) (set! *rvx* (+ -10 (if (> *rx* *x*) -2 0))))
-         (if (= *rk*  1) (set! *rvx* (+  10 (if (< *rx* *x*)  2 0))))
-         )
-       (when (or (and (or (= *act* 2) (= *act* 3)) (< (abs (- *rx* *x*)) 250))
-                 (= (randint 0 100) 0))
-         (set! *rk*  (randint 0 10))
-         (cond
-          ((<= *rk* 2)
-           (set! *ract* 2)
-           (if (or (= *act* 2) (= *act* 3)) (set! *rdir* (- *dir*)))
-           (set! *rvx*  (* *rdir* 15))
-           (set! *rvy*  50))
-          ((<= *rk* 8)
-           (set! *ract* 3)
-           (if (or (= *act* 2) (= *act* 3)) (set! *rdir* (- *dir*)))
-           (set! *rvx*  (* *rdir* 25))
-           (set! *rvy*  20))
-          )
-         )
-       )
-      )
-     )
-    ((2) ; パンチ
-     (cond
-      ((> *endstate* 0)
-       (set! *rvx* 0)
-       (set! *rvy* 0))
-      (else
-       (set! *rvy* (- *rvy* 5))
-       (if (< *rvy* 0) (set! *ract* 10))))
-     )
-    ((3) ; キック
-     (cond
-      ((> *endstate* 0)
-       (set! *rvx* 0)
-       (set! *rvy* 0))
-      (else
-       (set! *rvy* (- *rvy* 5))
-       (when (and (<= *ry* *miny*) (< *rvy* 0))
-         (set! *ract* 11)
-         (set! *rft*  *fixtime*))))
-     )
-    ((10) ; 落下
-     (set! *rvx* 0)
-     (set! *rvy* (- *rvy* 5))
-     (if (<= *ry* *miny*) (set! *ract* 0))
-     )
-    ((11) ; 硬直
-     (set! *rvx* 0)
-     (dec! *rft*)
-     (if (<= *rft* 0) (set! *ract* 0))
-     )
-    ((12) ; 相打ち(パンチ)
-     (set! *rvy* (- *rvy* 5))
-     (if (< *rvy* 0) (set! *ract* 10))
-     )
-    ((13) ; 相打ち(キック)
-     (set! *rvy* (- *rvy* 5))
-     (when (and (<= *ry* *miny*) (< *rvy* 0))
-       (set! *ract* 11)
-       (set! *rft*  *fixtime*))
-     )
-    ((14) ; やられ
-     (set! *rvy* (- *rvy* 5))
-     (when (and (<= *ry* *miny*) (< *rvy* 0))
-       (set! *endstate* 3)
-       (set! *rvx* 0))
-     )
-    )
-  (set! *rx* (clamp (+ *rx* *rvx*) *minx* *maxx*))
-  (set! *ry* (clamp (+ *ry* *rvy*) *miny*))
-  )
-
-;; 長方形の衝突チェック
-(define (recthit? x1 y1 w1 h1 x2 y2 w2 h2)
-  (if (and (< x1 (+ x2 w2))
-           (< x2 (+ x1 w1))
-           (< y1 (+ y2 h2))
-           (< y2 (+ y1 h1)))
-    #t
-    #f))
 
 ;; メイン処理
 (define (main args)
