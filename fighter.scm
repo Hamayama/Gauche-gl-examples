@@ -30,6 +30,7 @@
 ;;   2015-7-27  v1.13  コメント修正のみ
 ;;   2015-7-28  v1.14  いくつかの処理をクラス化
 ;;   2015-7-28  v1.15  コメント修正のみ
+;;   2015-7-28  v1.16  コメント修正のみ
 ;;
 (use gl)
 (use gl.glut)
@@ -155,11 +156,12 @@
    (y        :init-value 0) ; Y座標
    (vx       :init-value 0) ; X方向速度
    (vy       :init-value 0) ; Y方向速度
-   (act      :init-value 0) ; アクション
-   (dir      :init-value 0) ; 方向
+   (act      :init-value 0) ; アクション(=0:通常,=2:パンチ,=3:キック,=10:落下,=11:硬直,
+   ;                                     =12:相打ち(パンチ),=13:相打ち(キック),=14:やられ)
+   (dir      :init-value 0) ; 方向(=-1:左向き,=0:不明,=1:右向き)
    (ft       :init-value 0) ; 硬直時間カウント用
-   (kcount   :init-value 0) ; 連続キック防止用
-   (endstate :init-value 0) ; 終了状態(=1:自分の勝ち,=2:敵の勝ち,=3:敵の勝ちで終了)
+   (kcount   :init-value 0) ; 連続キック防止時間カウント用
+   (endstate :init-value 0) ; 終了状態(=0:初期状態,=1:自分の勝ち,=2:敵の勝ち,=3:敵の勝ちで終了)
    ))
 (define-method fighter-init ((f1 <fighter>) (type <integer>) (x <integer>) (y <integer>) (dir <integer>))
   (set! (~ f1 'type)     type)
@@ -187,7 +189,7 @@
      (cond
       ;; デモの起動直後のとき(何もしない)
       (demostart)
-      ;; タイプが自分でデモでないとき
+      ;; 「タイプが自分」かつデモでないとき
       ((and (= (~ f1 'type) 0) (not *demoflg*))
        ;; キー操作で行動を決定する
        (set! (~ f1 'vx) 0)
@@ -212,7 +214,7 @@
          (set! (~ f1 'vy)     20)
          (set! (~ f1 'kcount) *kickcount*))
        )
-      ;; タイプが敵かデモのとき
+      ;; 「タイプが敵」またはデモのとき
       (else
        ;; 条件と乱数で行動を決定する
        (when (<= (~ f1 'y) *miny*)
@@ -353,7 +355,8 @@
                   ((< (* (~ f1 'dir) (~ f1 'vx)) 0) 2)
                   ((> (* (~ f1 'dir) (~ f1 'vx)) 0) 1)
                   (else 0)))))
-  (gl-pop-matrix))
+  (gl-pop-matrix)
+  )
 (define *f1* (make <fighter>)) ; インスタンス生成
 (define *f2* (make <fighter>)) ; インスタンス生成
 (fighter-init *f1* 0 (+ *minx* 40) *miny*  1)
