@@ -31,6 +31,7 @@
 ;;   2015-7-28  v1.14  いくつかの処理をクラス化
 ;;   2015-7-28  v1.15  コメント修正のみ
 ;;   2015-7-28  v1.16  コメント修正のみ
+;;   2015-7-29  v1.17  コメント修正のみ
 ;;
 (use gl)
 (use gl.glut)
@@ -71,7 +72,6 @@
     (lambda (n1 n2) (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
 
 ;; キー入力待ちクラス
-;;   (現状、特殊キー(矢印キー等)は待ち受け不可)
 (define-class <keywaitinfo> ()
   ((state    :init-value 0)   ; 待ち状態(=0:初期状態,=1:キー入力待ち開始,=2:キー入力待ち中,=3:キー入力完了)
    (waitkey  :init-value '()) ; 待ち受けキー(文字のリストで指定)
@@ -127,7 +127,7 @@
 ;;   (処理時間を測定して、ウェイト時間が一定になるように調整する)
 (define-class <waitmsecinfo> ()
   ((waitdata :init-value #f) ; ウェイト時間調整用(msec)
-   (waittime :init-keyword :waittime :init-value 0)  ; ウェイト時間指定値(msec)
+   (waittime :init-keyword :waittime :init-value 0) ; ウェイト時間指定値(msec)
    ))
 (define-method waitmsec-calc ((w <waitmsecinfo>))
   (let* ((tnow      (current-time))
@@ -357,8 +357,8 @@
                   (else 0)))))
   (gl-pop-matrix)
   )
-(define *f1* (make <fighter>)) ; インスタンス生成
-(define *f2* (make <fighter>)) ; インスタンス生成
+(define *f1* (make <fighter>)) ; インスタンス生成(自分)
+(define *f2* (make <fighter>)) ; インスタンス生成(敵)
 (fighter-init *f1* 0 (+ *minx* 40) *miny*  1)
 (fighter-init *f2* 1 (- *maxx* 40) *miny* -1)
 
