@@ -32,6 +32,7 @@
 ;;   2015-7-28  v1.15  コメント修正のみ
 ;;   2015-7-28  v1.16  コメント修正のみ
 ;;   2015-7-29  v1.17  コメント修正のみ
+;;   2015-8-2   v1.18  難易度調整等
 ;;
 (use gl)
 (use gl.glut)
@@ -57,8 +58,7 @@
 (define *minx* (- (- *wd/2* *chw/2*))) ; X座標最小値
 (define *miny*    (+ *gdy*  *chh*))    ; Y座標最小値
 (define *waku*      10) ; 当たり判定調整用
-(define *fixtime*    8) ; 硬直時間
-(define *kickcount*  5) ; 連続キック防止時間
+(define *fixtime*   10) ; 硬直時間
 (define *stephigh*  30) ; ステップ高さ
 (define *demoflg*   #f) ; デモフラグ
 (define *demotime*   0) ; デモ時間調整用(msec)
@@ -160,7 +160,6 @@
    ;                                     =12:相打ち(パンチ),=13:相打ち(キック),=14:やられ)
    (dir      :init-value 0) ; 方向(=-1:左向き,=0:不明,=1:右向き)
    (ft       :init-value 0) ; 硬直時間カウント用
-   (kcount   :init-value 0) ; 連続キック防止時間カウント用
    (endstate :init-value 0) ; 終了状態(=0:初期状態,=1:自分の勝ち,=2:敵の勝ち,=3:敵の勝ちで終了)
    ))
 (define-method fighter-init ((f1 <fighter>) (type <integer>) (x <integer>) (y <integer>) (dir <integer>))
@@ -172,7 +171,6 @@
   (set! (~ f1 'act)      0)
   (set! (~ f1 'dir)      dir)
   (set! (~ f1 'ft)       0)
-  (set! (~ f1 'kcount)   0)
   (set! (~ f1 'endstate) 0)
   )
 (define-method fighter-finished? ((f1 <fighter>))
@@ -197,22 +195,18 @@
          (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0))))
        (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
          (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0))))
-       (when (> (~ f1 'kcount) 0) (dec! (~ f1 'kcount)) (set! (~ f1 'vx) 0) (set! (~ f1 'vy) 0))
        (when (or (hash-table-get *keystate* (char->integer #\z) #f)
                  (hash-table-get *keystate* (char->integer #\Z) #f))
          (set! (~ f1 'act) 2)
          (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
-         (set! (~ f1 'vx)     (* (~ f1 'dir) 15))
-         (set! (~ f1 'vy)     50)
-         (set! (~ f1 'kcount) 0))
-       (when (and (<= (~ f1 'kcount) 0)
-                  (or (hash-table-get *keystate* (char->integer #\x) #f)
-                      (hash-table-get *keystate* (char->integer #\X) #f)))
+         (set! (~ f1 'vx) (* (~ f1 'dir) 16))
+         (set! (~ f1 'vy) 50))
+       (when (or (hash-table-get *keystate* (char->integer #\x) #f)
+                 (hash-table-get *keystate* (char->integer #\X) #f))
          (set! (~ f1 'act) 3)
          (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
-         (set! (~ f1 'vx)     (* (~ f1 'dir) 25))
-         (set! (~ f1 'vy)     20)
-         (set! (~ f1 'kcount) *kickcount*))
+         (set! (~ f1 'vx) (* (~ f1 'dir) 23))
+         (set! (~ f1 'vy) 20))
        )
       ;; 「タイプが敵」またはデモのとき
       (else
@@ -230,17 +224,19 @@
                  (and (= (~ f1 'type) 0)
                       (<= (randint 0 100) 30)
                       (< (abs (- (~ f2 'x) (~ f1 'x))) 250)))
-         (let1 k (randint 0 10)
+         (let ((k  (randint 0 100))
+               (k1 (case (~ f2 'act) ((2) 50) ((3) 5) (else 30)))
+               (k2 80))
            (cond
-            ((<= k 2)
+            ((<= k k1)
              (set! (~ f1 'act) 2)
              (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
-             (set! (~ f1 'vx) (* (~ f1 'dir) 15))
+             (set! (~ f1 'vx) (* (~ f1 'dir) 16))
              (set! (~ f1 'vy) 50))
-            ((<= k 8)
+            ((<= k k2)
              (set! (~ f1 'act) 3)
              (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
-             (set! (~ f1 'vx) (* (~ f1 'dir) 25))
+             (set! (~ f1 'vx) (* (~ f1 'dir) 23))
              (set! (~ f1 'vy) 20))
             )
            )
