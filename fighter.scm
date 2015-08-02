@@ -34,6 +34,7 @@
 ;;   2015-7-29  v1.17  コメント修正のみ
 ;;   2015-8-2   v1.18  難易度調整等
 ;;   2015-8-2   v1.19  難易度調整等
+;;   2015-8-2   v1.20  難易度調整等
 ;;
 (use gl)
 (use gl.glut)
@@ -200,7 +201,7 @@
                  (hash-table-get *keystate* (char->integer #\Z) #f))
          (set! (~ f1 'act) 2)
          (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
-         (set! (~ f1 'vx) (* (~ f1 'dir) 16))
+         (set! (~ f1 'vx) (* (~ f1 'dir) 15))
          (set! (~ f1 'vy) 50))
        (when (or (hash-table-get *keystate* (char->integer #\x) #f)
                  (hash-table-get *keystate* (char->integer #\X) #f))
@@ -232,7 +233,7 @@
             ((<= k k1)
              (set! (~ f1 'act) 2)
              (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
-             (set! (~ f1 'vx) (* (~ f1 'dir) 16))
+             (set! (~ f1 'vx) (* (~ f1 'dir) 15))
              (set! (~ f1 'vy) 50))
             ((<= k k2)
              (set! (~ f1 'act) 3)
