@@ -33,6 +33,7 @@
 ;;   2015-7-28  v1.16  コメント修正のみ
 ;;   2015-7-29  v1.17  コメント修正のみ
 ;;   2015-8-2   v1.18  難易度調整等
+;;   2015-8-2   v1.19  難易度調整等
 ;;
 (use gl)
 (use gl.glut)
@@ -51,12 +52,12 @@
 
 (define *wd/2*     400) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
-(define *chw/2*     50) ; キャラクタの幅/2
+(define *chw*      100) ; キャラクタの幅
 (define *chh*      100) ; キャラクタの高さ
 (define *gdy*     -300) ; 地面のY座標
-(define *maxx*    (- *wd/2* *chw/2*))  ; X座標最大値
-(define *minx* (- (- *wd/2* *chw/2*))) ; X座標最小値
-(define *miny*    (+ *gdy*  *chh*))    ; Y座標最小値
+(define *maxx*    (- *wd/2* (quotient *chw* 2)))  ; X座標最大値
+(define *minx* (- (- *wd/2* (quotient *chw* 2)))) ; X座標最小値
+(define *miny*    (+ *gdy*  *chh*)) ; Y座標最小値
 (define *waku*      10) ; 当たり判定調整用
 (define *fixtime*   10) ; 硬直時間
 (define *stephigh*  30) ; ステップ高さ
@@ -226,7 +227,7 @@
                       (< (abs (- (~ f2 'x) (~ f1 'x))) 250)))
          (let ((k  (randint 0 100))
                (k1 (case (~ f2 'act) ((2) 50) ((3) 5) (else 30)))
-               (k2 80))
+               (k2 (if (< (abs (- (~ f2 'x) (~ f1 'x))) *chw*) 95 80)))
            (cond
             ((<= k k1)
              (set! (~ f1 'act) 2)
@@ -298,12 +299,12 @@
   ;; 衝突判定
   (if (recthit? (+ (~ f1 'x) *waku*)
                 (+ (~ f1 'y) *waku*)
-                (- (* *chw/2* 2) (* *waku* 2))
-                (- *chh*         (* *waku* 2))
+                (- *chw*  (* *waku* 2))
+                (- *chh*  (* *waku* 2))
                 (+ (~ f2 'x) *waku*)
                 (+ (~ f2 'y) *waku*)
-                (- (* *chw/2* 2) (* *waku* 2))
-                (- *chh*         (* *waku* 2)))
+                (- *chw*  (* *waku* 2))
+                (- *chh*  (* *waku* 2)))
     (cond
      ;; 相打ち
      ((and (or (= (~ f1 'act) 2) (= (~ f1 'act) 3))
