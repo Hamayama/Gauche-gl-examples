@@ -18,6 +18,7 @@
 ;;   2015-7-28  v1.04  見逃し時のパラメータ表示修正等
 ;;   2015-7-28  v1.05  打撃判定条件を一部修正
 ;;   2015-7-29  v1.06  コメント修正のみ
+;;   2015-8-3   v1.07  定数名変更(変数と混同しないように)
 ;;
 (use gl)
 (use gl.glut)
@@ -172,11 +173,11 @@
 ;; 直方体(上面に原点あり)
 (define (box x y z)
   (define f32 f32vector)
-  (define -x  (- x))
-  (define -2y (* -2 y))
-  (define -z  (- z))
-  (let ((vertex (vector (f32  x  0  z) (f32 x -2y  z) (f32 -x -2y  z) (f32 -x  0  z)
-                        (f32  x  0 -z) (f32 x -2y -z) (f32 -x -2y -z) (f32 -x  0 -z)))
+  (define c1  (- x))
+  (define c2  (* -2 y))
+  (define c3  (- z))
+  (let ((vertex (vector (f32 x 0  z) (f32 x c2  z) (f32 c1 c2  z) (f32 c1 0  z)
+                        (f32 x 0 c3) (f32 x c2 c3) (f32 c1 c2 c3) (f32 c1 0 c3)))
         (face   #(#(0 1 2 3) #(0 4 5 1) #(1 5 6 2) #(2 6 7 3) #(3 7 4 0) #(4 7 6 5)))
         (normal #(#f32( 0  0  1) #f32( 1  0  0) #f32( 0 -1  0)
                   #f32(-1  0  0) #f32( 0  1  0) #f32( 0  0 -1))))
