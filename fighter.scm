@@ -36,6 +36,7 @@
 ;;   2015-8-2   v1.19  難易度調整等
 ;;   2015-8-2   v1.20  難易度調整等
 ;;   2015-8-3   v1.21  定数名変更(変数と混同しないように)
+;;   2015-8-3   v1.22  円柱の生成処理修正
 ;;
 (use gl)
 (use gl.glut)
@@ -447,6 +448,7 @@
 
 ;; 円柱(上面に原点あり)
 (define (cylinder r h s)
+  (define f32  f32vector)
   (define step (/. 2pi s))
   (define c1   (* -2 h))
   ;; 上面
@@ -455,7 +457,7 @@
   (do ((i 0 (+ i 1))
        (angle 0 (+ angle step)))
       ((>= i s) #f)
-    (gl-vertex (* r (cos angle)) 0 (* r (sin angle))))
+    (gl-vertex (f32 (* r (cos angle)) 0 (* r (sin angle)))))
   (gl-end)
   ;; 底面
   (gl-begin GL_TRIANGLE_FAN)
@@ -463,7 +465,7 @@
   (do ((i 0 (+ i 1))
        (angle 0 (- angle step)))
       ((>= i s) #f)
-    (gl-vertex (* r (cos angle)) c1 (* r (sin angle))))
+    (gl-vertex (f32 (* r (cos angle)) c1 (* r (sin angle)))))
   (gl-end)
   ;; 側面
   (gl-begin GL_QUAD_STRIP)
@@ -472,9 +474,9 @@
       ((> i s) #f)
     (let ((x (cos angle))
           (z (sin angle)))
-      (gl-normal (f32vector x 0 z))
-      (gl-vertex (* r x) 0  (* r z))
-      (gl-vertex (* r x) c1 (* r z))
+      (gl-normal (f32 x 0 z))
+      (gl-vertex (f32 (* r x) 0  (* r z)))
+      (gl-vertex (f32 (* r x) c1 (* r z)))
       ))
   (gl-end))
 
