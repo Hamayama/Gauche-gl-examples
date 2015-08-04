@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2015-8-4 v1.27
+;; 2015-8-4 v1.28
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -43,6 +43,8 @@
 (define *demotime*   0) ; デモ時間調整用(msec)
 (define *starttime*  0) ; スタート後経過時間(msec)
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:戦闘中,=2:戦闘終了)
+(define *playcount*  0) ; 試合数
+(define *wincount*   0) ; 勝利数
 
 ;; 乱数
 ;;   (randint n1 n2)でn1以上n2以下の整数の乱数を取得する(n1,n2は整数でn1<n2であること)
@@ -560,7 +562,7 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字表示
-  (let ((str1 "") (str2 "") (y2 68))
+  (let ((str1 "") (str2 "") (str3 "") (y2 68))
     ;; シーン情報で場合分け
     (case *scene*
       ((0) ; スタート画面
@@ -589,10 +591,18 @@
        (set! str1 (if (fighter-finished? *f2*) "You win!!" "You lose!!"))
        (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
       )
+    (set! str3 (format #f "(W=~D L=~D R=~D)"
+                       *wincount*
+                       (- *playcount* *wincount*)
+                       (if (= *playcount* 0)
+                         0.0
+                         (/. (round->exact (* 100 (/. *wincount* *playcount*))) 100))))
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text str1 (/. *width* 2) (/. (* *height* 80) 100) (/. *height* 10) #t)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str2 (/. *width* 2) (/. (* *height* y2) 100) (/. *height* 20) #t))
+    (draw-stroke-text str2 (/. *width* 2) (/. (* *height* y2) 100) (/. *height* 20) #t)
+    (gl-color 0.0 1.0 0.0 1.0)
+    (draw-stroke-text str3 (/. *height* 100) (/. (* *height* 95) 100) (/. *height* 25) #f))
   ;; 自分を表示
   (fighter-disp *f1*)
   ;; 敵を表示
@@ -708,7 +718,9 @@
            (if (>= *demotime* 1600) (set! *scene* 0)))
           ;; デモでないとき
           (else
-           (set! *scene* 2))
+           (set! *scene* 2)
+           (inc! *playcount*)
+           (if (fighter-finished? *f2*) (inc! *wincount*)))
           ))
        ;; デモを抜けるチェック
        (when (and *demoflg*
