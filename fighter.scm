@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2015-8-4 v1.24
+;; 2015-8-4 v1.25
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -172,18 +172,18 @@
          ;; キー操作で行動を決定する
          (set! (~ f1 'vx) 0)
          (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
-           (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0))))
+           (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0)))) ; 左
          (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
-           (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0))))
+           (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0)))) ; 右
          (when (or (hash-table-get *keystate* (char->integer #\z) #f)
                    (hash-table-get *keystate* (char->integer #\Z) #f))
-           (set! (~ f1 'act) 2)
+           (set! (~ f1 'act) 2) ; パンチ
            (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
            (set! (~ f1 'vx) (* (~ f1 'dir) 15))
            (set! (~ f1 'vy) 50))
          (when (or (hash-table-get *keystate* (char->integer #\x) #f)
                    (hash-table-get *keystate* (char->integer #\X) #f))
-           (set! (~ f1 'act) 3)
+           (set! (~ f1 'act) 3) ; キック
            (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
            (set! (~ f1 'vx) (* (~ f1 'dir) 23))
            (set! (~ f1 'vy) 20))
@@ -194,33 +194,34 @@
          (when (<= (~ f1 'y) *miny*)
            (set! (~ f1 'vx) 0)
            (let1 k (randint -1 1)
-             (if (= k -1) (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0))))
-             (if (= k  1) (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0))))
+             (if (= k -1) (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0)))) ; 左
+             (if (= k  1) (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0)))) ; 右
              )
            )
-         (when (or (and (or (= (~ f2 'act) 2) (= (~ f2 'act) 3))
-                        (< (abs (- (~ f2 'x) (~ f1 'x))) 250))
-                   (and (<= (randint 0 100) 1)
-                        (or (< (abs (- (~ f2 'x) (~ f1 'x))) 250)
-                            (> (abs (- (~ f2 'x) (~ f1 'x))) 550)))
-                   (and (= (~ f1 'type) 0)
-                        (<= (randint 0 100) 30)
-                        (< (abs (- (~ f2 'x) (~ f1 'x))) 250)))
-           (let ((k  (randint 0 100))
-                 (k1 (case (~ f2 'act) ((2) 50) ((3) 5) (else 30)))
-                 (k2 (if (< (abs (- (~ f2 'x) (~ f1 'x))) *chw*) 95 80)))
-             (cond
-              ((<= k k1)
-               (set! (~ f1 'act) 2)
-               (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
-               (set! (~ f1 'vx) (* (~ f1 'dir) 15))
-               (set! (~ f1 'vy) 50))
-              ((<= k k2)
-               (set! (~ f1 'act) 3)
-               (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
-               (set! (~ f1 'vx) (* (~ f1 'dir) 23))
-               (set! (~ f1 'vy) 20))
-              )
+         (let1 d (abs (- (~ f2 'x) (~ f1 'x))) ; 間合いを取得
+           (when (or (and (or (= (~ f2 'act) 2) (= (~ f2 'act) 3))
+                          (< d 250))
+                     (and (<= (randint 0 100) 1)
+                          (or (< d 250) (> d 550) (<= (randint 0 100) 5)))
+                     (and (= (~ f1 'type) 0)
+                          (<= (randint 0 100) 30)
+                          (< d 250)))
+             (let ((k  (randint 0 100))
+                   (k1 (case (~ f2 'act) ((2) 50) ((3) 5) (else 30)))
+                   (k2 (if (< d *chw*) 95 80)))
+               (cond
+                ((<= k k1)
+                 (set! (~ f1 'act) 2) ; パンチ
+                 (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
+                 (set! (~ f1 'vx) (* (~ f1 'dir) 15))
+                 (set! (~ f1 'vy) 50))
+                ((<= k k2)
+                 (set! (~ f1 'act) 3) ; キック
+                 (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
+                 (set! (~ f1 'vx) (* (~ f1 'dir) 23))
+                 (set! (~ f1 'vy) 20))
+                )
+               )
              )
            )
          )
