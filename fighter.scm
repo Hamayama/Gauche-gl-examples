@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2015-8-4 v1.25
+;; 2015-8-4 v1.26
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -38,7 +38,7 @@
 (define *miny*    (+ *gdy*  *chh*)) ; Y座標最小値
 (define *waku*      10) ; 当たり判定調整用
 (define *fixtime*   10) ; 硬直時間
-(define *stephigh*  30) ; ステップ高さ
+(define *stephigh*  27) ; ステップ高さ
 (define *demoflg*   #f) ; デモフラグ
 (define *demotime*   0) ; デモ時間調整用(msec)
 (define *starttime*  0) ; スタート後経過時間(msec)
