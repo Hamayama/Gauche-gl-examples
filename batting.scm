@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2015-8-3 v1.08
+;; 2015-8-5 v1.09
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -47,6 +47,8 @@
 (define *sc*         0) ; スコア
 (define *hs*         0) ; ハイスコア
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:打撃前,=2:打撃後,=3:結果画面)
+(define *playcount*  0) ; プレイ数
+(define *scsum*      0) ; スコア累積
 
 ;; 乱数
 ;;   (randint n1 n2)でn1以上n2以下の整数の乱数を取得する(n1,n2は整数でn1<n2であること)
@@ -246,11 +248,16 @@
        (if *foul*      (set! str1 (string-append str1 " (FOUL!!)")))
        (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
       )
-    (set! str3 (format #f "HI-SCORE : ~Dm" *hs*))
+    (set! str3 (format #f "TOP=~Dm AVG=~Dm PLAY=~D"
+                       *hs*
+                       (if (= *playcount* 0)
+                         0.0
+                         (/. (round->exact (* (/. *scsum* *playcount*) 10)) 10))
+                       (+ *playcount* (if (or (= *scene* 1) (= *scene* 2)) 1 0))))
     (set! str4 (format #f "(X=~D Y=~D Z=~D)"
                        (truncate->exact *x*) (truncate->exact *y*) (truncate->exact *z*)))
     (set! str5 (format #f "(VX=~D VY=~D VZ=~D)"
-                       (if (= *scene* 0) 0 (/. (truncate->exact (* 100 *vx*)) 100))
+                       (if (= *scene* 0) 0.0 (/. (truncate->exact (* 100 *vx*)) 100))
                        (/. (truncate->exact (* 100 *vy*)) 100)
                        (/. (truncate->exact (* 100 *vz*)) 100)))
     (gl-color 1.0 1.0 1.0 1.0)
@@ -415,13 +422,16 @@
            (set! *foul*  #t))
          )
         )
+       (when (= *scene* 3)
+         (set! *sc* (truncate->exact (/. (- *zend* *z*) 10)))
+         (if (= *hit* 3)    (set! *sc* 199))
+         (if *foul*         (set! *sc* 0))
+         (if (< *sc*  0)    (set! *sc* 0))
+         (if (> *sc*  *hs*) (set! *hs* *sc*))
+         (inc! *playcount*)
+         (set! *scsum* (+ *scsum* *sc*)))
        )
       ((3) ; 結果画面
-       (set! *sc* (truncate->exact (/. (- *zend* *z*) 10)))
-       (if (= *hit* 3)    (set! *sc* 199))
-       (if *foul*         (set! *sc* 0))
-       (if (< *sc*  0)    (set! *sc* 0))
-       (if (> *sc*  *hs*) (set! *hs* *sc*))
        ;; 時間待ち
        (timewait *twinfo* 1500
                  (lambda ()
