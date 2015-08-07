@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2015-8-4 v1.28
+;; 2015-8-7 v1.29
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -43,7 +43,7 @@
 (define *demotime*   0) ; デモ時間調整用(msec)
 (define *starttime*  0) ; スタート後経過時間(msec)
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:戦闘中,=2:戦闘終了)
-(define *playcount*  0) ; 試合数
+(define *playcount*  0) ; プレイ数
 (define *wincount*   0) ; 勝利数
 
 ;; 乱数
@@ -172,39 +172,43 @@
         ;; 「タイプが自分」かつデモでないとき
         ((and (= (~ f1 'type) 0) (not *demoflg*))
          ;; キー操作で行動を決定する
-         (set! (~ f1 'vx) 0)
-         (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
-           (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0)))) ; 左
-         (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
-           (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0)))) ; 右
-         (when (or (hash-table-get *keystate* (char->integer #\z) #f)
-                   (hash-table-get *keystate* (char->integer #\Z) #f))
-           (set! (~ f1 'act) 2) ; パンチ
-           (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
-           (set! (~ f1 'vx) (* (~ f1 'dir) 15))
-           (set! (~ f1 'vy) 50))
-         (when (or (hash-table-get *keystate* (char->integer #\x) #f)
-                   (hash-table-get *keystate* (char->integer #\X) #f))
-           (set! (~ f1 'act) 3) ; キック
-           (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
-           (set! (~ f1 'vx) (* (~ f1 'dir) 23))
-           (set! (~ f1 'vy) 20))
+         (cond
+          ((hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
+           (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0)))) ; 左移動
+          ((hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
+           (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0)))) ; 右移動
+          (else (set! (~ f1 'vx) 0)))
+         (let ((d     (abs (- (~ f2 'x) (~ f1 'x)))) ; 相手との間合い
+               (f2atk (or  (= (~ f2 'act) 2) (= (~ f2 'act) 3)))) ; 相手攻撃状態
+           (when (or (hash-table-get *keystate* (char->integer #\z) #f)
+                     (hash-table-get *keystate* (char->integer #\Z) #f))
+             (set! (~ f1 'act) 2) ; パンチ
+             (if (and (< d *chw*) f2atk) (set! (~ f1 'dir) (- (~ f2 'dir))))
+             (set! (~ f1 'vx) (* (~ f1 'dir) 15))
+             (set! (~ f1 'vy) 50))
+           (when (or (hash-table-get *keystate* (char->integer #\x) #f)
+                     (hash-table-get *keystate* (char->integer #\X) #f))
+             (set! (~ f1 'act) 3) ; キック
+             (if (and (< d *chw*) f2atk) (set! (~ f1 'dir) (- (~ f2 'dir))))
+             (set! (~ f1 'vx) (* (~ f1 'dir) 23))
+             (set! (~ f1 'vy) 20))
+           )
          )
         ;; 「タイプが敵」またはデモのとき
         (else
          ;; 条件と乱数で行動を決定する
          (when (<= (~ f1 'y) *miny*)
-           (set! (~ f1 'vx) 0)
-           (let1 k (randint -1 1)
-             (if (= k -1) (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0)))) ; 左
-             (if (= k  1) (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0)))) ; 右
-             )
+           (case (randint -1 1)
+             ((-1) (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0)))) ; 左移動
+             ((1)  (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0)))) ; 右移動
+             (else (set! (~ f1 'vx) 0)))
            )
-         (let1 d (abs (- (~ f2 'x) (~ f1 'x))) ; 間合いを取得
-           (when (or (and (or (= (~ f2 'act) 2) (= (~ f2 'act) 3))
+         (let ((d     (abs (- (~ f2 'x) (~ f1 'x)))) ; 相手との間合い
+               (f2atk (or  (= (~ f2 'act) 2) (= (~ f2 'act) 3)))) ; 相手攻撃状態
+           (when (or (and f2atk
                           (< d 250))
                      (and (<= (randint 0 100) 1)
-                          (or (< d 250) (> d 550) (<= (randint 0 100) 5)))
+                          (or (< d 250) (> d 550) (<= (randint 0 100) 20)))
                      (and (= (~ f1 'type) 0)
                           (<= (randint 0 100) 30)
                           (< d 250)))
@@ -214,12 +218,12 @@
                (cond
                 ((<= k k1)
                  (set! (~ f1 'act) 2) ; パンチ
-                 (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
+                 (if (and (< d *chw*) f2atk) (set! (~ f1 'dir) (- (~ f2 'dir))))
                  (set! (~ f1 'vx) (* (~ f1 'dir) 15))
                  (set! (~ f1 'vy) 50))
                 ((<= k k2)
                  (set! (~ f1 'act) 3) ; キック
-                 (if (or (= (~ f2 'act) 2) (= (~ f2 'act) 3)) (set! (~ f1 'dir) (- (~ f2 'dir))))
+                 (if (and (< d *chw*) f2atk) (set! (~ f1 'dir) (- (~ f2 'dir))))
                  (set! (~ f1 'vx) (* (~ f1 'dir) 23))
                  (set! (~ f1 'vy) 20))
                 )
