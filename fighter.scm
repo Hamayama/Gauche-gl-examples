@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2015-8-7 v1.29
+;; 2015-8-8 v1.30
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -33,9 +33,9 @@
 (define *chw*      100) ; キャラクタの幅
 (define *chh*      100) ; キャラクタの高さ
 (define *gdy*     -300) ; 地面のY座標
-(define *maxx*    (- *wd/2* (quotient *chw* 2)))  ; X座標最大値
-(define *minx* (- (- *wd/2* (quotient *chw* 2)))) ; X座標最小値
-(define *miny*    (+ *gdy*  *chh*)) ; Y座標最小値
+(define *maxx*       (- *wd/2* (quotient *chw* 2)))     ; X座標最大値
+(define *minx*       (- (- *wd/2* (quotient *chw* 2)))) ; X座標最小値
+(define *miny*       (+ *gdy*  *chh*))                  ; Y座標最小値
 (define *waku*      10) ; 当たり判定調整用
 (define *fixtime*   10) ; 硬直時間
 (define *stephigh*  29) ; ステップ高さ
@@ -289,12 +289,12 @@
   ;; 衝突判定
   (if (recthit? (+ (~ f1 'x) *waku*)
                 (+ (~ f1 'y) *waku*)
-                (- *chw*  (* *waku* 2))
-                (- *chh*  (* *waku* 2))
+                (- *chw*     (* *waku* 2))
+                (- *chh*     (* *waku* 2))
                 (+ (~ f2 'x) *waku*)
                 (+ (~ f2 'y) *waku*)
-                (- *chw*  (* *waku* 2))
-                (- *chh*  (* *waku* 2)))
+                (- *chw*     (* *waku* 2))
+                (- *chh*     (* *waku* 2)))
     (cond
      ;; 相打ち
      ((and (or (= (~ f1 'act) 2) (= (~ f1 'act) 3))
@@ -422,8 +422,8 @@
   (let ((vertex (vector (f32 x 0  z) (f32 x c2  z) (f32 c1 c2  z) (f32 c1 0  z)
                         (f32 x 0 c3) (f32 x c2 c3) (f32 c1 c2 c3) (f32 c1 0 c3)))
         (face   #(#(0 1 2 3) #(0 4 5 1) #(1 5 6 2) #(2 6 7 3) #(3 7 4 0) #(4 7 6 5)))
-        (normal #(#f32( 0  0  1) #f32( 1  0  0) #f32( 0 -1  0)
-                  #f32(-1  0  0) #f32( 0  1  0) #f32( 0  0 -1))))
+        (normal #(#f32( 0 0 1) #f32(1 0 0) #f32(0 -1  0)
+                  #f32(-1 0 0) #f32(0 1 0) #f32(0  0 -1))))
     (gl-begin GL_QUADS)
     (do ((i 0 (+ i 1)))
         ((>= i 6) #f)
@@ -747,6 +747,7 @@
       )
     )
    )
+  ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整
   (glut-timer-func (waitmsec-calc *wtinfo*) timer 0)

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2015-8-5 v1.09
+;; 2015-8-8 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -31,7 +31,7 @@
 (define *zend*    -100) ; ボールの最終位置のZ座標
 (define *r*         12) ; ボールの半径
 (define *x*          0) ; ボールのX座標
-(define *y*       (- *r*)) ; ボールのY座標
+(define *y*          (- *r*)) ; ボールのY座標
 (define *z*          *zstart*) ; ボールのZ座標
 (define *vx*         0) ; ボールのX方向速度
 (define *vy*         0) ; ボールのY方向速度
@@ -39,7 +39,7 @@
 (define *vx2*        0) ; ボールのX方向速度2
 (define *vy2*        0) ; ボールのY方向速度2
 (define *cx*         0) ; カーソルのX座標
-(define *cy*     (/. *ht/2* -2)) ; カーソルのY座標
+(define *cy*         (- (/. *ht/2* 2))) ; カーソルのY座標
 (define *cz*         *zend*) ; カーソルのZ座標
 (define *gdy*     -100) ; 地面のY座標
 (define *hit*        0) ; 当たり判定(=0:なし,=1:空振り,=2:当たり,=3:大当たり)
@@ -171,8 +171,8 @@
   (let ((vertex (vector (f32 x 0  z) (f32 x c2  z) (f32 c1 c2  z) (f32 c1 0  z)
                         (f32 x 0 c3) (f32 x c2 c3) (f32 c1 c2 c3) (f32 c1 0 c3)))
         (face   #(#(0 1 2 3) #(0 4 5 1) #(1 5 6 2) #(2 6 7 3) #(3 7 4 0) #(4 7 6 5)))
-        (normal #(#f32( 0  0  1) #f32( 1  0  0) #f32( 0 -1  0)
-                  #f32(-1  0  0) #f32( 0  1  0) #f32( 0  0 -1))))
+        (normal #(#f32( 0 0 1) #f32(1 0 0) #f32(0 -1  0)
+                  #f32(-1 0 0) #f32(0 1 0) #f32(0  0 -1))))
     (gl-begin GL_QUADS)
     (do ((i 0 (+ i 1)))
         ((>= i 6) #f)
@@ -253,7 +253,7 @@
                        (if (= *playcount* 0)
                          0.0
                          (/. (round->exact (* (/. *scsum* *playcount*) 10)) 10))
-                       (+ *playcount* (if (or (= *scene* 1) (= *scene* 2)) 1 0))))
+                       *playcount*))
     (set! str4 (format #f "(X=~D Y=~D Z=~D)"
                        (truncate->exact *x*) (truncate->exact *y*) (truncate->exact *z*)))
     (set! str5 (format #f "(VX=~D VY=~D VZ=~D)"
@@ -352,24 +352,24 @@
     (case *scene*
       ((0) ; スタート画面
        ;; 初期化
-       (set! *x*      0)
+       (set! *x*     0)
        (set! *y*     (- *r*))
-       (set! *z*      *zstart*)
-       (set! *vz*     5)
+       (set! *z*     *zstart*)
+       (set! *vz*    5)
        (set! *vx*    (* (/. (randint (- (quotient *wd/2* 2)) (quotient *wd/2* 2))
                             (- *zend* *zstart*))
                         *vz*))
        (set! *vy*    (* (/. (- *r* (/. *ht/2* 2))
                             (- *zend* *zstart*))
                         *vz*))
-       (set! *vx2*    0)
-       (set! *vy2*    0)
-       (set! *cx*     0)
-       (set! *cy*    (/. *ht/2* -2))
-       (set! *cz*     *zend*)
-       (set! *hit*    0)
-       (set! *foul*  #f)
-       (set! *sc*     0)
+       (set! *vx2*   0)
+       (set! *vy2*   0)
+       (set! *cx*    0)
+       (set! *cy*    (- (/. *ht/2* 2)))
+       (set! *cz*    *zend*)
+       (set! *hit*   0)
+       (set! *foul* #f)
+       (set! *sc*    0)
        ;; キー入力待ち
        (keywait *kwinfo* '(#\s #\S)
                 (lambda ()
@@ -419,7 +419,7 @@
          (when (>= (abs *x*) (abs (* *z* *tanvan*)))
            (set! *scene* 3)
            (set! *hit*   2)
-           (set! *foul*  #t))
+           (set! *foul* #t))
          )
         )
        (when (= *scene* 3)
@@ -445,6 +445,7 @@
       )
     )
    )
+  ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整
   (glut-timer-func (waitmsec-calc *wtinfo*) timer 0)

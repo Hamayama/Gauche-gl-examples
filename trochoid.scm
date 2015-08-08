@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; trochoid.scm
-;; 2015-8-3 v1.08
+;; 2015-8-8 v1.09
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、内トロコイド曲線を描くサンプルです。
@@ -14,13 +14,13 @@
 (use math.const)
 (use math.mt-random)
 
-(define *rc* 100)         ; 外側の円の半径
-(define *rm*  48)         ; 内側の円の半径
-(define *rd*  44)         ; 内側の円の鉛筆の位置
+(define *rc*  100) ; 外側の円の半径
+(define *rm*   48) ; 内側の円の半径
+(define *rd*   44) ; 内側の円の鉛筆の位置
 (define *color-index* 15) ; 色番号(0-15)
-(define *vnum* 0)         ; 頂点数(計算するので設定不要)
-(define *vvec* #f)        ; 頂点座標格納用(ユニフォームベクタ(f32vector))
-(define *cvec* #f)        ; 頂点色格納用  (ユニフォームベクタ(f32vector))
+(define *vnum*  0) ; 頂点数(計算するので設定不要)
+(define *vvec* #f) ; 頂点座標格納用(ユニフォームベクタ(f32vector))
+(define *cvec* #f) ; 頂点色格納用  (ユニフォームベクタ(f32vector))
 
 ;; 乱数
 ;;   (randint n1 n2)でn1以上n2以下の整数の乱数を取得する(n1,n2は整数でn1<n2であること)
@@ -113,7 +113,8 @@
     (set! *vnum* (setup-pointers *rc* *rm* *rd* *color-index* *vvec* *cvec* 0))
     ;; タイトル文字列を更新
     (glut-set-window-title (make-title *rm* *rd*))
-    ;; 表示に時間がかかる場合は disp を glut-post-redisplay にする
+    ;; 画面表示
+    ;; (表示に時間がかかる場合は disp を glut-post-redisplay にする)
     (disp))
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))

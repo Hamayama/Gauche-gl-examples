@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; planet.scm
-;; 2015-8-3 v1.06
+;; 2015-8-8 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、星を表示するサンプルです。
@@ -13,17 +13,17 @@
 (use math.const)
 (use math.mt-random)
 
-(define *wait*   10)   ; ウェイト(msec)
-(define *snum*   200)  ; 星の数
-(define *ssize*  4)    ; 星の大きさ
-(define *sspeed* 1)    ; 星の速度
-(define *xvec*   #f)   ; 星のX座標(ユニフォームベクタ(f32vector))
-(define *yvec*   #f)   ; 星のY座標(ユニフォームベクタ(f32vector))
-(define *zvec*   #f)   ; 星のZ座標(ユニフォームベクタ(f32vector))
-(define *zmin*   300)  ; 星のZ座標の最小値
-(define *zmax*   3000) ; 星のZ座標の最大値
-(define *vangle* 45)   ; 視野角(度)
-(define *tanvan* (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
+(define *wait*   10) ; ウェイト(msec)
+(define *snum*  200) ; 星の数
+(define *ssize*   4) ; 星の大きさ
+(define *sspeed*  1) ; 星の速度
+(define *xvec*   #f) ; 星のX座標(ユニフォームベクタ(f32vector))
+(define *yvec*   #f) ; 星のY座標(ユニフォームベクタ(f32vector))
+(define *zvec*   #f) ; 星のZ座標(ユニフォームベクタ(f32vector))
+(define *zmin*  300) ; 星のZ座標の最小値
+(define *zmax* 3000) ; 星のZ座標の最大値
+(define *vangle* 45) ; 視野角(度)
+(define *tanvan*  (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
 
 ;; 乱数
 ;;   (randint n1 n2)でn1以上n2以下の整数の乱数を取得する(n1,n2は整数でn1<n2であること)
@@ -73,7 +73,9 @@
           )
         (f32vector-set! *xvec* i x))
     ))
+  ;; 画面表示
   (glut-post-redisplay)
+  ;; ウェイト
   (glut-timer-func *wait* timer 0))
 
 ;; 画面表示
