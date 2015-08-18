@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2015-8-8 v1.30
+;; 2015-8-18 v1.31
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -20,7 +20,7 @@
 (use math.mt-random)
 (use srfi-13) ; string-fold,string-for-each用
 
-(define *wait*      30) ; ウェイト(msec)
+(define *wait*      28) ; ウェイト(msec)
 (define *width*    480) ; 画面幅(px)
 (define *height*   480) ; 画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
