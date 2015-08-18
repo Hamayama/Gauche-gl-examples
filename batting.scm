@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2015-8-8 v1.10
+;; 2015-8-18 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -200,7 +200,7 @@
 (define (sky)
   (gl-disable GL_LIGHTING)
   (gl-color 0.0 0.0 1.0 1.0)
-  (box 40000 40000 1)
+  (box 40000 40000 10)
   (gl-enable GL_LIGHTING)
   )
 
