@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; planet.scm
-;; 2015-8-8 v1.07
+;; 2015-10-21 v1.08
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、星を表示するサンプルです。
@@ -13,10 +13,11 @@
 (use math.const)
 (use math.mt-random)
 
-(define *wait*   10) ; ウェイト(msec)
+(define *wait*   20) ; ウェイト(msec)
 (define *snum*  200) ; 星の数
 (define *ssize*   4) ; 星の大きさ
 (define *sspeed*  1) ; 星の速度
+(define *cvec*   #f) ; 星の色番号(ベクタ)
 (define *xvec*   #f) ; 星のX座標(ユニフォームベクタ(f32vector))
 (define *yvec*   #f) ; 星のY座標(ユニフォームベクタ(f32vector))
 (define *zvec*   #f) ; 星のZ座標(ユニフォームベクタ(f32vector))
@@ -31,6 +32,13 @@
   (let1 m (make <mersenne-twister> :seed (sys-time))
     (lambda (n1 n2) (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
 
+;; 色情報(16色)
+(define *color-table*
+  #(#f32(0.0 0.0 0.0 1.0) #f32(0.0 0.0 0.5 1.0) #f32(0.0 0.5 0.0 1.0) #f32(0.0 0.5 0.5 1.0)
+    #f32(0.5 0.0 0.0 1.0) #f32(0.5 0.0 0.5 1.0) #f32(0.5 0.5 0.0 1.0) #f32(0.75 0.75 0.75 1.0)
+    #f32(0.5 0.5 0.5 1.0) #f32(0.0 0.0 1.0 1.0) #f32(0.0 1.0 0.0 1.0) #f32(0.0 1.0 1.0 1.0)
+    #f32(1.0 0.0 0.0 1.0) #f32(1.0 0.0 1.0 1.0) #f32(1.0 1.0 0.0 1.0) #f32(1.0 1.0 1.0 1.0)))
+
 ;; 初期化
 (define (init)
   (gl-clear-color 0.0 0.0 0.0 0.0)
@@ -42,14 +50,16 @@
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
-  ;; ユニフォームベクタの領域を確保する
+  ;; ベクタの領域を確保する
+  (set! *cvec* (make-vector    *snum* 0))
   (set! *xvec* (make-f32vector *snum* 0))
   (set! *yvec* (make-f32vector *snum* 0))
   (set! *zvec* (make-f32vector *snum* 0))
-  ;; 星の座標の初期化
+  ;; 星の色と座標の初期化
   (do ((i 0 (+ i 1)))
       ((>= i *snum*) #f)
     (let1 z (randint *zmin* *zmax*)
+      (vector-set!    *cvec* i (randint 10 15))
       (f32vector-set! *zvec* i (- z))
       (f32vector-set! *xvec* i (randint (truncate->exact (- (* *zmax* *tanvan*)))
                                         (truncate->exact    (* *zmax* *tanvan*))))
@@ -66,6 +76,7 @@
     (let1 x (+ (f32vector-ref *xvec* i) *sspeed*)
       (if (> x (truncate->exact (* *zmax* *tanvan*)))
         (let1 z (randint *zmin* *zmax*)
+          (vector-set!    *cvec* i (randint 10 15))
           (f32vector-set! *zvec* i (- z))
           (f32vector-set! *xvec* i (truncate->exact (- (* *zmax* *tanvan*))))
           (f32vector-set! *yvec* i (randint (truncate->exact (- (* z *tanvan*)))
@@ -86,6 +97,7 @@
   ;; 星を表示
   (do ((i 0 (+ i 1)))
       ((>= i *snum*) #f)
+    (gl-material GL_FRONT GL_DIFFUSE (~ *color-table* (~ *cvec* i)))
     (gl-push-matrix)
     (gl-translate (f32vector-ref *xvec* i)
                   (f32vector-ref *yvec* i)
