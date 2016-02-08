@@ -7,7 +7,8 @@
 ![image](image0501.png)
 
 ## 概要
-- Gauche-gl を使用したサンプルプログラムです。
+- Gauche-gl を使用したサンプルプログラム等です。  
+  Gauche-gl は、Gauche から OpenGL を使用するための拡張ライブラリです。
 
 
 ## 内容
@@ -48,7 +49,7 @@
 
 
 ## 注意事項
-1. 一部のサンプルプログラムは、glmintool.scm と gltextscrn.scm に依存しています。
+1. 一部のサンプルは、glmintool.scm と gltextscrn.scm に依存しています。  
    同一フォルダに配置してください。
 
 
@@ -58,6 +59,8 @@
 - 言語
   - Gauche v0.9.4
   - Gauche v0.9.5_pre1
+- 拡張ライブラリ
+  - Gauche-gl v0.6
 
 ## 履歴
 - 1001HISTORY.txt を参照ください。
