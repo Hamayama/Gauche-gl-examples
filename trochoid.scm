@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; trochoid.scm
-;; 2015-8-8 v1.09
+;; 2016-2-8 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、内トロコイド曲線を描くサンプルです。
@@ -23,10 +23,12 @@
 (define *cvec* #f) ; 頂点色格納用  (ユニフォームベクタ(f32vector))
 
 ;; 乱数
-;;   (randint n1 n2)でn1以上n2以下の整数の乱数を取得する(n1,n2は整数でn1<n2であること)
+;;   (randint n1 n2)でn1以上n2以下の整数の乱数を取得する(n1,n2は整数であること)
 (define randint
   (let1 m (make <mersenne-twister> :seed (sys-time))
-    (lambda (n1 n2) (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
+    (lambda (n1 n2)
+      (if (> n1 n2) (let1 t n1 (set! n1 n2) (set! n2 t)))
+      (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
 
 ;; 色情報(16色)
 (define *color-table*

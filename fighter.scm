@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2015-8-18 v1.31
+;; 2016-2-8 v1.32
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -13,16 +13,17 @@
 ;;   Ready?の画面でしばらく待つとデモになります。
 ;;   ESCキーを押すと終了します。
 ;;
+(add-load-path "." :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
 (use math.const)
-(use math.mt-random)
-(use srfi-13) ; string-fold,string-for-each用
+(use glmintool)
+(use gltextscrn)
 
 (define *wait*      28) ; ウェイト(msec)
-(define *width*    480) ; 画面幅(px)
-(define *height*   480) ; 画面高さ(px)
+(define *width*    480) ; ウィンドウ上の画面幅(px)
+(define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
 (define *tanvan*     (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
 (define *keystate*   (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
@@ -46,91 +47,18 @@
 (define *playcount*  0) ; プレイ数
 (define *wincount*   0) ; 勝利数
 
-;; 乱数
-;;   (randint n1 n2)でn1以上n2以下の整数の乱数を取得する(n1,n2は整数でn1<n2であること)
-(define randint
-  (let1 m (make <mersenne-twister> :seed (sys-time))
-    (lambda (n1 n2) (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
+;; キー入力待ちクラスのインスタンス生成
+(define *kwinfo* (make <keywaitinfo> :keystate *keystate*))
 
-;; キー入力待ちクラス
-(define-class <keywaitinfo> ()
-  ((state    :init-value 0)   ; 待ち状態(=0:初期状態,=1:キー入力待ち開始,=2:キー入力待ち中,=3:キー入力完了)
-   (waitkey  :init-value '()) ; 待ち受けキー(文字のリストで指定)
-   (keystate :init-keyword :keystate :init-value (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
-   ))
-(define-method keywait ((k <keywaitinfo>) (wk <pair>) (finished-func <procedure>))
-  (case (~ k 'state)
-    ((0) (set! (~ k 'waitkey) wk)
-         (set! (~ k 'state) 1))
-    ((3) (finished-func))))
-(define-method keywait-timer ((k <keywaitinfo>))
-  (case (~ k 'state)
-    ((1) (for-each (lambda (c) (hash-table-put! (~ k 'keystate) (char->integer c) #f)) (~ k 'waitkey))
-         (set! (~ k 'state) 2))
-    ((2) (when (any (lambda (c) (hash-table-get (~ k 'keystate) (char->integer c) #f)) (~ k 'waitkey))
-           (set! (~ k 'state) 3)))))
-(define-method keywait-clear ((k <keywaitinfo>))
-  (set! (~ k 'state) 0))
-(define-method keywait-waiting? ((k <keywaitinfo>))
-  (or (= (~ k 'state) 1) (= (~ k 'state) 2)))
-(define-method keywait-finished? ((k <keywaitinfo>))
-  (= (~ k 'state) 3))
-(define *kwinfo* (make <keywaitinfo> :keystate *keystate*)) ; インスタンス生成
+;; 時間待ちクラスのインスタンス生成
+(define *twinfo* (make <timewaitinfo> :waitinterval *wait*))
 
-;; 時間待ちクラス
-(define-class <timewaitinfo> ()
-  ((state        :init-value 0) ; 待ち状態(=0:初期状態,=1:時間待ち開始,=2:時間待ち中,=3:時間待ち完了)
-   (waittime     :init-value 0) ; 待ち時間(msec)
-   (waitinterval :init-keyword :waitinterval :init-value 0) ; 待ち時間インターバル(msec)
-   (waitcount    :init-value 0) ; 待ち時間カウント用(msec)
-   ))
-(define-method timewait ((t <timewaitinfo>) (wt <integer>) (finished-func <procedure>))
-  (case (~ t 'state)
-    ((0) (set! (~ t 'waittime) wt)
-         (set! (~ t 'state) 1))
-    ((3) (finished-func))))
-(define-method timewait-timer ((t <timewaitinfo>))
-  (case (~ t 'state)
-    ((1) (set! (~ t 'waitcount) 0)
-         (set! (~ t 'state) 2))
-    ((2) (set! (~ t 'waitcount) (+ (~ t 'waitcount) (~ t 'waitinterval)))
-         (when (>= (~ t 'waitcount) (~ t 'waittime))
-           (set! (~ t 'state) 3)))))
-(define-method timewait-clear ((t <timewaitinfo>))
-  (set! (~ t 'state) 0))
-(define-method timewait-waiting? ((t <timewaitinfo>))
-  (or (= (~ t 'state) 1) (= (~ t 'state) 2)))
-(define-method timewait-finished? ((t <timewaitinfo>))
-  (= (~ t 'state) 3))
-(define *twinfo* (make <timewaitinfo> :waitinterval *wait*)) ; インスタンス生成
-
-;; ウェイト時間調整クラス
-;;   (処理時間を測定して、ウェイト時間が一定になるように調整する)
-(define-class <waitmsecinfo> ()
-  ((waitdata :init-value #f) ; ウェイト時間調整用(msec)
-   (waittime :init-keyword :waittime :init-value 0) ; ウェイト時間指定値(msec)
-   ))
-(define-method waitmsec-calc ((w <waitmsecinfo>))
-  (let* ((tnow      (current-time))
-         (tnowmsec  (+ (* (~ tnow 'second) 1000) (quotient (~ tnow 'nanosecond) 1000000)))
-         (tdiffmsec 0)
-         (wt        (~ w 'waittime))
-         (waitmsec  wt))
-    (when (~ w 'waitdata)
-      (set! tdiffmsec (- tnowmsec (~ w 'waitdata)))
-      (cond
-       ((and (>= tdiffmsec (- wt)) (< tdiffmsec wt))
-        (set! waitmsec (- wt tdiffmsec)))
-       ((and (>= tdiffmsec wt) (< tdiffmsec (* wt 50)))
-        (set! waitmsec 1))
-       ))
-    (set! (~ w 'waitdata) (+ tnowmsec waitmsec))
-    ;(print tdiffmsec " " waitmsec)
-    waitmsec))
-(define *wtinfo* (make <waitmsecinfo> :waittime *wait*)) ; インスタンス生成
+;; ウェイト時間調整クラスのインスタンス生成
+(define *wtinfo* (make <waitmsecinfo> :waittime *wait*))
 
 ;; ファイタークラス
-;;   (グローバル変数や外部の手続きに依存しているので注意)
+;;   ・自分と敵の移動、衝突判定、表示を行う
+;;   ・グローバル変数や外部の手続きに依存しているので注意
 (define-class <fighter> ()
   ((type     :init-value 0) ; タイプ(=0:自分,=1:敵)
    (x        :init-value 0) ; X座標
@@ -226,14 +154,10 @@
                  (if (and (< d *chw*) f2atk) (set! (~ f1 'dir) (- (~ f2 'dir))))
                  (set! (~ f1 'vx) (* (~ f1 'dir) 23))
                  (set! (~ f1 'vy) 20))
-                )
-               )
-             )
-           )
-         )
-        )
-       )
-      )
+                ))
+             ))
+         ))
+       ))
      )
     ((2) ; パンチ
      (cond
@@ -348,69 +272,6 @@
 (define *f2* (make <fighter>)) ; インスタンス生成(敵)
 (fighter-init *f1* 0 (+ *minx* 40) *miny*  1)
 (fighter-init *f2* 1 (- *maxx* 40) *miny* -1)
-
-;; 長方形の衝突チェック
-(define (recthit? x1 y1 w1 h1 x2 y2 w2 h2)
-  (if (and (< x1 (+ x2 w2))
-           (< x2 (+ x1 w1))
-           (< y1 (+ y2 h2))
-           (< y2 (+ y1 h1)))
-    #t
-    #f))
-
-;; 文字列表示(ビットマップフォント)
-;;   ・座標 (x,y) は左下が原点で (0,0)-(*width*,*height*) の範囲で指定する必要がある
-;;     (図形表示とは座標系が異なるので注意)
-;;   ・日本語表示不可
-;;   ・文字のサイズは固定
-(define (draw-bitmap-text str x y :optional (hcenter #f) (font GLUT_BITMAP_HELVETICA_18))
-  (gl-disable GL_LIGHTING)
-  (gl-matrix-mode GL_PROJECTION)
-  (gl-push-matrix)
-  (gl-load-identity)
-  ;; (文字幅がpx単位でしかとれないので、座標系も一時的にpx単位にする)
-  (gl-ortho 0 *width* 0 *height* -1.0 1.0)
-  (gl-matrix-mode GL_MODELVIEW)
-  (gl-push-matrix)
-  (gl-load-identity)
-  (if hcenter
-    (let1 sw (string-fold (lambda (c n) (+ (glut-bitmap-width font (char->integer c)) n)) 0 str)
-      (gl-raster-pos (- x (/. sw 2)) y))
-    (gl-raster-pos x y))
-  (string-for-each (lambda (c) (glut-bitmap-character font (char->integer c))) str)
-  (gl-pop-matrix)
-  (gl-matrix-mode GL_PROJECTION)
-  (gl-pop-matrix)
-  (gl-matrix-mode GL_MODELVIEW)
-  (gl-enable GL_LIGHTING))
-
-;; 文字列表示(ストロークフォント)
-;;   ・座標 (x,y) は左下が原点で (0,0)-(*width*,*height*) の範囲で指定する必要がある
-;;     (図形表示とは座標系が異なるので注意)
-;;   ・日本語表示不可
-;;   ・文字のサイズは指定可能
-(define (draw-stroke-text str x y :optional (size 24) (hcenter #f) (font GLUT_STROKE_ROMAN))
-  (gl-disable GL_LIGHTING)
-  (gl-matrix-mode GL_PROJECTION)
-  (gl-push-matrix)
-  (gl-load-identity)
-  ;; (文字幅がpx単位でしかとれないので、座標系も一時的にpx単位にする)
-  (gl-ortho 0 *width* 0 *height* -1.0 1.0)
-  (gl-matrix-mode GL_MODELVIEW)
-  (gl-push-matrix)
-  (gl-load-identity)
-  (let1 scale (/. size 152.38)
-    (if hcenter
-      (let1 sw (string-fold (lambda (c n) (+ (glut-stroke-width font (char->integer c)) n)) 0 str)
-        (gl-translate (- x (/. (* sw scale) 2)) y 0))
-      (gl-translate x y 0))
-    (gl-scale scale scale scale)
-    (string-for-each (lambda (c) (glut-stroke-character font (char->integer c))) str))
-  (gl-pop-matrix)
-  (gl-matrix-mode GL_PROJECTION)
-  (gl-pop-matrix)
-  (gl-matrix-mode GL_MODELVIEW)
-  (gl-enable GL_LIGHTING))
 
 
 ;; 直方体(上面に原点あり)
@@ -566,7 +427,7 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字表示
-  (let ((str1 "") (str2 "") (str3 "") (y2 68))
+  (let ((str1 "") (str2 "") (str3 "") (y2 31))
     ;; シーン情報で場合分け
     (case *scene*
       ((0) ; スタート画面
@@ -577,7 +438,7 @@
         (else
          (set! str1 "Ready?")
          (set! str2 "HIT [S] KEY")
-         (set! y2 66))
+         (set! y2 32))
         ))
       ((1) ; 戦闘中
        (cond
@@ -602,11 +463,11 @@
                          0.0
                          (/. (round->exact (* 100 (/. *wincount* *playcount*))) 100))))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text str1 (/. *width* 2) (/. (* *height* 80) 100) (/. *height* 10) #t)
+    (draw-stroke-text str1 (/. *width* 2) (/. (* *height* 14) 100) *width* *height* (/. *height*  9) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str2 (/. *width* 2) (/. (* *height* y2) 100) (/. *height* 20) #t)
+    (draw-stroke-text str2 (/. *width* 2) (/. (* *height* y2) 100) *width* *height* (/. *height* 18) 'center)
     (gl-color 0.0 1.0 0.0 1.0)
-    (draw-stroke-text str3 (/. *height* 100) (/. (* *height* 95) 100) (/. *height* 25) #f))
+    (draw-stroke-text str3 (/. *height* 100) 5 *width* *height* (/. *height* 24)))
   ;; 自分を表示
   (fighter-disp *f1*)
   ;; 敵を表示
