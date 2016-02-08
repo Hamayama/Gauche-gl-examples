@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-2-8 v1.00
+;; 2016-2-9 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -46,7 +46,6 @@
 (define *hs*         0) ; ハイスコア
 (define *ssc*        0) ; 制御カウンタ
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:プレイ中,=2:プレイ終了)
-(define *starttime*  0) ; スタート後経過時間(msec)
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 
 ;; キー入力待ちクラスのインスタンス生成
@@ -131,10 +130,10 @@
 (define (disp-mychr pattern)
   (let1 tscrn #f
     (case pattern
-     ((0)  (gl-color 1.0 1.0 0.0 1.0)
-           (set! tscrn *tscrn-mychr1*))
-     (else (gl-color 1.0 0.0 0.0 1.0)
-           (set! tscrn *tscrn-mychr2*)))
+      ((0)  (gl-color 1.0 1.0 0.0 1.0)
+            (set! tscrn *tscrn-mychr1*))
+      (else (gl-color 1.0 0.0 0.0 1.0)
+            (set! tscrn *tscrn-mychr2*)))
     (textscrn-disp tscrn (get-win-x *x*) (get-win-y *y*)
                    *width* *height* (get-win-w *chw*) (get-win-h *chh*) 'center)
     ))

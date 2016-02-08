@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-2-8 v1.00
+;; 2016-2-9 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl のプログラムで、文字列の表示等を行うためのモジュールです。
@@ -26,7 +26,7 @@
 ;; 正射影設定ON/OFF(内部処理用)
 ;;   ・投影方法を正射影に設定し、また、
 ;;     画面の座標系を左上を原点として (0,0)-(*width*,*height*) の範囲に設定する
-;;   ・光源は無効にする(オプション引数で光源を変更しない設定も可)
+;;   ・光源は無効に設定する(オプション引数で光源を変更しない設定も可)
 ;;   ・ONとOFFは常にセットで使用する
 (define (gl-ortho-on *width* *height* :optional (preservelight #f))
   (if (not preservelight) (gl-disable GL_LIGHTING))
