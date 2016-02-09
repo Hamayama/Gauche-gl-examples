@@ -95,11 +95,27 @@
   (gl-pop-matrix)
   )
 
-;; 空(上面に原点あり)
+;; 空(正射影で表示)
 (define (sky)
-  (gl-disable GL_LIGHTING)
   (gl-color 0.0 0.0 1.0 1.0)
-  (box 40000 40000 10)
+  (gl-disable GL_LIGHTING)
+  (gl-matrix-mode GL_PROJECTION)
+  (gl-push-matrix)
+  (gl-load-identity)
+  (gl-ortho 0 *width* 0 *height* -1.0 1.0)
+  (gl-matrix-mode GL_MODELVIEW)
+  (gl-push-matrix)
+  (gl-load-identity)
+  ;; できるだけ奥に表示する
+  (gl-translate 0 0 -0.99999)
+  ;; Gauche-gl の gl-rect の不具合対策
+  ;; (開発最新版では修正済み)
+  ;(gl-rect 0 0 *width* *height*)
+  (gl-rect (f32vector 0 0) (f32vector *width* *height*))
+  (gl-pop-matrix)
+  (gl-matrix-mode GL_PROJECTION)
+  (gl-pop-matrix)
+  (gl-matrix-mode GL_MODELVIEW)
   (gl-enable GL_LIGHTING)
   )
 
@@ -183,10 +199,7 @@
   (cursor *r*)
   (gl-pop-matrix)
   ;; 空を表示
-  (gl-push-matrix)
-  (gl-translate 0 40000 -10000)
   (sky)
-  (gl-pop-matrix)
   ;; 地面を表示
   (gl-push-matrix)
   (gl-translate 0 *gdy* 0)

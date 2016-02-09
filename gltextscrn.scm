@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-2-9 v1.01
+;; 2016-2-9 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl のプログラムで、文字列の表示等を行うためのモジュールです。
@@ -26,10 +26,10 @@
 ;; 正射影設定ON/OFF(内部処理用)
 ;;   ・投影方法を正射影に設定し、また、
 ;;     画面の座標系を左上を原点として (0,0)-(*width*,*height*) の範囲に設定する
-;;   ・光源は無効に設定する(オプション引数で光源を変更しない設定も可)
+;;   ・光源は無効に設定する
 ;;   ・ONとOFFは常にセットで使用する
-(define (gl-ortho-on *width* *height* :optional (preservelight #f))
-  (if (not preservelight) (gl-disable GL_LIGHTING))
+(define (gl-ortho-on *width* *height*)
+  (gl-disable GL_LIGHTING)
   (gl-matrix-mode GL_PROJECTION)
   (gl-push-matrix)
   (gl-load-identity)
@@ -37,12 +37,12 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-push-matrix)
   (gl-load-identity))
-(define (gl-ortho-off :optional (preservelight #f))
+(define (gl-ortho-off)
   (gl-pop-matrix)
   (gl-matrix-mode GL_PROJECTION)
   (gl-pop-matrix)
   (gl-matrix-mode GL_MODELVIEW)
-  (if (not preservelight) (gl-enable GL_LIGHTING))
+  (gl-enable GL_LIGHTING)
   )
 
 ;; 文字列表示(ビットマップフォント)
