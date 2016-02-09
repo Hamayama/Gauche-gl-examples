@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-2-9 v1.02
+;; 2016-2-9 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -414,12 +414,9 @@
   (set! *width*  (min w h))
   (set! *height* (min w h))
   ;; 縦横比を変えずにリサイズ
-  (cond
-   ((< w h)
-    (gl-viewport 0 (quotient (- h w) 2) *width* *height*))
-   (else
+  (if (< w h)
+    (gl-viewport 0 (quotient (- h w) 2) *width* *height*)
     (gl-viewport (quotient (- w h) 2) 0 *width* *height*))
-   )
   (gl-matrix-mode GL_PROJECTION)
   (gl-load-identity)
   ;; 透視射影する範囲を設定

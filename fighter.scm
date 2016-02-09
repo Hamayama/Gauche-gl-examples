@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-2-8 v1.32
+;; 2016-2-9 v1.33
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -484,15 +484,11 @@
 ;; 画面のリサイズ
 (define (reshape w h)
   (set! *width*  w)
-  (set! *height* h)
+  (set! *height* (min w h))
   ;; 縦横比を変えずにリサイズ
-  (cond
-   ((< *width* *height*)
-    (gl-viewport 0 (quotient (- *height* *width*) 2) *width* *width*)
-    (set! *height* *width*))
-   (else
+  (if (< w h)
+    (gl-viewport 0 (quotient (- h w) 2) *width* *width*)
     (gl-viewport 0 0 *width* *height*))
-   )
   (gl-matrix-mode GL_PROJECTION)
   (gl-load-identity)
   ;; 透視射影する範囲を設定
