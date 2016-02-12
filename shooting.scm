@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-2-9 v1.03
+;; 2016-2-12 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -427,6 +427,7 @@
 
 ;; キー入力ON
 (define (keyboard key x y)
+  (check-modifier-keys)
   (cond
    ;; ESCキーで終了
    ((= key (char->integer #\escape)) (exit 0))
@@ -434,27 +435,26 @@
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
     (gc) (print (gc-stat)))
    )
-  (hash-table-put! *keystate* key #t)
-  (check-modifier-keys))
+  (hash-table-put! *keystate* key #t))
 
 ;; キー入力OFF
 (define (keyboardup key x y)
-  (hash-table-put! *keystate* key #f)
-  (check-modifier-keys))
+  (check-modifier-keys)
+  (hash-table-put! *keystate* key #f))
 
 ;; 特殊キー入力ON
 (define (specialkey key x y)
-  (hash-table-put! *spkeystate* key #t)
-  (check-modifier-keys))
+  (check-modifier-keys)
+  (hash-table-put! *spkeystate* key #t))
 
 ;; 特殊キー入力OFF
 (define (specialkeyup key x y)
-  (hash-table-put! *spkeystate* key #f)
-  (check-modifier-keys))
+  (check-modifier-keys)
+  (hash-table-put! *spkeystate* key #f))
 
 ;; Shift,Ctrl,Altキーの入力チェック
-;;   glut-get-modifiers は、キー入力関連のコールバック内でしか使用できない。
-;;   また、環境によっては、他のキーと同時押ししないと状態を取得できないもよう
+;;   glut-get-modifiers は、入力デバイス関連のコールバック内でしか使用できない。
+;;   また、環境によっては、他のキーと同時押ししないと状態を取得できない
 (define (check-modifier-keys)
   (let1 mdkey (glut-get-modifiers)
     (if (= (logand mdkey GLUT_ACTIVE_SHIFT) 0)
