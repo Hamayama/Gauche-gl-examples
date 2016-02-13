@@ -1,12 +1,12 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-2-12 v1.04
+;; 2016-2-13 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
 ;;   矢印キーで上下左右移動。
-;;   Ctrlキーかスペースキーでビーム発射です(押し続けると発射し続けます)。
+;;   [Ctrl]/[Space]/[a]/[z]キーのいずれかでビーム発射です(押し続けると発射し続けます)。
 ;;   敵は若干固いので、しばらくビームを当て続ける必要があります。
 ;;   また、敵を破壊すると一定範囲が誘爆します。
 ;;   画面右上のレベル表示は、出現する敵の数と速度の目安になります。
@@ -534,8 +534,12 @@
          )
        ;; 自機ビーム処理
        (set! *bc* 0)
-       (if (or (hash-table-get *keystate* (char->integer #\space) #f)
-               (hash-table-get *mdkeystate* GLUT_ACTIVE_CTRL #f))
+       (if (or (hash-table-get *mdkeystate* GLUT_ACTIVE_CTRL #f)
+               (hash-table-get *keystate* (char->integer #\space) #f)
+               (hash-table-get *keystate* (char->integer #\a) #f)
+               (hash-table-get *keystate* (char->integer #\A) #f)
+               (hash-table-get *keystate* (char->integer #\z) #f)
+               (hash-table-get *keystate* (char->integer #\Z) #f))
          (let loop ((i 1))
            (set! *bc* i)
            (if (and (<= i 25) (not (hit-beam?)))
