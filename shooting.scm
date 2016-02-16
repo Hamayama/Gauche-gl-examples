@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-2-13 v1.05
+;; 2016-2-16 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -147,19 +147,17 @@
                  *width* *height* (get-win-w *chw*) (get-win-h *chh*) 'center))
 
 ;; 敵/敵ミサイルの初期化
-(define (init-enemies kind)
-  (let1 enemies (cond ((< kind 1000) *enemies*) (else *missiles*))
-    (for-each (lambda (e1) (set! (~ e1 'useflag) #f)) enemies)
-    ))
+(define (init-enemies enemies)
+  (for-each (lambda (e1) (set! (~ e1 'useflag) #f)) enemies))
 
 ;; 敵/敵ミサイルの生成
-(define (make-enemies kind)
+(define (make-enemies enemies :optional (missiles #f))
   (cond
-   ((< kind 1000)
+   ((not missiles)
     ;; 敵の生成
-    (let1 i (find-index (lambda (e1) (not (~ e1 'useflag))) *enemies*)
+    (let1 i (find-index (lambda (e1) (not (~ e1 'useflag))) enemies)
       (if (and i (< i *mr*))
-        (let1 e1 (~ *enemies* i)
+        (let1 e1 (~ enemies i)
           (set! (~ e1 'useflag) #t)
           (set! (~ e1 'kind)    0)
           (set! (~ e1 'state)   0)
@@ -177,13 +175,13 @@
           ))))
    (else
     ;; 敵ミサイルの生成
-    (let1 e1 (~ *enemies* (randint 0 (max (- *mr* 1) 0)))
+    (let1 e1 (~ enemies (randint 0 (max (- *mr* 1) 0)))
       (if (and (~ e1 'useflag)
                (= (~ e1 'state) 0)
                (> (~ e1 'y) 150))
-        (let1 i (find-index (lambda (m1) (not (~ m1 'useflag))) *missiles*)
+        (let1 i (find-index (lambda (m1) (not (~ m1 'useflag))) missiles)
           (if (and i (< i *mr*))
-            (let1 m1 (~ *missiles* i)
+            (let1 m1 (~ missiles i)
               (set! (~ m1 'useflag) #t)
               (set! (~ m1 'kind)    1000)
               (set! (~ m1 'state)   0)
@@ -202,56 +200,51 @@
    ))
 
 ;; 敵/敵ミサイルの表示
-(define (disp-enemies kind)
-  (let1 enemies (cond ((< kind 1000) *enemies*) (else *missiles*))
-    (for-each
-     (lambda (e1)
-       (when (~ e1 'useflag)
-         (if (= (~ e1 'state) 0)
-           (gl-color 1.0 1.0 1.0 1.0)
-           (gl-color 1.0 1.0 1.0 0.9))
-         (textscrn-disp (~ e1 'tscrn) (get-win-x (~ e1 'x)) (get-win-y (~ e1 'y))
-                        *width* *height* (get-win-w *chw*) (get-win-h *chh*) 'center)
-         ))
-     enemies)
-    ))
+(define (disp-enemies enemies)
+  (for-each
+   (lambda (e1)
+     (when (~ e1 'useflag)
+       (if (= (~ e1 'state) 0)
+         (gl-color 1.0 1.0 1.0 1.0)
+         (gl-color 1.0 1.0 1.0 0.9))
+       (textscrn-disp (~ e1 'tscrn) (get-win-x (~ e1 'x)) (get-win-y (~ e1 'y))
+                      *width* *height* (get-win-w *chw*) (get-win-h *chh*) 'center)
+       ))
+   enemies))
 
 ;; 敵/敵ミサイルの移動
-(define (move-enemies kind)
-  (let1 enemies (cond ((< kind 1000) *enemies*) (else *missiles*))
-    (for-each
-     (lambda (e1)
-       (if (~ e1 'useflag)
-         (cond
-          ((= (~ e1 'state) 0)
-           ;; 次の座標を計算
-           (set! (~ e1 'x) (+ (~ e1 'x) (* (~ e1 'speed) (%cos (* (~ e1 'degree) pi/180)))))
-           (set! (~ e1 'y) (+ (~ e1 'y) (* (~ e1 'speed) (%sin (* (~ e1 'degree) pi/180)))))
-           ;; 座標の範囲チェック
-           (if (or (< (~ e1 'x) (~ e1 'minx))
-                   (> (~ e1 'x) (~ e1 'maxx))
-                   (< (~ e1 'y) (~ e1 'miny))
-                   (> (~ e1 'y) (~ e1 'maxy)))
-             ;; 範囲外なら未使用にする
-             (set! (~ e1 'useflag) #f)))
-          (else
-           ;; 爆発の処理
-           (inc! (~ e1 'state))
-           (if (>= (~ e1 'state) 10)
-             ;; 爆発終了なら未使用にする
-             (set! (~ e1 'useflag) #f))))
-         ))
-     enemies)
-    ))
+(define (move-enemies enemies)
+  (for-each
+   (lambda (e1)
+     (if (~ e1 'useflag)
+       (cond
+        ((= (~ e1 'state) 0)
+         ;; 次の座標を計算
+         (set! (~ e1 'x) (+ (~ e1 'x) (* (~ e1 'speed) (%cos (* (~ e1 'degree) pi/180)))))
+         (set! (~ e1 'y) (+ (~ e1 'y) (* (~ e1 'speed) (%sin (* (~ e1 'degree) pi/180)))))
+         ;; 座標の範囲チェック
+         (if (or (< (~ e1 'x) (~ e1 'minx))
+                 (> (~ e1 'x) (~ e1 'maxx))
+                 (< (~ e1 'y) (~ e1 'miny))
+                 (> (~ e1 'y) (~ e1 'maxy)))
+           ;; 範囲外なら未使用にする
+           (set! (~ e1 'useflag) #f)))
+        (else
+         ;; 爆発の処理
+         (inc! (~ e1 'state))
+         (if (>= (~ e1 'state) 10)
+           ;; 爆発終了なら未使用にする
+           (set! (~ e1 'useflag) #f))))
+       ))
+   enemies))
 
 ;; 敵/敵ミサイルの当たり判定
-(define (hit-enemies? kind)
-  (let ((ret     #f)
-        (enemies (cond ((< kind 1000) *enemies*) (else *missiles*)))
-        (x1      (get-win-x (+ *x* (* *chw* -1.3)    *waku* )))
-        (y1      (get-win-y (+ *y* (* *chh* -1.0) (- *waku*))))
-        (x2      (get-win-x (+ *x* (* *chw*  1.3) (- *waku*))))
-        (y2      (get-win-y (+ *y* (* *chh* -2.0)    *waku* ))))
+(define (hit-enemies? enemies)
+  (let ((ret #f)
+        (x1  (get-win-x (+ *x* (* *chw* -1.3)    *waku* )))
+        (y1  (get-win-y (+ *y* (* *chh* -1.0) (- *waku*))))
+        (x2  (get-win-x (+ *x* (* *chw*  1.3) (- *waku*))))
+        (y2  (get-win-y (+ *y* (* *chh* -2.0)    *waku* ))))
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
@@ -300,8 +293,7 @@
                         (get-win-y (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
                         (get-win-w *bs*) *width* *height* 'center)
        ))
-   *enemies*)
-  )
+   *enemies*))
 
 ;; 爆風の当たり判定
 (define (hit-blast?)
@@ -351,7 +343,7 @@
   (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; 透過設定
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
-  (gl-enable GL_BLEND);
+  (gl-enable GL_BLEND)
   )
 
 ;; 画面表示
@@ -392,9 +384,9 @@
   (gl-color *backcolor*)
   (fill-win-rect (/. *width* 2) 0 *width* (get-win-h *chh*) *width* *height* 'center)
   ;; 敵ミサイルの表示
-  (disp-enemies 1000)
+  (disp-enemies *missiles*)
   ;; 敵の表示
-  (disp-enemies 0)
+  (disp-enemies *enemies*)
   ;; 自機ビームの表示
   (if (> *bc* 0) (disp-beam))
   ;; 自機の表示
@@ -489,8 +481,8 @@
        (set! *mmr*  10)
        (set! *sc*    0)
        (set! *ssc*   0)
-       (init-enemies 0)
-       (init-enemies 1000)
+       (init-enemies *enemies*)
+       (init-enemies *missiles*)
        ;; キー入力待ち
        (keywait *kwinfo* '(#\s #\S)
                 (lambda ()
@@ -511,13 +503,14 @@
            (set! *mmr* (min (+ *mmr* 2) *mmmr*))
            ))
        ;; 敵の生成
-       (if (= (modulo *ssc* 6) 0) (make-enemies 0))
+       (if (= (modulo *ssc* 6) 0) (make-enemies *enemies*))
        ;; 敵の移動
-       (move-enemies 0)
+       (move-enemies *enemies*)
        ;; 敵ミサイルの生成
-       (if (and (= (modulo *ssc* 6) 0) (< (randint 0 100) 50)) (make-enemies 1000))
+       (if (and (= (modulo *ssc* 6) 0) (< (randint 0 100) 50))
+         (make-enemies *enemies* *missiles*))
        ;; 敵ミサイルの移動
-       (move-enemies 1000)
+       (move-enemies *missiles*)
        ;; 自機の移動
        (let* ((maxx (- *wd/2* (* *chw* 1.5)))
               (minx (- maxx))
@@ -548,9 +541,9 @@
        ;; 爆風の当たり判定
        (hit-blast?)
        ;; 敵の当たり判定
-       (if (hit-enemies? 0) (set! *scene* 2))
+       (if (hit-enemies? *enemies*) (set! *scene* 2))
        ;; 敵ミサイルの当たり判定
-       (if (hit-enemies? 1000) (set! *scene* 2))
+       (if (hit-enemies? *missiles*) (set! *scene* 2))
        )
       ((2) ; プレイ終了
        ;; 時間待ち
