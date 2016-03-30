@@ -48,14 +48,23 @@
    ESCキーを押すと終了します。
 
 
-## 注意事項
-1. 一部のサンプルは、glmintool.scm と gltextscrn.scm に依存しています。  
-   同一フォルダに配置してください。
+## 注意事項等
+1. 一部のサンプルは、モジュール glmintool.scm, gltextscrn.scm, alaudplay.scm  
+   に依存しています。同一フォルダに配置してください。
 
 2. shooting.scm について、キーボードによっては、キーの同時押しの制限が存在し、  
    斜め移動とスペースキーの同時押しが効かない場合があります。  
    キーの割り当てがたくさんあるのはその回避のためです。  
    (Ctrlキー単独の状態取得は、freeglut の v2.8.0 以後で対応されたもよう)
+
+3. 一部のサンプルに効果音を追加しました。  
+   効果音ファイルは、sound フォルダに格納しています。  
+   これらは、TAM Music Factory ( http://www.tam-music.com/ ) 様の素材を使用しています。  
+   効果音の再生には、OpenAL, freealut, Gauche-al のインストールが必要です。  
+   以下のページを参考に、インストールを実施ください。  
+   https://github.com/Hamayama/Gauche-al-mg  
+   インストール完了後に、xxx_snd.bat (xxxはサンプル名) を実行すると、  
+   効果音ありでサンプルを実行できます。
 
 
 ## 環境等
@@ -66,9 +75,10 @@
   - Gauche v0.9.5_pre1
 - 拡張ライブラリ
   - Gauche-gl v0.6
+  - Gauche-al v1.0
 
 ## 履歴
 - 1001HISTORY.txt を参照ください。
 
 
-(2016-2-13)
+(2016-3-31)

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-2-9 v1.02
+;; 2016-3-31 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl のプログラムで、文字列の表示等を行うためのモジュールです。
@@ -42,8 +42,7 @@
   (gl-matrix-mode GL_PROJECTION)
   (gl-pop-matrix)
   (gl-matrix-mode GL_MODELVIEW)
-  (gl-enable GL_LIGHTING)
-  )
+  (gl-enable GL_LIGHTING))
 
 ;; 文字列表示(ビットマップフォント)
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
@@ -137,7 +136,7 @@
 (define-class <textscrn> ()
   ((width  :init-value 0) ; テキスト画面の幅(単位:文字)
    (height :init-value 0) ; テキスト画面の高さ(単位:文字)
-   (data   :init-value (make-u32vector 0)) ; テキスト画面のデータ(u32vector)
+   (data   :init-form (make-u32vector 0)) ; テキスト画面のデータ(u32vector)
    ))
 
 ;; 初期化
@@ -604,7 +603,7 @@
      )
     ))
 
-;(define *tscrn* (make <textscrn>)) ; インスタンス生成例
-;(textscrn-init *tscrn* 50 25)
+;(define *tscrn1* (make <textscrn>)) ; インスタンス生成例
+;(textscrn-init *tscrn1* 50 25)
 
 

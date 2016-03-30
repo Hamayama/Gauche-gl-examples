@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-2-16 v1.06
+;; 2016-3-31 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -20,6 +20,7 @@
 (use math.const)
 (use glmintool)
 (use gltextscrn)
+(use alaudplay)
 
 (define *wait*      20) ; ウェイト(msec)
 (define *width*    480) ; ウィンドウ上の画面幅(px)
@@ -47,6 +48,11 @@
 (define *ssc*        0) ; 制御カウンタ
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:プレイ中,=2:プレイ終了)
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
+
+;; 音楽データクラスのインスタンス生成
+(define *adata-start* (make <auddata>))
+(define *adata-hit*   (make <auddata>))
+(define *adata-end*   (make <auddata>))
 
 ;; キー入力待ちクラスのインスタンス生成
 (define *kwinfo* (make <keywaitinfo> :keystate *keystate*))
@@ -250,10 +256,11 @@
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
          (let ((ex (get-win-x (~ e1 'x)))
                (ey (get-win-y (~ e1 'y))))
-           (if (textscrn-disp-check-str (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
-                                        (get-win-w *chw*) (get-win-h *chh*)
-                                        ex ey 'center)
-             (set! ret #t)))
+           (when (textscrn-disp-check-str (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
+                                          (get-win-w *chw*) (get-win-h *chh*)
+                                          ex ey 'center)
+             (set! ret #t)
+             (auddata-play *adata-end*)))
          ))
      enemies)
     ret))
@@ -277,7 +284,8 @@
              (dec! (~ e1 'life))
              (when (<= (~ e1 'life) 0)
                (set! (~ e1 'state) 1)
-               (set! *sc* (+ *sc* 100)))
+               (set! *sc* (+ *sc* 100))
+               (auddata-play *adata-hit*))
              ))
          ))
      *enemies*)
@@ -312,7 +320,8 @@
                   (dec! (~ e2 'life))
                   (when (<= (~ e2 'life) 0)
                     (set! (~ e2 'state) 1)
-                    (set! *sc* (+ *sc* 200)))
+                    (set! *sc* (+ *sc* 200))
+                    (auddata-play *adata-hit*))
                   ))
               ))
           *enemies*)
@@ -344,6 +353,16 @@
   ;; 透過設定
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (gl-enable GL_BLEND)
+  ;; 音楽データの初期化
+  (auddata-load-wav-file *adata-start* "sound/appear1.wav")
+  (auddata-set-prop *adata-start* AL_GAIN  0.05)
+  (auddata-set-prop *adata-start* AL_PITCH 3.0)
+  (auddata-load-wav-file *adata-hit*   "sound/decide2.wav")
+  (auddata-set-prop *adata-hit*   AL_GAIN  0.4)
+  (auddata-set-prop *adata-hit*   AL_PITCH 1.1)
+  (auddata-load-wav-file *adata-end*   "sound/pattern05.wav")
+  (auddata-set-prop *adata-end*   AL_GAIN  0.2)
+  (auddata-set-prop *adata-end*   AL_PITCH 1.3)
   )
 
 ;; 画面表示
@@ -422,7 +441,7 @@
   (check-modifier-keys)
   (cond
    ;; ESCキーで終了
-   ((= key (char->integer #\escape)) (exit 0))
+   ((= key (char->integer #\escape)) (exit-main-loop 0))
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
     (gc) (print (gc-stat)))
@@ -449,15 +468,12 @@
 ;;   また、環境によっては、他のキーと同時押ししないと状態を取得できない
 (define (check-modifier-keys)
   (let1 mdkey (glut-get-modifiers)
-    (if (= (logand mdkey GLUT_ACTIVE_SHIFT) 0)
-      (hash-table-put! *mdkeystate* GLUT_ACTIVE_SHIFT #f)
-      (hash-table-put! *mdkeystate* GLUT_ACTIVE_SHIFT #t))
-    (if (= (logand mdkey GLUT_ACTIVE_CTRL) 0)
-      (hash-table-put! *mdkeystate* GLUT_ACTIVE_CTRL #f)
-      (hash-table-put! *mdkeystate* GLUT_ACTIVE_CTRL #t))
-    (if (= (logand mdkey GLUT_ACTIVE_ALT) 0)
-      (hash-table-put! *mdkeystate* GLUT_ACTIVE_ALT #f)
-      (hash-table-put! *mdkeystate* GLUT_ACTIVE_ALT #t))
+    (hash-table-put! *mdkeystate* GLUT_ACTIVE_SHIFT
+                     (not (= (logand mdkey GLUT_ACTIVE_SHIFT) 0)))
+    (hash-table-put! *mdkeystate* GLUT_ACTIVE_CTRL
+                     (not (= (logand mdkey GLUT_ACTIVE_CTRL)  0)))
+    (hash-table-put! *mdkeystate* GLUT_ACTIVE_ALT
+                     (not (= (logand mdkey GLUT_ACTIVE_ALT)   0)))
     ))
 
 ;; タイマー
@@ -487,6 +503,7 @@
        (keywait *kwinfo* '(#\s #\S)
                 (lambda ()
                   (set! *scene* 1)
+                  (auddata-play *adata-start*)
                   (keywait-clear *kwinfo*)))
        )
       ((1) ; プレイ中
@@ -565,9 +582,15 @@
   (glut-timer-func (waitmsec-calc *wtinfo*) timer 0)
   )
 
+;; 終了
+(define (exit-main-loop code)
+  (aud-end)
+  (exit code))
+
 ;; メイン処理
 (define (main args)
-  (glut-init args)
+  (aud-init (> (x->integer (get-one-arg args 1)) 0))
+  (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
   (glut-init-window-position 100 100)
@@ -581,7 +604,7 @@
   (glut-special-up-func specialkeyup)
   (glut-timer-func *wait* timer 0)
   ;; コールバック内エラー対策
-  (guard (ex (else (report-error ex) (exit 0)))
+  (guard (ex (else (report-error ex) (exit-main-loop 1)))
     (glut-main-loop))
   0)
 

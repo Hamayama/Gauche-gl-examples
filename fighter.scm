@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-2-9 v1.33
+;; 2016-3-30 v1.40
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -20,6 +20,7 @@
 (use math.const)
 (use glmintool)
 (use gltextscrn)
+(use alaudplay)
 
 (define *wait*      28) ; ウェイト(msec)
 (define *width*    480) ; ウィンドウ上の画面幅(px)
@@ -46,6 +47,11 @@
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:戦闘中,=2:戦闘終了)
 (define *playcount*  0) ; プレイ数
 (define *wincount*   0) ; 勝利数
+
+;; 音楽データクラスのインスタンス生成
+(define *adata-start* (make <auddata>))
+(define *adata-hit*   (make <auddata>))
+(define *adata-end*   (make <auddata>))
 
 ;; キー入力待ちクラスのインスタンス生成
 (define *kwinfo* (make <keywaitinfo> :keystate *keystate*))
@@ -229,6 +235,7 @@
       (set! (~ f2 'vx)  (- (~ f2 'vx)))
       (if (< (~ f1 'vy) 15) (set! (~ f1 'vy) 15))
       (if (< (~ f2 'vy) 15) (set! (~ f2 'vy) 15))
+      (if (not *demoflg*) (auddata-play *adata-hit*))
       )
      ;; 自分の勝ち
      ((and (or  (= (~ f1 'act) 2) (= (~ f1 'act) 3))
@@ -239,6 +246,7 @@
       (set! (~ f2 'dir) (- (~ f1 'dir)))
       (set! (~ f2 'vx)  (* (~ f2 'dir) -10))
       (set! (~ f2 'vy)  50)
+      (if (not *demoflg*) (auddata-play *adata-hit*))
       )
      ;; 敵の勝ち
      ((and (or  (= (~ f2 'act) 2) (= (~ f2 'act) 3))
@@ -249,6 +257,7 @@
       (set! (~ f1 'dir) (- (~ f2 'dir)))
       (set! (~ f1 'vx)  (* (~ f1 'dir) -10))
       (set! (~ f1 'vy)  50)
+      (if (not *demoflg*) (auddata-play *adata-hit*))
       )
      )
     )
@@ -419,6 +428,16 @@
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
+  ;; 音楽データの初期化
+  (auddata-load-wav-file *adata-start* "sound/appear1.wav")
+  (auddata-set-prop *adata-start* AL_GAIN  0.05)
+  (auddata-set-prop *adata-start* AL_PITCH 3.0)
+  (auddata-load-wav-file *adata-hit*   "sound/decide2.wav")
+  (auddata-set-prop *adata-hit*   AL_GAIN  0.4)
+  (auddata-set-prop *adata-hit*   AL_PITCH 1.1)
+  (auddata-load-wav-file *adata-end*   "sound/pattern05.wav")
+  (auddata-set-prop *adata-end*   AL_GAIN  0.2)
+  (auddata-set-prop *adata-end*   AL_PITCH 1.3)
   )
 
 ;; 画面表示
@@ -501,7 +520,7 @@
 (define (keyboard key x y)
   (cond
    ;; ESCキーで終了
-   ((= key (char->integer #\escape)) (exit 0))
+   ((= key (char->integer #\escape)) (exit-main-loop 0))
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
     (gc) (print (gc-stat)))
@@ -550,7 +569,9 @@
          ;; キー入力待ち
          (keywait  *kwinfo* '(#\s #\S)
                    (lambda ()
-                     (set! *scene*   1)))
+                     (set! *scene*   1)
+                     (auddata-play *adata-start*)
+                     ))
          ;; 時間待ち(タイムアップでデモへ移行)
          (timewait *twinfo* 5000
                    (lambda ()
@@ -580,6 +601,7 @@
           ;; デモでないとき
           (else
            (set! *scene* 2)
+           (auddata-play *adata-end*)
            (inc! *playcount*)
            (if (fighter-finished? *f2*) (inc! *wincount*)))
           ))
@@ -610,9 +632,15 @@
   (glut-timer-func (waitmsec-calc *wtinfo*) timer 0)
   )
 
+;; 終了
+(define (exit-main-loop code)
+  (aud-end)
+  (exit code))
+
 ;; メイン処理
 (define (main args)
-  (glut-init args)
+  (aud-init (> (x->integer (get-one-arg args 1)) 0))
+  (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
   (glut-init-window-position 100 100)
@@ -626,7 +654,7 @@
   (glut-special-up-func specialkeyup)
   (glut-timer-func *wait* timer 0)
   ;; コールバック内エラー対策
-  (guard (ex (else (report-error ex) (exit 0)))
+  (guard (ex (else (report-error ex) (exit-main-loop 1)))
     (glut-main-loop))
   0)
 

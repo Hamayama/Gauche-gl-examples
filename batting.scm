@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-2-9 v1.14
+;; 2016-3-30 v1.20
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -17,6 +17,7 @@
 (use math.const)
 (use glmintool)
 (use gltextscrn)
+(use alaudplay)
 
 (define *wait*      15) ; ウェイト(msec)
 (define *width*    480) ; ウィンドウ上の画面幅(px)
@@ -50,6 +51,12 @@
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:打撃前,=2:打撃後,=3:結果画面)
 (define *playcount*  0) ; プレイ数
 (define *scsum*      0) ; スコア累積
+
+;; 音楽データクラスのインスタンス生成
+(define *adata-start* (make <auddata>))
+(define *adata-hit*   (make <auddata>))
+(define *adata-end1*  (make <auddata>))
+(define *adata-end2*  (make <auddata>))
 
 ;; キー入力待ちクラスのインスタンス生成
 (define *kwinfo* (make <keywaitinfo> :keystate *keystate*))
@@ -138,6 +145,18 @@
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
+  ;; 音楽データの初期化
+  (auddata-load-wav-file *adata-start* "sound/warp1.wav")
+  (auddata-set-prop *adata-start* AL_GAIN  0.2)
+  (auddata-set-prop *adata-start* AL_PITCH 1.2)
+  (auddata-load-wav-file *adata-hit*   "sound/pattern05.wav")
+  (auddata-set-prop *adata-hit*   AL_GAIN  0.4)
+  (auddata-set-prop *adata-hit*   AL_PITCH 2.0)
+  (auddata-load-wav-file *adata-end1*  "sound/pattern05.wav")
+  (auddata-set-prop *adata-end1*  AL_GAIN  0.2)
+  (auddata-set-prop *adata-end1*  AL_PITCH 1.3)
+  (auddata-load-wav-file *adata-end2*  "sound/pattern03.wav")
+  (auddata-set-prop *adata-end2*  AL_GAIN  0.3)
   )
 
 ;; 画面表示
@@ -227,7 +246,7 @@
 (define (keyboard key x y)
   (cond
    ;; ESCキーで終了
-   ((= key (char->integer #\escape)) (exit 0))
+   ((= key (char->integer #\escape)) (exit-main-loop 0))
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
     (gc) (print (gc-stat)))
@@ -282,6 +301,7 @@
        (keywait *kwinfo* '(#\s #\S)
                 (lambda ()
                   (set! *scene* 1)
+                  (auddata-play *adata-start*)
                   (keywait-clear *kwinfo*)))
        )
       ((1) ; 打撃前
@@ -308,6 +328,7 @@
        (when (>= *z* *zend*)
          (set! *scene* 2)
          (when (>= *hit* 2)
+           (auddata-play *adata-hit*)
            (set! *vx* *vx2*)
            (set! *vy* *vy2*)
            (set! *vz* -5))
@@ -337,7 +358,11 @@
          (if (< *sc*  0)    (set! *sc* 0))
          (if (> *sc*  *hs*) (set! *hs* *sc*))
          (inc! *playcount*)
-         (set! *scsum* (+ *scsum* *sc*)))
+         (set! *scsum* (+ *scsum* *sc*))
+         (if (= *hit* 3)
+           (auddata-play *adata-end2*)
+           (auddata-play *adata-end1*))
+         )
        )
       ((3) ; 結果画面
        ;; 時間待ち
@@ -359,9 +384,15 @@
   (glut-timer-func (waitmsec-calc *wtinfo*) timer 0)
   )
 
+;; 終了
+(define (exit-main-loop code)
+  (aud-end)
+  (exit code))
+
 ;; メイン処理
 (define (main args)
-  (glut-init args)
+  (aud-init (> (x->integer (get-one-arg args 1)) 0))
+  (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
   (glut-init-window-position 100 100)
@@ -375,7 +406,7 @@
   (glut-special-up-func specialkeyup)
   (glut-timer-func *wait* timer 0)
   ;; コールバック内エラー対策
-  (guard (ex (else (report-error ex) (exit 0)))
+  (guard (ex (else (report-error ex) (exit-main-loop 1)))
     (glut-main-loop))
   0)
 

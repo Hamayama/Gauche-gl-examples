@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-2-8 v1.00
+;; 2016-3-31 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl のプログラムで使うための簡単なツール類です。
@@ -12,7 +12,7 @@
   (use gauche.uvector)
   (use math.mt-random)
   (export
-    randint recthit?
+    randint recthit? get-one-arg
     <keywaitinfo> keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
     <waitmsecinfo> waitmsec-calc
@@ -33,12 +33,18 @@
 ;;   衝突していれば #t を返す。
 ;;   そうでなければ #f を返す。
 (define (recthit? x1 y1 w1 h1 x2 y2 w2 h2)
-  (if (and (< x1 (+ x2 w2))
-           (< x2 (+ x1 w1))
-           (< y1 (+ y2 h2))
-           (< y2 (+ y1 h1)))
-    #t
-    #f))
+  (and (< x1 (+ x2 w2))
+       (< x2 (+ x1 w1))
+       (< y1 (+ y2 h2))
+       (< y2 (+ y1 h1))))
+
+;; コマンドライン引数1個の取得
+(define (get-one-arg args i)
+  (and (integer? i)
+       (>= i 0)
+       (list? args)
+       (> (length args) i)
+       (~ args i)))
 
 
 ;; キー入力待ちクラス
@@ -47,7 +53,7 @@
 (define-class <keywaitinfo> ()
   ((state    :init-value 0)   ; 待ち状態(=0:初期状態,=1:キー入力待ち開始,=2:キー入力待ち中,=3:キー入力完了)
    (waitkey  :init-value '()) ; 待ち受けキー(文字のリストで指定)
-   (keystate :init-keyword :keystate :init-value (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
+   (keystate :init-keyword :keystate :init-form (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
    ))
 (define-method keywait ((k <keywaitinfo>) (wk <pair>) (finished-func <procedure>))
   (case (~ k 'state)
@@ -103,23 +109,20 @@
 ;;   ・処理時間を測定して、ウェイト時間が一定になるように調整する
 ;;   ・glut-timer-func と組み合わせて使用する
 (define-class <waitmsecinfo> ()
-  ((waitdata :init-value #f) ; ウェイト時間調整用(msec)
+  ((waitdata :init-value 0) ; ウェイト時間調整用(msec)
    (waittime :init-keyword :waittime :init-value 0) ; ウェイト時間指定値(msec)
    ))
 (define-method waitmsec-calc ((w <waitmsecinfo>))
   (let* ((tnow      (current-time))
          (tnowmsec  (+ (* (~ tnow 'second) 1000) (quotient (~ tnow 'nanosecond) 1000000)))
-         (tdiffmsec 0)
+         (tdiffmsec (- tnowmsec (~ w 'waitdata)))
          (wt        (~ w 'waittime))
          (waitmsec  wt))
-    (when (~ w 'waitdata)
-      (set! tdiffmsec (- tnowmsec (~ w 'waitdata)))
-      (cond
-       ((and (>= tdiffmsec (- wt)) (< tdiffmsec wt))
-        (set! waitmsec (- wt tdiffmsec)))
-       ((and (>= tdiffmsec wt) (< tdiffmsec (* wt 50)))
-        (set! waitmsec 1))
-       ))
+    (cond
+     ((and (>= tdiffmsec (- wt)) (< tdiffmsec wt))
+      (set! waitmsec (- wt tdiffmsec)))
+     ((and (>= tdiffmsec wt) (< tdiffmsec (* wt 50)))
+      (set! waitmsec 1)))
     (set! (~ w 'waitdata) (+ tnowmsec waitmsec))
     ;(print tdiffmsec " " waitmsec)
     waitmsec))
