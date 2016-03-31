@@ -110,6 +110,7 @@ gltextscrn.scm
 alaudplay.scm
   2016-3-31  v1.00  初版
   2016-3-31  v1.01  auddata-free の処理修正
+  2016-3-31  v1.02  Gauche-al モジュールの定数のダミー設定等
 
 
 (2016-3-31)
