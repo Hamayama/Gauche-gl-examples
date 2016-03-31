@@ -63,8 +63,9 @@
    効果音の再生には、OpenAL, freealut, Gauche-al のインストールが必要です。  
    以下のページを参考に、インストールを実施ください。  
    https://github.com/Hamayama/Gauche-al-mg  
-   インストール完了後に、xxx_snd.bat (xxxはサンプル名) を実行すると、  
-   効果音ありでサンプルを実行できます。
+   上記インストール後に、xxx_snd.bat (xxxはサンプル名) を実行するか、または、  
+   `gosh xxx.scm 1` のように引数を付けて実行すると、効果音付きになります。  
+   (Gauche-al が存在しない場合には、効果音なしになります)
 
 
 ## 環境等
