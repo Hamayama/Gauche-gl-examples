@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-3-31 v1.03
+;; 2016-3-31 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl のプログラムで、文字列の表示等を行うためのモジュールです。
@@ -481,6 +481,7 @@
     ))
 
 ;; 文字列の判定処理
+;;   ・テキスト画面の指定範囲に文字列 str のいずれかの文字があれば #t を返す
 (define-method textscrn-check-str ((ts <textscrn>)
                                    (str <string>)
                                    (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>))
@@ -503,6 +504,8 @@
     ret))
 
 ;; 文字列の画面上の判定処理
+;;   ・画面上の座標範囲 (x1,y1)-(x2,y2) を指定して、textscrn-check-str を実行する
+;;   ・1文字の幅 chw と高さ chh も指定が必要
 (define-method textscrn-disp-check-str ((ts <textscrn>)
                                         (str <string>)
                                         (x1 <real>) (y1 <real>) (x2 <real>) (y2 <real>)
