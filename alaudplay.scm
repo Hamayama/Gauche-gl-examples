@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; alaudplay.scm
-;; 2016-3-31 v1.00
+;; 2016-3-31 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-al を使って音楽を演奏するためのモジュールです。
@@ -86,7 +86,7 @@
 
 ;; 音楽データの解放
 (define-method auddata-free ((a <auddata>))
-  (if (aud-enabled?)
+  (when (aud-enabled?)
     (when (~ a 'src)
       (al-delete-sources (u32vector (~ a 'src)))
       (set! (~ a 'src) #f))
