@@ -76,6 +76,8 @@
 - 拡張ライブラリ
   - Gauche-gl v0.6
   - Gauche-al v1.0
+- 効果音
+  - TAM Music Factory ( http://www.tam-music.com/ ) 様
 
 ## 履歴
 - 1001HISTORY.txt を参照ください。
