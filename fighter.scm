@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-3-30 v1.40
+;; 2016-3-31 v1.41
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -23,6 +23,7 @@
 (use alaudplay)
 
 (define *wait*      28) ; ウェイト(msec)
+(define *title* "fighter") ; ウィンドウのタイトル
 (define *width*    480) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
@@ -644,7 +645,7 @@
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
   (glut-init-window-position 100 100)
-  (glut-create-window "fighter")
+  (glut-create-window *title*)
   (init)
   (glut-display-func disp)
   (glut-reshape-func reshape)
