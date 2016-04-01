@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; alaudplay.scm
-;; 2016-3-31 v1.02
+;; 2016-4-1 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-al を使って音楽を演奏するためのモジュールです。
@@ -33,25 +33,19 @@
 
 ;; Gauche-al モジュールの定数のダミー設定
 (select-module al)
-(export
+(define-syntax define-and-export-variables
+  (syntax-rules ()
+    ((_ var ...)
+     (begin (export var ...) (define var 0) ...))))
+(define-and-export-variables
   AL_PITCH AL_GAIN AL_MAX_DISTANCE AL_ROLLOFF_FACTOR AL_REFERENCE_DISTANCE
   AL_MIN_GAIN AL_MAX_GAIN
   AL_CONE_OUTER_GAIN AL_CONE_INNER_ANGLE AL_CONE_OUTER_ANGLE
   AL_POSITION AL_VELOCITY AL_DIRECTION AL_SOURCE_RELATIVE
   AL_LOOPING AL_BUFFER
   AL_SOURCE_STATE AL_INITIAL AL_PLAYING AL_PAUSED AL_STOPPED
-  AL_BUFFERS_QUEUED AL_BUFFERS_PROCESSED)
-(define-values
-  (AL_PITCH AL_GAIN AL_MAX_DISTANCE AL_ROLLOFF_FACTOR AL_REFERENCE_DISTANCE
-   AL_MIN_GAIN AL_MAX_GAIN
-   AL_CONE_OUTER_GAIN AL_CONE_INNER_ANGLE AL_CONE_OUTER_ANGLE
-   AL_POSITION AL_VELOCITY AL_DIRECTION AL_SOURCE_RELATIVE
-   AL_LOOPING AL_BUFFER)
-  (apply values (make-list 16 0)))
-(define-values
-  (AL_SOURCE_STATE AL_INITIAL AL_PLAYING AL_PAUSED AL_STOPPED
-   AL_BUFFERS_QUEUED AL_BUFFERS_PROCESSED)
-  (apply values (make-list 7 0)))
+  AL_BUFFERS_QUEUED AL_BUFFERS_PROCESSED
+  )
 (select-module alaudplay)
 
 ;; Gauche-al モジュールのロード

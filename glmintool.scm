@@ -1,10 +1,10 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-3-31 v1.01
+;; 2016-4-1 v1.02
 ;;
 ;; ＜内容＞
-;;   Gauche-gl のプログラムで使うための簡単なツール類です。
+;;   Gauche-gl を使うプログラムのための簡単なツール類です。
 ;;
 (define-module glmintool
   (use gl)
