@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-3-31 v1.11
+;; 2016-4-7 v1.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -10,6 +10,7 @@
 ;;   敵は若干固いので、しばらくビームを当て続ける必要があります。
 ;;   また、敵を破壊すると一定範囲が誘爆します。
 ;;   画面右上のレベル表示は、出現する敵の数と速度の目安になります。
+;;   また、スタート画面でしばらく待つとデモになります。
 ;;   ESCキーを押すと終了します。
 ;;
 (add-load-path "." :relative)
@@ -18,6 +19,7 @@
 (use gauche.uvector)
 (use gauche.sequence)
 (use math.const)
+(use data.heap)
 (use glmintool)
 (use gltextscrn)
 (use alaudplay)
@@ -49,6 +51,9 @@
 (define *ssc*        0) ; 制御カウンタ
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:プレイ中,=2:プレイ終了)
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
+(define *demoflg*    #f) ; デモフラグ
+(define *demotime1*  0) ; デモ時間調整用1(msec)
+(define *demotime2*  0) ; デモ時間調整用2(msec)
 
 ;; 音楽データクラスのインスタンス生成
 (define *adata-start* (make <auddata>))
@@ -261,7 +266,8 @@
                                           (get-win-w *chw*) (get-win-h *chh*)
                                           ex ey 'center)
              (set! ret #t)
-             (auddata-play *adata-end*)))
+             (if (not *demoflg*) (auddata-play *adata-end*))
+             ))
          ))
      enemies)
     ret))
@@ -285,8 +291,10 @@
              (dec! (~ e1 'life))
              (when (<= (~ e1 'life) 0)
                (set! (~ e1 'state) 1)
-               (set! *sc* (+ *sc* 100))
-               (auddata-play *adata-hit*))
+               (when (not *demoflg*)
+                 (set! *sc* (+ *sc* 100))
+                 (auddata-play *adata-hit*)
+                 ))
              ))
          ))
      *enemies*)
@@ -321,12 +329,54 @@
                   (dec! (~ e2 'life))
                   (when (<= (~ e2 'life) 0)
                     (set! (~ e2 'state) 1)
-                    (set! *sc* (+ *sc* 200))
-                    (auddata-play *adata-hit*))
+                    (when (not *demoflg*)
+                      (set! *sc* (+ *sc* 200))
+                      (auddata-play *adata-hit*)
+                      ))
                   ))
               ))
           *enemies*)
          ))
+     *enemies*)
+    ret))
+
+;; 自機に近い敵/敵ミサイルを、近い順にn個だけ取得する(デモ用)
+;;   ・戻り値は ((距離の2乗 . 敵) ...) というリストを返す
+;;   ・有効な敵がいなければ ((#f . #f) ...) というリストを返す
+(define (get-near-enemies n)
+  (let* ((ret '())
+         (bh  (make-binary-heap :storage (make-vector n #f) :key car)))
+    (define (%search-near-enemies enemies)
+      (for-each
+       (lambda (e1)
+         (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
+           (let* ((xdiff (- (~ e1 'x) *x*))
+                  (ydiff (- (~ e1 'y) *y*))
+                  (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
+             (if (< (binary-heap-num-entries bh) n)
+               (binary-heap-push! bh (cons rr e1))
+               (if (< rr (car (binary-heap-find-max bh)))
+                 (binary-heap-swap-max! bh (cons rr e1))))
+             )))
+       enemies))
+    (%search-near-enemies *enemies*)
+    (%search-near-enemies *missiles*)
+    (do ((i 0 (+ i 1)))
+        ((>= i n) #f)
+      (push! ret (if (binary-heap-empty? bh)
+                   '(#f . #f)
+                   (binary-heap-pop-min! bh))))
+    (reverse ret)))
+
+;; 自機の敵への攻撃チェック(デモ用)
+(define (attack-enemies?)
+  (let ((ret #f)
+        (x1  (- *x* (* *chw* 2)))
+        (x2  (+ *x* (* *chw* 2))))
+    (for-each
+     (lambda (e1)
+       (if (and (~ e1 'useflag) (= (~ e1 'state) 0) (<= x1 (~ e1 'x) x2))
+         (set! ret #t)))
      *enemies*)
     ret))
 
@@ -373,18 +423,27 @@
   (gl-load-identity)
   ;; 文字表示
   (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (y2 49))
-    ;; シーン情報で場合分け
-    (case *scene*
-      ((0) ; スタート画面
-       (set! str1 "== SHOOTING ==")
-       (set! str2 "HIT [S] KEY")
-       (set! y2 50))
-      ((1) ; プレイ中
-       )
-      ((2) ; プレイ終了
-       (set! str1 "GAME OVER")
-       (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
+    (cond
+     ;; デモのとき
+     (*demoflg*
+      (set! str1 "== Demo ==")
+      (set! str2 "HIT [D] KEY"))
+     ;; デモでないとき
+     (else
+      ;; シーン情報で場合分け
+      (case *scene*
+        ((0) ; スタート画面
+         (set! str1 "== SHOOTING ==")
+         (set! str2 "HIT [S] KEY")
+         (set! y2 50))
+        ((1) ; プレイ中
+         )
+        ((2) ; プレイ終了
+         (set! str1 "GAME OVER")
+         (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
+        )
       )
+     )
     (set! str3 (format #f "SCORE : ~D"    *sc*))
     (set! str4 (format #f "HI-SCORE : ~D" *hs*))
     (set! str5 (format #f "LEVEL : ~D/~D" *mr* *mmr*))
@@ -484,6 +543,9 @@
    ((or (keywait-waiting? *kwinfo*) (timewait-waiting? *twinfo*))
     (keywait-timer  *kwinfo*)
     (timewait-timer *twinfo*)
+    (when (= *scene* 0)
+      (if (keywait-finished?  *kwinfo*) (timewait-clear *twinfo*))
+      (if (timewait-finished? *twinfo*) (keywait-clear  *kwinfo*)))
     )
    ;; 待ち状態でないとき
    (else
@@ -496,20 +558,39 @@
        (set! *bc*    0)
        (set! *mr*    1)
        (set! *mmr*  10)
-       (set! *sc*    0)
+       ;(set! *sc*    0)
        (set! *ssc*   0)
        (init-enemies *enemies*)
        (init-enemies *missiles*)
-       ;; キー入力待ち
-       (keywait *kwinfo* '(#\s #\S)
-                (lambda ()
-                  (set! *scene* 1)
-                  (auddata-play *adata-start*)
-                  (keywait-clear *kwinfo*)))
+       (set! *demotime1* 0)
+       (set! *demotime2* 0)
+       (cond
+        ;; デモのとき
+        (*demoflg*
+         (set! *scene* 1))
+        ;; デモでないとき
+        (else
+         ;; キー入力待ち
+         (keywait  *kwinfo* '(#\s #\S)
+                   (lambda ()
+                     (set! *scene*   1)
+                     (set! *sc*      0)
+                     (auddata-play *adata-start*)
+                     ))
+         ;; 時間待ち(タイムアップでデモへ移行)
+         (timewait *twinfo* 5000
+                   (lambda ()
+                     (set! *scene*   1)
+                     (set! *demoflg* #t)))
+         (when (= *scene* 1)
+           (keywait-clear  *kwinfo*)
+           (timewait-clear *twinfo*))
+         )
+        )
        )
       ((1) ; プレイ中
        ;; スコアと制御カウンタの処理等
-       (inc! *sc*)
+       (if (not *demoflg*) (inc! *sc*))
        (if (> *sc* 1000000) (set! *sc* 1000000))
        (if (> *sc* *hs*)    (set! *hs* *sc*))
        (inc! *ssc*)
@@ -529,28 +610,70 @@
          (make-enemies *enemies* *missiles*))
        ;; 敵ミサイルの移動
        (move-enemies *missiles*)
-       ;; 自機の移動
-       (let* ((maxx (- *wd/2* (* *chw* 1.5)))
-              (minx (- maxx))
-              (maxy (- *ht/2* *chh*))
-              (miny (+ (- *ht/2*) (* *chh* 2))))
-         (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
-           (set! *x* (clamp (+ *x* -8) minx maxx)))
-         (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
-           (set! *x* (clamp (+ *x*  8) minx maxx)))
-         (if (hash-table-get *spkeystate* GLUT_KEY_UP    #f)
-           (set! *y* (clamp (+ *y*  8) miny maxy)))
-         (if (hash-table-get *spkeystate* GLUT_KEY_DOWN  #f)
-           (set! *y* (clamp (+ *y* -8) miny maxy)))
+       ;; 自機の操作
+       (cond
+        ;; デモのとき
+        (*demoflg*
+         ;; 自機の移動
+         (let* ((maxx (- *wd/2* (* *chw* 1.5)))
+                (minx (- maxx))
+                (vx   0)
+                (nes  (get-near-enemies 1))
+                (rr1  (car (~ nes 0)))
+                (e1   (cdr (~ nes 0))))
+           (cond
+            ;; 一番近い敵/敵ミサイルを避ける
+            ((and rr1 (< rr1 (* *chw* *chw* 6 6)))
+             (set! vx (if (< *x* (~ e1 'x)) -8 +8)))
+            ;; 中央に戻る
+            (else
+             (when (< (randint 0 100) 50)
+               (if (< *x* -8) (set! vx +8))
+               (if (> *x* +8) (set! vx -8))))
+            )
+           (set! *x* (clamp (+ *x* vx) minx maxx))
+           )
+         ;; 自機ビーム発射
+         (when (attack-enemies?)
+           (set! *bc* 1)
+           (set! *demotime2* 0))
+         (when (> *bc* 0)
+           (set! *demotime2* (+ *demotime2* *wait*))
+           (if (>= *demotime2* 200) (set! *bc* 0)))
+         ;; デモを抜けるチェック
+         (when (or (hash-table-get *keystate* (char->integer #\d) #f)
+                   (hash-table-get *keystate* (char->integer #\D) #f))
+           (set! *scene*   0)
+           (set! *demoflg* #f))
          )
+        ;; デモでないとき
+        (else
+         ;; 自機の移動
+         (let* ((maxx (- *wd/2* (* *chw* 1.5)))
+                (minx (- maxx))
+                (maxy (- *ht/2* *chh*))
+                (miny (+ (- *ht/2*) (* *chh* 2))))
+           (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
+             (set! *x* (clamp (+ *x* -8) minx maxx)))
+           (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
+             (set! *x* (clamp (+ *x*  8) minx maxx)))
+           (if (hash-table-get *spkeystate* GLUT_KEY_UP    #f)
+             (set! *y* (clamp (+ *y*  8) miny maxy)))
+           (if (hash-table-get *spkeystate* GLUT_KEY_DOWN  #f)
+             (set! *y* (clamp (+ *y* -8) miny maxy)))
+           )
+         ;; 自機ビーム発射
+         (if (or (hash-table-get *mdkeystate* GLUT_ACTIVE_CTRL #f)
+                 (hash-table-get *keystate* (char->integer #\space) #f)
+                 (hash-table-get *keystate* (char->integer #\a) #f)
+                 (hash-table-get *keystate* (char->integer #\A) #f)
+                 (hash-table-get *keystate* (char->integer #\z) #f)
+                 (hash-table-get *keystate* (char->integer #\Z) #f))
+           (set! *bc* 1)
+           (set! *bc* 0))
+         ))
        ;; 自機ビーム処理
-       (set! *bc* 0)
-       (if (or (hash-table-get *mdkeystate* GLUT_ACTIVE_CTRL #f)
-               (hash-table-get *keystate* (char->integer #\space) #f)
-               (hash-table-get *keystate* (char->integer #\a) #f)
-               (hash-table-get *keystate* (char->integer #\A) #f)
-               (hash-table-get *keystate* (char->integer #\z) #f)
-               (hash-table-get *keystate* (char->integer #\Z) #f))
+       (if (> *bc* 0)
          (let loop ((i 1))
            (set! *bc* i)
            (if (and (<= i 25) (not (hit-beam?)))
@@ -564,15 +687,29 @@
        (if (hit-enemies? *missiles*) (set! *scene* 2))
        )
       ((2) ; プレイ終了
-       ;; 時間待ち
-       (timewait *twinfo* 1500
-                 (lambda ()
-                   ;; キー入力待ち
-                   (keywait *kwinfo* '(#\d #\D)
-                            (lambda ()
-                              (set! *scene* 0)
-                              (timewait-clear *twinfo*)
-                              (keywait-clear  *kwinfo*)))))
+       (cond
+        ;; デモのとき
+        (*demoflg*
+         (set! *demotime1* (+ *demotime1* *wait*))
+         (if (>= *demotime1* 1600) (set! *scene* 0))
+         ;; デモを抜けるチェック
+         (when (or (hash-table-get *keystate* (char->integer #\d) #f)
+                   (hash-table-get *keystate* (char->integer #\D) #f))
+           (set! *scene*   0)
+           (set! *demoflg* #f))
+         )
+        ;; デモでないとき
+        (else
+         ;; 時間待ち
+         (timewait *twinfo* 1500
+                   (lambda ()
+                     ;; キー入力待ち
+                     (keywait *kwinfo* '(#\d #\D)
+                              (lambda ()
+                                (set! *scene* 0)
+                                (timewait-clear *twinfo*)
+                                (keywait-clear  *kwinfo*)))))
+         ))
        )
       )
     )
