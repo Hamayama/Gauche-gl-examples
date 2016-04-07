@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-7 v1.13
+;; 2016-4-7 v1.14
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -57,7 +57,10 @@
 (define *demopara1*  6) ; デモ用パラメータ1
 (define *demopara2* 50) ; デモ用パラメータ2
 (define *democount*  0) ; デモ回数
-(define *demosscsum* 0) ; デモ生存時間累積
+(define *demosscsum* 0) ; デモ生存カウンタ累積
+(define *demotmax* 0.0) ; デモ生存時間最大値
+(define *demotmin* 0.0) ; デモ生存時間最小値
+(define *demotavg* 0.0) ; デモ生存時間平均値
 
 
 ;; 音楽データクラスのインスタンス生成
@@ -433,11 +436,10 @@
      (*demoflg*
       (set! str1 "== Demo ==")
       (set! str2 "HIT [D] KEY")
-      (set! str6 (format #f "P=(~D,~D) COUNT=~D AVG-TIME=~D"
+      (set! str6 (format #f "P=(~D, ~D) COUNT=~D TIME=(~D, ~D, ~D, ~D)"
                          *demopara1* *demopara2* *democount*
-                         (let ((sum   (if (= *democount* 0) *ssc* *demosscsum*))
-                               (count (if (= *democount* 0) 1     *democount*)))
-                           (/. (round->exact (* (/. sum count 1000) *wait* 10)) 10))))
+                         *demotmax*  *demotmin*  *demotavg*
+                         (/. (round->exact (* (/. *ssc* 1000) *wait* 10)) 10)))
       )
      ;; デモでないとき
      (else
@@ -704,8 +706,23 @@
         ;; デモのとき
         (*demoflg*
          (when (= *demotime1* 0)
+           ;; デモの各種データを更新
            (inc! *democount*)
-           (set! *demosscsum* (+ *demosscsum* *ssc*)))
+           (set! *demosscsum* (+ *demosscsum* *ssc*))
+           (let ((t    (/. (round->exact (* (/. *ssc* 1000) *wait* 10)) 10))
+                 (tavg (/. (round->exact
+                            (* (/. *demosscsum* *democount* 1000) *wait* 10))
+                           10)))
+             (cond
+              ((= *democount* 1)
+               (set! *demotmax* t)
+               (set! *demotmin* t)
+               (set! *demotavg* t))
+              (else
+               (set! *demotmax* (max *demotmax* t))
+               (set! *demotmin* (min *demotmin* t))
+               (set! *demotavg* tavg)))
+             ))
          (set! *demotime1* (+ *demotime1* *wait*))
          (if (>= *demotime1* 1600) (set! *scene* 0))
          ;; デモを抜けるチェック
