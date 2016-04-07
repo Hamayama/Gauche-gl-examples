@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-7 v1.12
+;; 2016-4-7 v1.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -54,6 +54,11 @@
 (define *demoflg*    #f) ; デモフラグ
 (define *demotime1*  0) ; デモ時間調整用1(msec)
 (define *demotime2*  0) ; デモ時間調整用2(msec)
+(define *demopara1*  6) ; デモ用パラメータ1
+(define *demopara2* 50) ; デモ用パラメータ2
+(define *democount*  0) ; デモ回数
+(define *demosscsum* 0) ; デモ生存時間累積
+
 
 ;; 音楽データクラスのインスタンス生成
 (define *adata-start* (make <auddata>))
@@ -422,12 +427,18 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字表示
-  (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (y2 49))
+  (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (y2 49))
     (cond
      ;; デモのとき
      (*demoflg*
       (set! str1 "== Demo ==")
-      (set! str2 "HIT [D] KEY"))
+      (set! str2 "HIT [D] KEY")
+      (set! str6 (format #f "P=(~D,~D) COUNT=~D AVG-TIME=~D"
+                         *demopara1* *demopara2* *democount*
+                         (let ((sum   (if (= *democount* 0) *ssc* *demosscsum*))
+                               (count (if (= *democount* 0) 1     *democount*)))
+                           (/. (round->exact (* (/. sum count 1000) *wait* 10)) 10))))
+      )
      ;; デモでないとき
      (else
       ;; シーン情報で場合分け
@@ -458,6 +469,8 @@
     (draw-stroke-text str4 (/. *width* 2) 0 *width* *height* (/. *height* 22) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
     (draw-stroke-text str5 *width* 0 *width* *height* (/. *height* 22) 'right)
+    (gl-color 0.0 1.0 0.0 1.0)
+    (draw-stroke-text str6 0 (/. (* *height* 5) 100) *width* *height* (/. *height* 22))
     )
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
@@ -623,11 +636,11 @@
                 (e1   (cdr (~ nes 0))))
            (cond
             ;; 一番近い敵/敵ミサイルを避ける
-            ((and rr1 (< rr1 (* *chw* *chw* 6 6)))
+            ((and rr1 (< rr1 (* *chw* *chw* *demopara1* *demopara1*)))
              (set! vx (if (< *x* (~ e1 'x)) -8 +8)))
             ;; 中央に戻る
             (else
-             (when (< (randint 0 100) 50)
+             (when (< (randint 0 100) *demopara2*)
                (if (< *x* -8) (set! vx +8))
                (if (> *x* +8) (set! vx -8))))
             )
@@ -690,6 +703,9 @@
        (cond
         ;; デモのとき
         (*demoflg*
+         (when (= *demotime1* 0)
+           (inc! *democount*)
+           (set! *demosscsum* (+ *demosscsum* *ssc*)))
          (set! *demotime1* (+ *demotime1* *wait*))
          (if (>= *demotime1* 1600) (set! *scene* 0))
          ;; デモを抜けるチェック
