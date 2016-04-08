@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-4-1 v1.02
+;; 2016-4-8 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -12,7 +12,7 @@
   (use gauche.uvector)
   (use math.mt-random)
   (export
-    randint recthit? get-one-arg
+    randint round-n truncate-n recthit? get-one-arg
     <keywaitinfo> keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
     <waitmsecinfo> waitmsec-calc
@@ -26,6 +26,16 @@
     (lambda (n1 n2)
       (if (> n1 n2) (let1 t n1 (set! n1 n2) (set! n2 t)))
       (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
+
+;; 数値xを偶数丸めして小数第n位までの数値にする
+(define (round-n x :optional (n 0))
+  (let1 p (expt 10 n)
+    (/. (round (* x p)) p)))
+
+;; 数値xを0方向に切り捨てて小数第n位までの数値にする
+(define (truncate-n x :optional (n 0))
+  (let1 p (expt 10 n)
+    (/. (truncate (* x p)) p)))
 
 ;; 長方形の衝突チェック
 ;;   左上座表が (x1,y1) で 幅 w1 高さ h1 の長方形と、

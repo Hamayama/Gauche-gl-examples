@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-1 v1.05
+;; 2016-4-8 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -95,7 +95,8 @@
   (gl-ortho-off))
 
 ;; 長方形の塗りつぶし
-;;   ・長方形 (x,y,w,h) は左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
+;;   ・長方形 (x,y,w,h) の塗りつぶし表示を行う
+;;   ・座標は、左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
 ;;     (図形表示とは座標系が異なるので注意)
 (define (fill-win-rect x y w h *width* *height* :optional (align 'left))
   (gl-ortho-on *width* *height*)
@@ -115,19 +116,23 @@
   (gl-ortho-off))
 
 ;; 円の塗りつぶし
-;;   ・円 (x,y,r) は左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
+;;   ・円 (x,y,r,a,b) -> (x*x)/(a*a)+(y*y)/(b*b)=r*r の塗りつぶし表示を行う
+;;   ・座標は、左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
 ;;     (図形表示とは座標系が異なるので注意)
-(define (fill-win-circle x y r *width* *height* :optional (align 'left))
+(define (fill-win-circle x y r a b *width* *height* :optional (align 'left))
   (gl-ortho-on *width* *height*)
   (let ((x1      x)
         (y1      (- *height* y))
         (q       (make <glu-quadric>)))
+    (if (= a 0) (set! a 1))
+    (if (= b 0) (set! b 1))
     (cond
      ((eq? align 'left)  ; 左寄せ
       (set! x1 (+ x1 r)))
      ((eq? align 'right) ; 右寄せ
       (set! x1 (- x1 r))))
     (gl-translate x1 y1 0)
+    (gl-scale (/. 1 a) (/. 1 b) 1)
     (glu-disk q 0 r 40 1))
   (gl-ortho-off))
 

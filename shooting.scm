@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-7 v1.14
+;; 2016-4-8 v1.15
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -51,6 +51,7 @@
 (define *ssc*        0) ; 制御カウンタ
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:プレイ中,=2:プレイ終了)
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
+
 (define *demoflg*    #f) ; デモフラグ
 (define *demotime1*  0) ; デモ時間調整用1(msec)
 (define *demotime2*  0) ; デモ時間調整用2(msec)
@@ -316,7 +317,7 @@
      (when (and (~ e1 'useflag) (> (~ e1 'state) 0))
        (fill-win-circle (get-win-x (~ e1 'x))
                         (get-win-y (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                        (get-win-w *bs*) *width* *height* 'center)
+                        (get-win-w *bs*) 1 1 *width* *height* 'center)
        ))
    *enemies*))
 
@@ -430,16 +431,17 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字表示
-  (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (y2 49))
+  (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (str7 "") (y2 49))
     (cond
      ;; デモのとき
      (*demoflg*
       (set! str1 "== Demo ==")
       (set! str2 "HIT [D] KEY")
-      (set! str6 (format #f "P=(~D, ~D) COUNT=~D TIME=(~D, ~D, ~D, ~D)"
-                         *demopara1* *demopara2* *democount*
+      (set! str6 (format #f "TIME=(MAX=~D, MIN=~D, AVG=~D, NOW=~D)"
                          *demotmax*  *demotmin*  *demotavg*
-                         (/. (round->exact (* (/. *ssc* 1000) *wait* 10)) 10)))
+                         (round-n (* *ssc* *wait* 0.001) 1)))
+      (set! str7 (format #f "PARAM=(~D, ~D) COUNT=~D"
+                         *demopara1* *demopara2* *democount*))
       )
      ;; デモでないとき
      (else
@@ -472,7 +474,8 @@
     (gl-color 1.0 1.0 0.0 1.0)
     (draw-stroke-text str5 *width* 0 *width* *height* (/. *height* 22) 'right)
     (gl-color 0.0 1.0 0.0 1.0)
-    (draw-stroke-text str6 0 (/. (* *height* 5) 100) *width* *height* (/. *height* 22))
+    (draw-stroke-text str6 0 (/. (* *height*  5) 100) *width* *height* (/. *height* 22))
+    (draw-stroke-text str7 0 (/. (* *height* 10) 100) *width* *height* (/. *height* 22))
     )
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
@@ -709,10 +712,8 @@
            ;; デモの各種データを更新
            (inc! *democount*)
            (set! *demosscsum* (+ *demosscsum* *ssc*))
-           (let ((t    (/. (round->exact (* (/. *ssc* 1000) *wait* 10)) 10))
-                 (tavg (/. (round->exact
-                            (* (/. *demosscsum* *democount* 1000) *wait* 10))
-                           10)))
+           (let ((t    (round-n (* *ssc* *wait* 0.001) 1))
+                 (tavg (round-n (* (/. *demosscsum* *democount*) *wait* 0.001) 1)))
              (cond
               ((= *democount* 1)
                (set! *demotmax* t)

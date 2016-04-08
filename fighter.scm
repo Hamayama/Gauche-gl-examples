@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-3-31 v1.41
+;; 2016-4-8 v1.42
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -481,7 +481,7 @@
                        (- *playcount* *wincount*)
                        (if (= *playcount* 0)
                          0.0
-                         (/. (round->exact (* 100 (/. *wincount* *playcount*))) 100))))
+                         (round-n (/. *wincount* *playcount*) 2))))
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text str1 (/. *width* 2) (/. (* *height* 14) 100) *width* *height* (/. *height*  9) 'center)
     (gl-color 1.0 1.0 0.0 1.0)

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-3-31 v1.21
+;; 2016-4-8 v1.22
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -187,14 +187,14 @@
                        *hs*
                        (if (= *playcount* 0)
                          0.0
-                         (/. (round->exact (* (/. *scsum* *playcount*) 10)) 10))
+                         (round-n (/. *scsum* *playcount*) 1))
                        *playcount*))
     (set! str4 (format #f "(X=~D Y=~D Z=~D)"
                        (truncate->exact *x*) (truncate->exact *y*) (truncate->exact *z*)))
     (set! str5 (format #f "(VX=~D VY=~D VZ=~D)"
-                       (if (= *scene* 0) 0.0 (/. (truncate->exact (* 100 *vx*)) 100))
-                       (/. (truncate->exact (* 100 *vy*)) 100)
-                       (/. (truncate->exact (* 100 *vz*)) 100)))
+                       (if (= *scene* 0) 0.0 (truncate-n *vx* 2))
+                       (truncate-n *vy* 2)
+                       (truncate-n *vz* 2)))
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text str1 (/. *width* 2) (/. (* *height* 26) 100) *width* *height* (/. *height* 13) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
