@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-9 v1.17
+;; 2016-4-9 v1.18
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -734,10 +734,10 @@
                (demoparam-copy *dparam-old* *dparam*)) ; 結果が悪いときは戻す
              (demoparam-copy *dparam* *dparam-old*)
              (set! (~ *dparam* 'p1)
-                   (clamp (round-n (+ (~ *dparam* 'p1) (* (randint -5 5) 0.1)) 1)
+                   (clamp (round-n (+ (~ *dparam* 'p1) (* (randint -1 1) 0.1)) 1)
                           3 50))
              (set! (~ *dparam* 'p2)
-                   (clamp (+ (~ *dparam* 'p2) (randint -5 5))
+                   (clamp (+ (~ *dparam* 'p2) (randint -1 1))
                           1 100))
              ))
          (set! *demotime1* (+ *demotime1* *wait*))
