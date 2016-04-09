@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-4-8 v1.42
+;; 2016-4-9 v1.43
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -36,9 +36,9 @@
 (define *chw*      100) ; キャラクタの幅
 (define *chh*      100) ; キャラクタの高さ
 (define *gdy*     -300) ; 地面のY座標
-(define *maxx*       (- *wd/2* (quotient *chw* 2)))     ; X座標最大値
-(define *minx*       (- (- *wd/2* (quotient *chw* 2)))) ; X座標最小値
-(define *miny*       (+ *gdy*  *chh*))                  ; Y座標最小値
+(define *maxx*       (- *wd/2* (quotient *chw* 2))) ; X座標最大値
+(define *minx*       (- *maxx*))                    ; X座標最小値
+(define *miny*       (+ *gdy*  *chh*))              ; Y座標最小値
 (define *waku*      10) ; 当たり判定調整用
 (define *fixtime*   10) ; 硬直時間
 (define *stephigh*  29) ; ステップ高さ
