@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-9 v1.16
+;; 2016-4-9 v1.17
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -56,6 +56,7 @@
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:プレイ中,=2:プレイ終了)
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 
+(define *demomode*   0) ; デモモード(=0:通常デモ,=1:高速デモ)
 (define *demoflg*    #f) ; デモフラグ
 (define *demotime1*  0) ; デモ時間調整用1(msec)
 (define *demotime2*  0) ; デモ時間調整用2(msec)
@@ -613,7 +614,9 @@
          (timewait *twinfo* 5000
                    (lambda ()
                      (set! *scene*   1)
-                     (set! *demoflg* #t)))
+                     (set! *demoflg* #t)
+                     (set! (~ *wtinfo* 'waittime) (if (> *demomode* 0) 1 *wait*))
+                     ))
          (when (= *scene* 1)
            (keywait-clear  *kwinfo*)
            (timewait-clear *twinfo*))
@@ -657,7 +660,7 @@
              (set! vx (if (< *x* (~ e1 'x)) -8 +8)))
             ;; 中央に戻る
             (else
-             (when (< (randint 0 100) (~ *dparam* 'p2))
+             (when (<= (randint 1 100) (~ *dparam* 'p2))
                (if (< *x* -8) (set! vx +8))
                (if (> *x* +8) (set! vx -8))))
             )
@@ -675,7 +678,8 @@
          (when (or (hash-table-get *keystate* (char->integer #\d) #f)
                    (hash-table-get *keystate* (char->integer #\D) #f))
            (set! *scene*   0)
-           (set! *demoflg* #f))
+           (set! *demoflg* #f)
+           (set! (~ *wtinfo* 'waittime) *wait*))
          )
         ;; デモでないとき
         (else
@@ -729,8 +733,12 @@
              (if (< t tavg)
                (demoparam-copy *dparam-old* *dparam*)) ; 結果が悪いときは戻す
              (demoparam-copy *dparam* *dparam-old*)
-             (set! (~ *dparam* 'p1) (round-n (+ (~ *dparam* 'p1) (* (randint -1 1) 0.1)) 1))
-             (set! (~ *dparam* 'p2) (+ (~ *dparam* 'p2) (randint -1 1)))
+             (set! (~ *dparam* 'p1)
+                   (clamp (round-n (+ (~ *dparam* 'p1) (* (randint -5 5) 0.1)) 1)
+                          3 50))
+             (set! (~ *dparam* 'p2)
+                   (clamp (+ (~ *dparam* 'p2) (randint -5 5))
+                          1 100))
              ))
          (set! *demotime1* (+ *demotime1* *wait*))
          (if (>= *demotime1* 1600) (set! *scene* 0))
@@ -738,7 +746,8 @@
          (when (or (hash-table-get *keystate* (char->integer #\d) #f)
                    (hash-table-get *keystate* (char->integer #\D) #f))
            (set! *scene*   0)
-           (set! *demoflg* #f))
+           (set! *demoflg* #f)
+           (set! (~ *wtinfo* 'waittime) *wait*))
          )
         ;; デモでないとき
         (else
@@ -770,6 +779,7 @@
 ;; メイン処理
 (define (main args)
   (aud-init (> (x->integer (get-one-arg args 1)) 0))
+  (set! *demomode* (x->integer (get-one-arg args 2)))
   (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
