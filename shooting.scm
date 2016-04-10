@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-9 v1.18
+;; 2016-4-10 v1.19
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -174,13 +174,58 @@
                    *width* *height* (get-win-w *chw*) (get-win-h *chh*) 'center)
     ))
 
-;; 自機ビームの表示
-(define (disp-beam)
-  (gl-color 1.0 1.0 0.0 1.0)
-  (textscrn-cls  *tscrn-beam1*)
-  (textscrn-line *tscrn-beam1* 0 0 0 (- *bc* 1) "c ")
-  (textscrn-disp *tscrn-beam1* (get-win-x *x*) (get-win-y (+ *y* (* *chh* *bc*)))
-                 *width* *height* (get-win-w *chw*) (get-win-h *chh*) 'center))
+;; 自機の操作
+(define (control-mychr)
+  (cond
+   ;; デモのとき
+   (*demoflg*
+    ;; 自機の移動
+    (let* ((nes (get-near-enemies 1))
+           (rr1 (car (~ nes 0)))
+           (e1  (cdr (~ nes 0)))
+           (vx  0))
+      (cond
+       ;; 一番近い敵/敵ミサイルを避ける
+       ((and rr1 (< rr1 (* *chw* *chw* (~ *dparam* 'p1) (~ *dparam* 'p1))))
+        (set! vx (if (< *x* (~ e1 'x)) -8 +8)))
+       ;; 中央に戻る
+       (else
+        (when (<= (randint 1 100) (~ *dparam* 'p2))
+          (if (< *x* -8) (set! vx +8))
+          (if (> *x* +8) (set! vx -8)))))
+      (set! *x* (clamp (+ *x* vx) *minx* *maxx*)))
+    ;; 自機ビーム発射
+    (cond
+     ((attack-enemies?)
+      (set! *bc* 1)
+      (set! *demotime2* 0))
+     ((> *bc* 0)
+      (set! *bc* 1)
+      (set! *demotime2* (+ *demotime2* *wait*))
+      (if (>= *demotime2* 200) (set! *bc* 0))))
+    )
+   ;; デモでないとき
+   (else
+    ;; 自機の移動
+    (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
+      (set! *x* (clamp (+ *x* -8) *minx* *maxx*)))
+    (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
+      (set! *x* (clamp (+ *x*  8) *minx* *maxx*)))
+    (if (hash-table-get *spkeystate* GLUT_KEY_UP    #f)
+      (set! *y* (clamp (+ *y*  8) *miny* *maxy*)))
+    (if (hash-table-get *spkeystate* GLUT_KEY_DOWN  #f)
+      (set! *y* (clamp (+ *y* -8) *miny* *maxy*)))
+    ;; 自機ビーム発射
+    (if (or (hash-table-get *mdkeystate* GLUT_ACTIVE_CTRL #f)
+            (hash-table-get *keystate* (char->integer #\space) #f)
+            (hash-table-get *keystate* (char->integer #\a) #f)
+            (hash-table-get *keystate* (char->integer #\A) #f)
+            (hash-table-get *keystate* (char->integer #\z) #f)
+            (hash-table-get *keystate* (char->integer #\Z) #f))
+      (set! *bc* 1)
+      (set! *bc* 0))
+    )
+   ))
 
 ;; 敵/敵ミサイルの初期化
 (define (init-enemies enemies)
@@ -295,6 +340,14 @@
          ))
      enemies)
     ret))
+
+;; 自機ビームの表示
+(define (disp-beam)
+  (gl-color 1.0 1.0 0.0 1.0)
+  (textscrn-cls  *tscrn-beam1*)
+  (textscrn-line *tscrn-beam1* 0 0 0 (- *bc* 1) "c ")
+  (textscrn-disp *tscrn-beam1* (get-win-x *x*) (get-win-y (+ *y* (* *chh* *bc*)))
+                 *width* *height* (get-win-w *chw*) (get-win-h *chh*) 'center))
 
 ;; 自機ビームの当たり判定
 (define (hit-beam?)
@@ -646,75 +699,26 @@
        ;; 敵ミサイルの移動
        (move-enemies *missiles*)
        ;; 自機の操作
-       (cond
-        ;; デモのとき
-        (*demoflg*
-         ;; 自機の移動
-         (let* ((nes (get-near-enemies 1))
-                (rr1 (car (~ nes 0)))
-                (e1  (cdr (~ nes 0)))
-                (vx  0))
-           (cond
-            ;; 一番近い敵/敵ミサイルを避ける
-            ((and rr1 (< rr1 (* *chw* *chw* (~ *dparam* 'p1) (~ *dparam* 'p1))))
-             (set! vx (if (< *x* (~ e1 'x)) -8 +8)))
-            ;; 中央に戻る
-            (else
-             (when (<= (randint 1 100) (~ *dparam* 'p2))
-               (if (< *x* -8) (set! vx +8))
-               (if (> *x* +8) (set! vx -8))))
-            )
-           (set! *x* (clamp (+ *x* vx) *minx* *maxx*))
-           )
-         ;; 自機ビーム発射
-         (cond
-          ((attack-enemies?)
-           (set! *bc* 1)
-           (set! *demotime2* 0))
-          ((> *bc* 0)
-           (set! *demotime2* (+ *demotime2* *wait*))
-           (if (>= *demotime2* 200) (set! *bc* 0))))
-         ;; デモを抜けるチェック
-         (when (or (hash-table-get *keystate* (char->integer #\d) #f)
-                   (hash-table-get *keystate* (char->integer #\D) #f))
-           (set! *scene*   0)
-           (set! *demoflg* #f)
-           (set! (~ *wtinfo* 'waittime) *wait*))
-         )
-        ;; デモでないとき
-        (else
-         ;; 自機の移動
-         (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
-           (set! *x* (clamp (+ *x* -8) *minx* *maxx*)))
-         (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
-           (set! *x* (clamp (+ *x*  8) *minx* *maxx*)))
-         (if (hash-table-get *spkeystate* GLUT_KEY_UP    #f)
-           (set! *y* (clamp (+ *y*  8) *miny* *maxy*)))
-         (if (hash-table-get *spkeystate* GLUT_KEY_DOWN  #f)
-           (set! *y* (clamp (+ *y* -8) *miny* *maxy*)))
-         ;; 自機ビーム発射
-         (if (or (hash-table-get *mdkeystate* GLUT_ACTIVE_CTRL #f)
-                 (hash-table-get *keystate* (char->integer #\space) #f)
-                 (hash-table-get *keystate* (char->integer #\a) #f)
-                 (hash-table-get *keystate* (char->integer #\A) #f)
-                 (hash-table-get *keystate* (char->integer #\z) #f)
-                 (hash-table-get *keystate* (char->integer #\Z) #f))
-           (set! *bc* 1)
-           (set! *bc* 0))
-         ))
+       (control-mychr)
        ;; 自機ビーム処理
-       (if (> *bc* 0)
-         (let loop ((i 1))
-           (set! *bc* i)
-           (if (and (<= i 25) (not (hit-beam?)))
-             (loop (+ i 1)))
-           ))
+       (if (= *bc* 1)
+         (let loop ()
+           (when (and (<= *bc* 25) (not (hit-beam?)))
+             (inc! *bc*)
+             (loop))))
        ;; 爆風の当たり判定
        (hit-blast?)
        ;; 敵の当たり判定
        (if (hit-enemies? *enemies*) (set! *scene* 2))
        ;; 敵ミサイルの当たり判定
        (if (hit-enemies? *missiles*) (set! *scene* 2))
+       ;; デモを抜けるチェック
+       (when (and *demoflg*
+                  (or (hash-table-get *keystate* (char->integer #\d) #f)
+                      (hash-table-get *keystate* (char->integer #\D) #f)))
+         (set! *scene*   0)
+         (set! *demoflg* #f)
+         (set! (~ *wtinfo* 'waittime) *wait*))
        )
       ((2) ; プレイ終了
        (cond
@@ -729,7 +733,8 @@
              (set! *demotmax* (max *demotmax* t))
              (set! *demotmin* (if (= *democount* 1) t (min *demotmin* t)))
              (set! *demotavg* tavg)
-             ;; デモ用パラメータの自動調整
+             ;; デモ用パラメータの自動調整機能
+             ;; (パラメータを乱数で少しだけ変化させる)
              (if (< t tavg)
                (demoparam-copy *dparam-old* *dparam*)) ; 結果が悪いときは戻す
              (demoparam-copy *dparam* *dparam-old*)
