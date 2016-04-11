@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-10 v1.19
+;; 2016-4-11 v1.20
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -65,7 +65,6 @@
 (define *demotmax* 0.0) ; デモ生存時間最大値
 (define *demotmin* 0.0) ; デモ生存時間最小値
 (define *demotavg* 0.0) ; デモ生存時間平均値
-
 
 ;; 音楽データクラスのインスタンス生成
 (define *adata-start* (make <auddata>))
@@ -304,10 +303,8 @@
          (set! (~ e1 'x) (+ (~ e1 'x) (* (~ e1 'speed) (%cos (* (~ e1 'degree) pi/180)))))
          (set! (~ e1 'y) (+ (~ e1 'y) (* (~ e1 'speed) (%sin (* (~ e1 'degree) pi/180)))))
          ;; 座標の範囲チェック
-         (if (or (< (~ e1 'x) (~ e1 'minx))
-                 (> (~ e1 'x) (~ e1 'maxx))
-                 (< (~ e1 'y) (~ e1 'miny))
-                 (> (~ e1 'y) (~ e1 'maxy)))
+         (if (not (and (<= (~ e1 'minx) (~ e1 'x) (~ e1 'maxx))
+                       (<= (~ e1 'miny) (~ e1 'y) (~ e1 'maxy))))
            ;; 範囲外なら未使用にする
            (set! (~ e1 'useflag) #f)))
         (else
@@ -329,14 +326,12 @@
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
-         (let ((ex (get-win-x (~ e1 'x)))
-               (ey (get-win-y (~ e1 'y))))
-           (when (textscrn-disp-check-str (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
-                                          (get-win-w *chw*) (get-win-h *chh*)
-                                          ex ey 'center)
-             (set! ret #t)
-             (if (not *demoflg*) (auddata-play *adata-end*))
-             ))
+         (when (textscrn-disp-check-str
+                (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
+                (get-win-w *chw*) (get-win-h *chh*)
+                (get-win-x (~ e1 'x)) (get-win-y (~ e1 'y)) 'center)
+           (set! ret #t)
+           (if (not *demoflg*) (auddata-play *adata-end*)))
          ))
      enemies)
     ret))
@@ -359,20 +354,18 @@
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
-         (let ((ex (get-win-x (~ e1 'x)))
-               (ey (get-win-y (~ e1 'y))))
-           (when (textscrn-disp-check-str (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
-                                          (get-win-w *chw*) (get-win-h *chh*)
-                                          ex ey 'center)
-             (set! ret #t)
-             (dec! (~ e1 'life))
-             (when (<= (~ e1 'life) 0)
-               (set! (~ e1 'state) 1)
-               (when (not *demoflg*)
-                 (set! *sc* (+ *sc* 100))
-                 (auddata-play *adata-hit*)
-                 ))
-             ))
+         (when (textscrn-disp-check-str
+                (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
+                (get-win-w *chw*) (get-win-h *chh*)
+                (get-win-x (~ e1 'x)) (get-win-y (~ e1 'y)) 'center)
+           (set! ret #t)
+           (dec! (~ e1 'life))
+           (when (<= (~ e1 'life) 0)
+             (set! (~ e1 'state) 1)
+             (when (not *demoflg*)
+               (set! *sc* (+ *sc* 100))
+               (auddata-play *adata-hit*)
+               )))
          ))
      *enemies*)
     ret))
