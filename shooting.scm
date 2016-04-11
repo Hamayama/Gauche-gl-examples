@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-11 v1.20
+;; 2016-4-11 v1.21
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -256,9 +256,7 @@
    (else
     ;; 敵ミサイルの生成
     (let1 e1 (~ enemies (randint 0 (max (- *mr* 1) 0)))
-      (if (and (~ e1 'useflag)
-               (= (~ e1 'state) 0)
-               (> (~ e1 'y) 150))
+      (if (and (~ e1 'useflag) (= (~ e1 'state) 0) (> (~ e1 'y) 150))
         (let1 i (find-index (lambda (m1) (not (~ m1 'useflag))) missiles)
           (if (and i (< i *mr*))
             (let1 m1 (~ missiles i)
@@ -364,8 +362,7 @@
              (set! (~ e1 'state) 1)
              (when (not *demoflg*)
                (set! *sc* (+ *sc* 100))
-               (auddata-play *adata-hit*)
-               )))
+               (auddata-play *adata-hit*))))
          ))
      *enemies*)
     ret))
@@ -401,9 +398,7 @@
                     (set! (~ e2 'state) 1)
                     (when (not *demoflg*)
                       (set! *sc* (+ *sc* 200))
-                      (auddata-play *adata-hit*)
-                      ))
-                  ))
+                      (auddata-play *adata-hit*)))))
               ))
           *enemies*)
          ))
@@ -426,8 +421,8 @@
              (if (< (binary-heap-num-entries bh) n)
                (binary-heap-push! bh (cons rr e1))
                (if (< rr (car (binary-heap-find-max bh)))
-                 (binary-heap-swap-max! bh (cons rr e1))))
-             )))
+                 (binary-heap-swap-max! bh (cons rr e1)))))
+           ))
        enemies))
     (%search-near-enemies *enemies*)
     (%search-near-enemies *missiles*)
@@ -727,9 +722,9 @@
              (set! *demotmin* (if (= *democount* 1) t (min *demotmin* t)))
              (set! *demotavg* tavg)
              ;; デモ用パラメータの自動調整機能
-             ;; (パラメータを乱数で少しだけ変化させる)
+             ;; (パラメータを乱数で少しだけ変化させる。結果が悪ければ元に戻す)
              (if (< t tavg)
-               (demoparam-copy *dparam-old* *dparam*)) ; 結果が悪いときは戻す
+               (demoparam-copy *dparam-old* *dparam*))
              (demoparam-copy *dparam* *dparam-old*)
              (set! (~ *dparam* 'p1)
                    (clamp (round-n (+ (~ *dparam* 'p1) (* (randint -1 1) 0.1)) 1)
