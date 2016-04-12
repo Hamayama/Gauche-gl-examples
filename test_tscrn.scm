@@ -22,19 +22,20 @@
 
 ;; テキスト画面クラスのインスタンス生成
 (define *tscrn1* (make <textscrn>))
-(textscrn-init *tscrn1* 50 25)
-(textscrn-cls  *tscrn1*)
-(textscrn-pset *tscrn1*  0  0 "ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890")
-(textscrn-pset *tscrn1*  0  1 "abcdefghijklmnopqrstuvwxyz")
-(textscrn-pset *tscrn1* 27  1 (textscrn-pget *tscrn1* 27 0 5))
-(textscrn-line *tscrn1* 12  6 49 24 "*=")
-(textscrn-box  *tscrn1*  0  3  4  7 "012")
-(textscrn-fbox *tscrn1*  6  3 10  7 "012")
-(textscrn-circle  *tscrn1* 24 5 7 1 2 "o")
-(textscrn-fcircle *tscrn1* 40 5 7 1 2 "o")
-(textscrn-poly  *tscrn1* '(( 3 9) (0 13) ( 6 13)) "xyz")
-(textscrn-fpoly *tscrn1* '((11 9) (8 13) (14 13)) "xyz")
-(textscrn-fpoly *tscrn1* '((10 15) (4 24) (19 18) (1 18) (16 24)) "#=")
+(textscrn-init    *tscrn1* 50 25)
+(textscrn-cls     *tscrn1*)
+(textscrn-pset    *tscrn1*  0  0 (list->string (map integer->char (iota 32 32))))
+(textscrn-pset    *tscrn1*  0  1 (list->string (map integer->char (iota 32 64))))
+(textscrn-pset    *tscrn1*  0  2 (list->string (map integer->char (iota 32 96))))
+(textscrn-pset    *tscrn1* 45  0 (textscrn-pget *tscrn1* 1 1 5))
+(textscrn-line    *tscrn1* 12  6 49 24 "*=")
+(textscrn-box     *tscrn1*  0  3  4  7 "012")
+(textscrn-fbox    *tscrn1*  6  3 10  7 "012")
+(textscrn-circle  *tscrn1* 26  6  7  1  2 "o")
+(textscrn-fcircle *tscrn1* 41  6  7  1  2 "o")
+(textscrn-poly    *tscrn1* '(( 3 9) (0 13) ( 6 13)) "xyz")
+(textscrn-fpoly   *tscrn1* '((11 9) (8 13) (14 13)) "xyz")
+(textscrn-fpoly   *tscrn1* '((10 15) (4 24) (19 18) (1 18) (16 24)) "#=")
 
 
 ;; ウィンドウ上のX座標を取得
