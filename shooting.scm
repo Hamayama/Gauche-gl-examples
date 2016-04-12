@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-11 v1.21
+;; 2016-4-12 v1.22
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -78,7 +78,7 @@
 (define *twinfo* (make <timewaitinfo> :waitinterval *wait*))
 
 ;; ウェイト時間調整クラスのインスタンス生成
-(define *wtinfo* (make <waitmsecinfo> :waittime *wait*))
+(define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
 ;; テキスト画面クラスのインスタンス生成
 ;; (自機)
@@ -656,7 +656,7 @@
                    (lambda ()
                      (set! *scene*   1)
                      (set! *demoflg* #t)
-                     (set! (~ *wtinfo* 'waittime) (if (> *demomode* 0) 1 *wait*))
+                     (set! (~ *wcinfo* 'waittime) (if (> *demomode* 0) 1 *wait*))
                      ))
          (when (= *scene* 1)
            (keywait-clear  *kwinfo*)
@@ -706,7 +706,7 @@
                       (hash-table-get *keystate* (char->integer #\D) #f)))
          (set! *scene*   0)
          (set! *demoflg* #f)
-         (set! (~ *wtinfo* 'waittime) *wait*))
+         (set! (~ *wcinfo* 'waittime) *wait*))
        )
       ((2) ; プレイ終了
        (cond
@@ -740,7 +740,7 @@
                    (hash-table-get *keystate* (char->integer #\D) #f))
            (set! *scene*   0)
            (set! *demoflg* #f)
-           (set! (~ *wtinfo* 'waittime) *wait*))
+           (set! (~ *wcinfo* 'waittime) *wait*))
          )
         ;; デモでないとき
         (else
@@ -761,7 +761,7 @@
   ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整
-  (glut-timer-func (waitmsec-calc *wtinfo*) timer 0)
+  (glut-timer-func (waitcalc *wcinfo*) timer 0)
   )
 
 ;; 終了

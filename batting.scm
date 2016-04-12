@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-4-8 v1.22
+;; 2016-4-12 v1.23
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -66,7 +66,7 @@
 (define *twinfo* (make <timewaitinfo> :waitinterval *wait*))
 
 ;; ウェイト時間調整クラスのインスタンス生成
-(define *wtinfo* (make <waitmsecinfo> :waittime *wait*))
+(define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
 
 ;; 直方体(上面に原点あり)
@@ -382,7 +382,7 @@
   ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整
-  (glut-timer-func (waitmsec-calc *wtinfo*) timer 0)
+  (glut-timer-func (waitcalc *wcinfo*) timer 0)
   )
 
 ;; 終了

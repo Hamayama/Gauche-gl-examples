@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-4-9 v1.43
+;; 2016-4-12 v1.44
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -61,7 +61,7 @@
 (define *twinfo* (make <timewaitinfo> :waitinterval *wait*))
 
 ;; ウェイト時間調整クラスのインスタンス生成
-(define *wtinfo* (make <waitmsecinfo> :waittime *wait*))
+(define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
 ;; ファイタークラス
 ;;   ・自分と敵の移動、衝突判定、表示を行う
@@ -630,7 +630,7 @@
   ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整
-  (glut-timer-func (waitmsec-calc *wtinfo*) timer 0)
+  (glut-timer-func (waitcalc *wcinfo*) timer 0)
   )
 
 ;; 終了

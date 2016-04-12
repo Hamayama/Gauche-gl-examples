@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-4-8 v1.03
+;; 2016-4-12 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -15,7 +15,7 @@
     randint round-n truncate-n recthit? get-one-arg
     <keywaitinfo> keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
-    <waitmsecinfo> waitmsec-calc
+    <waitcalcinfo> waitcalc
     ))
 (select-module glmintool)
 
@@ -28,12 +28,12 @@
       (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
 
 ;; 数値xを偶数丸めして小数第n位までの数値にする
-(define (round-n x :optional (n 0))
+(define (round-n x n)
   (let1 p (expt 10 n)
     (/. (round (* x p)) p)))
 
 ;; 数値xを0方向に切り捨てて小数第n位までの数値にする
-(define (truncate-n x :optional (n 0))
+(define (truncate-n x n)
   (let1 p (expt 10 n)
     (/. (truncate (* x p)) p)))
 
@@ -118,11 +118,11 @@
 ;; ウェイト時間調整クラス
 ;;   ・処理時間を測定して、ウェイト時間が一定になるように調整する
 ;;   ・glut-timer-func と組み合わせて使用する
-(define-class <waitmsecinfo> ()
+(define-class <waitcalcinfo> ()
   ((waitdata :init-value 0) ; ウェイト時間調整用(msec)
    (waittime :init-keyword :waittime :init-value 0) ; ウェイト時間指定値(msec)
    ))
-(define-method waitmsec-calc ((w <waitmsecinfo>))
+(define-method waitcalc ((w <waitcalcinfo>))
   (let* ((tnow      (current-time))
          (tnowmsec  (+ (* (~ tnow 'second) 1000) (quotient (~ tnow 'nanosecond) 1000000)))
          (tdiffmsec (- tnowmsec (~ w 'waitdata)))
@@ -136,6 +136,6 @@
     (set! (~ w 'waitdata) (+ tnowmsec waitmsec))
     ;(print tdiffmsec " " waitmsec)
     waitmsec))
-;(define *wtinfo* (make <waitmsecinfo> :waittime *wait*)) ; インスタンス生成例
+;(define *wcinfo* (make <waitcalcinfo> :waittime *wait*)) ; インスタンス生成例
 
 
