@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-8 v1.06
+;; 2016-4-12 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -17,7 +17,8 @@
     draw-bitmap-text draw-stroke-text
     fill-win-rect fill-win-circle
     <textscrn> textscrn-init textscrn-disp
-    textscrn-cls textscrn-pset textscrn-line textscrn-box textscrn-fbox
+    textscrn-cls textscrn-pset textscrn-pget
+    textscrn-line textscrn-box textscrn-fbox
     textscrn-circle textscrn-fcircle textscrn-poly textscrn-fpoly
     textscrn-check-str textscrn-disp-check-str
     ))
@@ -230,6 +231,17 @@
 (define-method textscrn-pset ((ts <textscrn>) (x <integer>) (y <integer>) (str <string>))
   (textscrn-over-sub ts x y (string->u32vector str)))
 
+;; 文字列の点取得処理
+(define-method textscrn-pget ((ts <textscrn>) (x <integer>) (y <integer>) :optional (n 1))
+  (let* ((w  (~ ts 'width))
+         (h  (~ ts 'height))
+         (x1 (max 0 x))
+         (x2 (min (- w 1) (+ x n)))
+         (i1 (* y w)))
+    (if (and (>= y 0) (< y h) (< x1 x2))
+      (u32vector->string (~ ts 'data) (+ i1 x1) (+ i1 x2))
+      "")))
+
 ;; 文字列のライン表示処理
 (define-method textscrn-line ((ts <textscrn>)
                               (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>)
@@ -355,6 +367,7 @@
     ))
 
 ;; 文字列の多角形表示処理
+;;   ・point は ((x1 y1) (x2 y2) ...) という頂点座標のリスト
 (define-method textscrn-poly ((ts <textscrn>)
                               (point <list>) (str <string>)
                               :optional (notclose #f))
@@ -374,6 +387,7 @@
     ))
 
 ;; 文字列の多角形塗りつぶし表示処理
+;;   ・point は ((x1 y1) (x2 y2) ...) という頂点座標のリスト
 (define-class <edgeinfo> () (a ydir y1 y2 x)) ; 辺情報クラス
 (define-method textscrn-fpoly ((ts <textscrn>)
                                (point <list>) (str <string>))
