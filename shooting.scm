@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-12 v1.22
+;; 2016-4-17 v1.23
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -723,9 +723,9 @@
              (set! *demotavg* tavg)
              ;; デモ用パラメータの自動調整機能
              ;; (パラメータを乱数で少しだけ変化させる。結果が悪ければ元に戻す)
-             (if (< t tavg)
+             (if (>= t tavg)
+               (demoparam-copy *dparam* *dparam-old*)
                (demoparam-copy *dparam-old* *dparam*))
-             (demoparam-copy *dparam* *dparam-old*)
              (set! (~ *dparam* 'p1)
                    (clamp (round-n (+ (~ *dparam* 'p1) (* (randint -1 1) 0.1)) 1)
                           3 50))
