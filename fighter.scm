@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-4-12 v1.44
+;; 2016-4-18 v1.45
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -48,6 +48,12 @@
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:戦闘中,=2:戦闘終了)
 (define *playcount*  0) ; プレイ数
 (define *wincount*   0) ; 勝利数
+
+;; データファイルのパス名を取得する
+(define get-data-path
+  (let1 dir (if-let1 path (current-load-path)
+              (string-append (sys-dirname path) "/") "")
+    (lambda (fname) (string-append dir fname))))
 
 ;; 音楽データクラスのインスタンス生成
 (define *adata-start* (make <auddata>))
@@ -430,13 +436,13 @@
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; 音楽データの初期化
-  (auddata-load-wav-file *adata-start* "sound/appear1.wav")
+  (auddata-load-wav-file *adata-start* (get-data-path "sound/appear1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.05)
   (auddata-set-prop *adata-start* AL_PITCH 3.0)
-  (auddata-load-wav-file *adata-hit*   "sound/decide2.wav")
+  (auddata-load-wav-file *adata-hit*   (get-data-path "sound/decide2.wav"))
   (auddata-set-prop *adata-hit*   AL_GAIN  0.4)
   (auddata-set-prop *adata-hit*   AL_PITCH 1.1)
-  (auddata-load-wav-file *adata-end*   "sound/pattern05.wav")
+  (auddata-load-wav-file *adata-end*   (get-data-path "sound/pattern05.wav"))
   (auddata-set-prop *adata-end*   AL_GAIN  0.2)
   (auddata-set-prop *adata-end*   AL_PITCH 1.3)
   )
