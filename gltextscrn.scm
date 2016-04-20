@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-12 v1.07
+;; 2016-4-20 v1.08
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -545,24 +545,19 @@
 
 ;; 文字列の上書き処理サブ(内部処理用)
 (define-method textscrn-over-sub ((ts <textscrn>) (x <integer>) (y <integer>) (strdata <u32vector>))
-  (let* ((w     (~ ts 'width))
-         (h     (~ ts 'height))
-         (data  (~ ts 'data))
-         (i     (+ (* y w) x)))
-    (if (and (>= y 0) (< y h))
-      (for-each
-       (lambda (c)
-         (if (and (>= x 0) (< x w))
-           (set! (~ data i) c))
-         (inc! x)
-         (inc! i))
-       strdata)
-      )))
+  (let* ((strdatalen (u32vector-length strdata))
+         (w  (~ ts 'width))
+         (h  (~ ts 'height))
+         (i1 (+ (* y w) (clamp x 0 (- w 1))))
+         (i2 (clamp (- x)   0 strdatalen))
+         (i3 (clamp (- w x) 0 strdatalen)))
+    (if (and (>= y 0) (< y h) (< i2 i3))
+      (u32vector-copy! (~ ts 'data) i1 strdata i2 i3))))
 
 ;; 文字列の繰り返し処理サブ(内部処理用)
 (define-method textscrn-repeat-sub ((ts <textscrn>) (strdata <u32vector>) (count <integer>))
   (let ((strdatalen (u32vector-length strdata))
-        (strdata1   (make-u32vector   count)))
+        (strdata1   (make-u32vector count)))
     (let loop ((i 0))
       (cond
        ((< (+ i strdatalen) count)
@@ -575,10 +570,10 @@
 
 ;; 文字列の点設定処理サブ(内部処理用)
 (define-method textscrn-pset-sub ((ts <textscrn>) (x <integer>) (y <integer>) (c <integer>))
-  (let* ((w     (~ ts 'width))
-         (h     (~ ts 'height))
-         (data  (~ ts 'data))
-         (i     (+ (* y w) x)))
+  (let* ((w    (~ ts 'width))
+         (h    (~ ts 'height))
+         (data (~ ts 'data))
+         (i    (+ (* y w) x)))
     (if (and (>= y 0) (< y h) (>= x 0) (< x w))
       (set! (~ data i) c))
     ))

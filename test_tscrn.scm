@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; テキスト画面クラスのテスト
-;; 2016-4-12
+;; 2016-4-20
 ;;
 (add-load-path "." :relative)
 (use gl)
@@ -27,7 +27,7 @@
 (textscrn-pset    *tscrn1*  0  0 (list->string (map integer->char (iota 32 32))))
 (textscrn-pset    *tscrn1*  0  1 (list->string (map integer->char (iota 32 64))))
 (textscrn-pset    *tscrn1*  0  2 (list->string (map integer->char (iota 32 96))))
-(textscrn-pset    *tscrn1* 45  0 (textscrn-pget *tscrn1* 1 1 5))
+(textscrn-pset    *tscrn1* 44  0 (textscrn-pget *tscrn1* 1 1 5))
 (textscrn-line    *tscrn1* 12  6 49 24 "*=")
 (textscrn-box     *tscrn1*  0  3  4  7 "012")
 (textscrn-fbox    *tscrn1*  6  3 10  7 "012")
@@ -36,7 +36,15 @@
 (textscrn-poly    *tscrn1* '(( 3 9) (0 13) ( 6 13)) "xyz")
 (textscrn-fpoly   *tscrn1* '((11 9) (8 13) (14 13)) "xyz")
 (textscrn-fpoly   *tscrn1* '((10 15) (4 24) (19 18) (1 18) (16 24)) "#=")
-
+(define *tscrn2* (make <textscrn>))
+(textscrn-init    *tscrn2*  5  5)
+(textscrn-pset    *tscrn2*  0  0 "ABC")
+(textscrn-pset    *tscrn2* -1  1 "ABC")
+(textscrn-pset    *tscrn2*  3  2 "ABC")
+(textscrn-pset    *tscrn2* -3  3 "ABC")
+(textscrn-pset    *tscrn2*  5  3 "ABC")
+(textscrn-pset    *tscrn2* -1  4 "1234567")
+(textscrn-box     *tscrn2* -1 -1  5  5 "x")
 
 ;; ウィンドウ上のX座標を取得
 (define (get-win-x x)
@@ -79,6 +87,9 @@
   (gl-color 1.0 1.0 1.0 1.0)
   (textscrn-disp *tscrn1* 0 0 *width* *height*
                  (get-win-w *chw*) (get-win-h *chh*))
+  (gl-color 0.0 1.0 1.0 1.0)
+  (textscrn-disp *tscrn2* (get-win-x 0) (get-win-y 0) *width* *height*
+                 (get-win-w *chw*) (get-win-h *chh*) 'right)
   ;; 背景の表示
   (gl-color 0.0 0.0 0.3 1.0)
   (fill-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)
