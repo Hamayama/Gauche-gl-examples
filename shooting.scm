@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-18 v1.24
+;; 2016-4-20 v1.25
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -19,7 +19,6 @@
 (use gauche.uvector)
 (use gauche.sequence)
 (use math.const)
-(use data.heap)
 (use glmintool)
 (use gltextscrn)
 (use alaudplay)
@@ -191,7 +190,7 @@
            (vx  0))
       (cond
        ;; 一番近い敵/敵ミサイルを避ける
-       ((and rr1 (< rr1 (* *chw* *chw* (~ *dparam* 'p1) (~ *dparam* 'p1))))
+       ((and e1 (< rr1 (* *chw* *chw* (~ *dparam* 'p1) (~ *dparam* 'p1))))
         (set! vx (if (< *x* (~ e1 'x)) -8 +8)))
        ;; 中央に戻る
        (else
@@ -412,11 +411,10 @@
     ret))
 
 ;; 自機に近い敵/敵ミサイルを、近い順にn個だけ取得する(デモ用)
-;;   ・戻り値は ((距離の2乗 . 敵) ...) というリストを返す
-;;   ・有効な敵がいなければ ((#f . #f) ...) というリストを返す
+;;   ・戻り値は #((距離の2乗 . 敵) ...) というベクタを返す
+;;   ・有効な敵がいなければ #((1000000 . #f) ...) というベクタを返す
 (define (get-near-enemies n)
-  (let* ((ret '())
-         (bh  (make-binary-heap :storage (make-vector n #f) :key car)))
+  (let1 ret (make-vector n '(1000000 . #f))
     (define (%search-near-enemies enemies)
       (for-each
        (lambda (e1)
@@ -424,20 +422,15 @@
            (let* ((xdiff (- (~ e1 'x) *x*))
                   (ydiff (- (~ e1 'y) *y*))
                   (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
-             (if (< (binary-heap-num-entries bh) n)
-               (binary-heap-push! bh (cons rr e1))
-               (if (< rr (car (binary-heap-find-max bh)))
-                 (binary-heap-swap-max! bh (cons rr e1)))))
+             (when (< rr (car (~ ret (- n 1))))
+               (set! (~ ret (- n 1)) (cons rr e1))
+               (set! ret (sort! ret < car))))
            ))
        enemies))
     (%search-near-enemies *enemies*)
     (%search-near-enemies *missiles*)
-    (do ((i 0 (+ i 1)))
-        ((>= i n) #f)
-      (push! ret (if (binary-heap-empty? bh)
-                   '(#f . #f)
-                   (binary-heap-pop-min! bh))))
-    (reverse ret)))
+    ;(print ret)
+    ret))
 
 ;; 自機の敵への攻撃チェック(デモ用)
 (define (attack-enemies?)
