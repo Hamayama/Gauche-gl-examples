@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-20 v1.08
+;; 2016-4-20 v1.09
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -252,8 +252,8 @@
 (define-method textscrn-box ((ts <textscrn>)
                              (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>)
                              (str <string>))
-  (let ((x3 0) (y3 0) (x4 0) (y4 0)
-        (strdata (string->u32vector str)))
+  (let ((strdata (string->u32vector str))
+        (x3 0) (y3 0) (x4 0) (y4 0))
     (cond
      ((> x1 x2) (set! x3 x2) (set! x4 x1))
      (else      (set! x3 x1) (set! x4 x2)))
@@ -275,8 +275,8 @@
 (define-method textscrn-fbox ((ts <textscrn>)
                               (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>)
                               (str <string>))
-  (let ((x3 0) (y3 0) (x4 0) (y4 0)
-        (strdata (string->u32vector str)))
+  (let ((strdata (string->u32vector str))
+        (x3 0) (y3 0) (x4 0) (y4 0))
     (cond
      ((> x1 x2) (set! x3 x2) (set! x4 x1))
      (else      (set! x3 x1) (set! x4 x2)))
@@ -582,8 +582,8 @@
 (define-method textscrn-line-sub ((ts <textscrn>)
                                   (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>)
                                   (strdata <u32vector>))
-  (let ((x3 x1) (y3 y1) (dx 0) (dy 0) (sx 0) (sy 0) (e1 0)
-        (strdatalen (u32vector-length strdata)))
+  (let ((strdatalen (u32vector-length strdata))
+        (x3 x1) (y3 y1) (dx 0) (dy 0) (sx 0) (sy 0) (e1 0))
     (cond
      ((< x1 x2) (set! dx (- x2 x1)) (set! sx  1))
      ((> x1 x2) (set! dx (- x1 x2)) (set! sx -1)))
