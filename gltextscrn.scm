@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-20 v1.09
+;; 2016-4-21 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -23,6 +23,13 @@
     textscrn-check-str textscrn-disp-check-str
     ))
 (select-module gltextscrn)
+
+;; Gauche-gl のテスト時のSEGVエラー対策
+;;   ・フォントに直接アクセスするとSEGVエラーになるので、
+;;     test-module を実行する前に以下の変数を #f にすること
+;;     (Gauche-gl の開発最新版では修正済み)
+(define *font-bitmap-1* GLUT_BITMAP_TIMES_ROMAN_24)
+(define *font-stroke-1* GLUT_STROKE_ROMAN)
 
 ;; 正射影設定ON/OFF(内部処理用)
 ;;   ・投影方法を正射影に設定し、また、
@@ -51,7 +58,7 @@
 ;;   ・日本語表示不可
 ;;   ・文字のサイズはフォントにより固定
 (define (draw-bitmap-text str x y *width* *height*
-                          :optional (size 24) (align 'left) (font GLUT_BITMAP_TIMES_ROMAN_24))
+                          :optional (size 24) (align 'left) (font *font-bitmap-1*))
   (gl-ortho-on *width* *height*)
   (let ((stw     0)
         (x1      x)
@@ -74,7 +81,7 @@
 ;;   ・日本語表示不可
 ;;   ・文字のサイズは指定可能
 (define (draw-stroke-text str x y *width* *height*
-                          :optional (size 24) (align 'left) (font GLUT_STROKE_ROMAN))
+                          :optional (size 24) (align 'left) (font *font-stroke-1*))
   (gl-ortho-on *width* *height*)
   (let ((stw     0)
         (x1      x)
@@ -166,7 +173,7 @@
                               :optional (align 'left))
   (gl-ortho-on *width* *height*)
   ;; 倍率とオフセット値を調整して、等幅フォントのように表示する
-  (let* ((font    GLUT_STROKE_ROMAN) ; フォント(固定)
+  (let* ((font    *font-stroke-1*)   ; フォント(固定)
          (fchw    0)                 ; フォントの文字幅
          (fchh    (+ 152.38 20))     ; フォントの文字高さ
          (xscale  0)                 ; X方向の倍率

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; alaudplay.scm
-;; 2016-4-1 v1.03
+;; 2016-4-21 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-al を使って音楽を演奏するためのモジュールです。
@@ -14,8 +14,9 @@
   (import al)
   (use gauche.uvector)
   (use gauche.vport) ; open-output-uvector用
-  ;(use mmlproc)
-  (autoload mmlproc write-wav get-wav-size)
+  ;(use mmlproc)     ; write-wav,get-wav-size用
+  (define-module mmlproc)
+  (import mmlproc)
   (export
     aud-enabled? aud-init aud-end
     <auddata> auddata-load-wav-file auddata-load-pcm-raw auddata-free
@@ -31,13 +32,18 @@
     ))
 (select-module alaudplay)
 
-;; Gauche-al モジュールの定数のダミー設定
-(select-module al)
-(define-syntax define-and-export-variables
+;; 定数のダミー設定用マクロ
+(define-syntax define-dummy-constants
   (syntax-rules ()
-    ((_ var ...)
-     (begin (export var ...) (define var 0) ...))))
-(define-and-export-variables
+    ((_ name ...)
+     (begin (define name 0) ...))))
+(define-syntax overwrite-module-constants
+  (syntax-rules ()
+    ((_ mod name ...)
+     (begin (set! name (with-module mod name)) ...))))
+
+;; Gauche-al モジュールの定数のダミー設定
+(define-dummy-constants
   AL_PITCH AL_GAIN AL_MAX_DISTANCE AL_ROLLOFF_FACTOR AL_REFERENCE_DISTANCE
   AL_MIN_GAIN AL_MAX_GAIN
   AL_CONE_OUTER_GAIN AL_CONE_INNER_ANGLE AL_CONE_OUTER_ANGLE
@@ -46,11 +52,27 @@
   AL_SOURCE_STATE AL_INITIAL AL_PLAYING AL_PAUSED AL_STOPPED
   AL_BUFFERS_QUEUED AL_BUFFERS_PROCESSED
   )
-(select-module alaudplay)
 
 ;; Gauche-al モジュールのロード
 (define *al-loaded*
-  (load "al" :error-if-not-found #f))
+  (let1 ret (load "al" :error-if-not-found #f)
+    (if ret
+      ;; Gauche-al モジュールの定数の上書き
+      (overwrite-module-constants
+       al
+       AL_PITCH AL_GAIN AL_MAX_DISTANCE AL_ROLLOFF_FACTOR AL_REFERENCE_DISTANCE
+       AL_MIN_GAIN AL_MAX_GAIN
+       AL_CONE_OUTER_GAIN AL_CONE_INNER_ANGLE AL_CONE_OUTER_ANGLE
+       AL_POSITION AL_VELOCITY AL_DIRECTION AL_SOURCE_RELATIVE
+       AL_LOOPING AL_BUFFER
+       AL_SOURCE_STATE AL_INITIAL AL_PLAYING AL_PAUSED AL_STOPPED
+       AL_BUFFERS_QUEUED AL_BUFFERS_PROCESSED
+       ))
+    ret))
+
+;; mmlproc モジュールのロード
+(define *mmlproc-loaded*
+  (load "mmlproc" :error-if-not-found #f))
 
 ;; 音楽演奏機能の有効/無効状態
 (define *aud-enabled* #t)
