@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-21 v1.10
+;; 2016-4-22 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -117,7 +117,7 @@
       (set! x1 (- x1 w))))
     (gl-translate x1 y1 0)
     ;; Gauche-gl の gl-rect の不具合対策
-    ;; (開発最新版では修正済み)
+    ;; (Gauche-gl の開発最新版では修正済み)
     ;(gl-rect 0 0 w (- h))
     (gl-rect (f32vector 0 0) (f32vector w (- h)))
     )
