@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-4-20 v1.25
+;; 2016-4-24 v1.26
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -770,8 +770,8 @@
 
 ;; メイン処理
 (define (main args)
-  (aud-init (> (x->integer (get-one-arg args 1)) 0))
-  (set! *demomode* (x->integer (get-one-arg args 2)))
+  (aud-init (> (x->integer (list-ref args 1 0)) 0))
+  (set! *demomode* (x->integer (list-ref args 2 0)))
   (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)

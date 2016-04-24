@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-4-18 v1.45
+;; 2016-4-24 v1.46
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -646,7 +646,7 @@
 
 ;; メイン処理
 (define (main args)
-  (aud-init (> (x->integer (get-one-arg args 1)) 0))
+  (aud-init (> (x->integer (list-ref args 1 0)) 0))
   (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)

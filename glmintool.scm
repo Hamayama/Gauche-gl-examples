@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-4-12 v1.04
+;; 2016-4-24 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -12,7 +12,7 @@
   (use gauche.uvector)
   (use math.mt-random)
   (export
-    randint round-n truncate-n recthit? get-one-arg
+    randint round-n truncate-n recthit?
     <keywaitinfo> keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
     <waitcalcinfo> waitcalc
@@ -47,14 +47,6 @@
        (< x2 (+ x1 w1))
        (< y1 (+ y2 h2))
        (< y2 (+ y1 h1))))
-
-;; コマンドライン引数1個の取得
-(define (get-one-arg args i)
-  (and (integer? i)
-       (>= i 0)
-       (list? args)
-       (> (length args) i)
-       (~ args i)))
 
 
 ;; キー入力待ちクラス
