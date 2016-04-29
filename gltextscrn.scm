@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-22 v1.11
+;; 2016-4-29 v1.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -60,15 +60,13 @@
 (define (draw-bitmap-text str x y *width* *height*
                           :optional (size 24) (align 'left) (font *font-bitmap-1*))
   (gl-ortho-on *width* *height*)
-  (let ((stw     0)
-        (x1      x)
-        (y1      (- *height* y size)))
+  (let ((stw (string-fold (lambda (ch n) (+ (glut-bitmap-width font (char->integer ch)) n)) 0 str))
+        (x1  x)
+        (y1  (- *height* y size)))
     (cond
      ((eq? align 'center) ; 中央寄せ
-      (set! stw (string-fold (lambda (ch n) (+ (glut-bitmap-width font (char->integer ch)) n)) 0 str))
       (set! x1 (- x1 (/. stw 2))))
      ((eq? align 'right)  ; 右寄せ
-      (set! stw (string-fold (lambda (ch n) (+ (glut-bitmap-width font (char->integer ch)) n)) 0 str))
       (set! x1 (- x1 stw))))
     (gl-raster-pos x1 y1)
     (string-for-each (lambda (ch) (glut-bitmap-character font (char->integer ch))) str)
@@ -83,7 +81,7 @@
 (define (draw-stroke-text str x y *width* *height*
                           :optional (size 24) (align 'left) (font *font-stroke-1*))
   (gl-ortho-on *width* *height*)
-  (let ((stw     0)
+  (let ((stw     (string-fold (lambda (ch n) (+ (glut-stroke-width font (char->integer ch)) n)) 0 str))
         (x1      x)
         (y1      (- *height* y size))
         (scale   (/. size (+ 152.38 20)))
@@ -91,15 +89,14 @@
         (yoffset (+ 33.33 10)))
     (cond
      ((eq? align 'center) ; 中央寄せ
-      (set! stw (string-fold (lambda (ch n) (+ (glut-stroke-width font (char->integer ch)) n)) 0 str))
       (set! xoffset (- (/. stw 2))))
      ((eq? align 'right)  ; 右寄せ
-      (set! stw (string-fold (lambda (ch n) (+ (glut-stroke-width font (char->integer ch)) n)) 0 str))
       (set! xoffset (- stw))))
     (gl-translate x1 y1 0)
     (gl-scale scale scale 1)
     (gl-translate xoffset yoffset 0)
-    (string-for-each (lambda (ch) (glut-stroke-character font (char->integer ch))) str))
+    (string-for-each (lambda (ch) (glut-stroke-character font (char->integer ch))) str)
+    )
   (gl-ortho-off))
 
 ;; 長方形の塗りつぶし
@@ -108,8 +105,8 @@
 ;;     (図形表示とは座標系が異なるので注意)
 (define (fill-win-rect x y w h *width* *height* :optional (align 'left))
   (gl-ortho-on *width* *height*)
-  (let ((x1      x)
-        (y1      (- *height* y)))
+  (let ((x1 x)
+        (y1 (- *height* y)))
     (cond
      ((eq? align 'center) ; 中央寄せ
       (set! x1 (- x1 (/. w 2))))
@@ -129,9 +126,9 @@
 ;;     (図形表示とは座標系が異なるので注意)
 (define (fill-win-circle x y r a b *width* *height* :optional (align 'left))
   (gl-ortho-on *width* *height*)
-  (let ((x1      x)
-        (y1      (- *height* y))
-        (q       (make <glu-quadric>)))
+  (let ((x1 x)
+        (y1 (- *height* y))
+        (q  (make <glu-quadric>)))
     (if (= a 0) (set! a 1))
     (if (= b 0) (set! b 1))
     (cond
@@ -141,7 +138,8 @@
       (set! x1 (- x1 r))))
     (gl-translate x1 y1 0)
     (gl-scale (/. 1 a) (/. 1 b) 1)
-    (glu-disk q 0 r 40 1))
+    (glu-disk q 0 r 40 1)
+    )
   (gl-ortho-off))
 
 
@@ -161,7 +159,50 @@
   ;  (set! (~ ts 'data i) (+ (modulo i (- 128 32)) 32)))
   )
 
-;; 文字列の一括表示
+;; 文字情報テーブル(文字列の一括表示用)
+(define-class <char-info> () (xscale yscale xoffset yoffset))
+(define *char-info-table* (make-vector 128 #f))
+(define *char-info-table-init*
+  (delay
+    (do ((i 0 (+ i 1)))
+        ((>= i (vector-length *char-info-table*)) #f)
+      (let* ((c1     (make <char-info>))
+             (fchw-1 (glut-stroke-width *font-stroke-1* i))
+             (fchw   (if (<= fchw-1 0) 104.76 fchw-1))
+             (fchh   (+ 152.38 20))
+             (xscale&xoffset
+              ;; X方向の倍率とオフセット値を設定
+              (case i
+                ;; !  ,  .  :  ;
+                ((33 44 46 58 59) '(0.4  . 16))
+                ;; "
+                ((34)  '(0.4  . 28))
+                ;; '
+                ((39)  '(0.4  . 12))
+                ;; `
+                ((96)  '(0.4  . 42))
+                ;; その他の文字
+                (else  '(0.9  .  0))))
+             (yscale&yoffset
+              ;; Y方向の倍率とオフセット値を設定
+              (case i
+                ;; #  $  (  )  ,  .  /  :  ;  [  \  ]  ^  _  g   j   p   q   y   {   |   }  phi
+                ((35 36 40 41 44 46 47 58 59 91 92 93 94 95 103 106 112 113 121 123 124 125 127)
+                 `(0.9 . ,(+ 33.33 10)))
+                ;; @ (特に小さいので特別扱い)
+                ((64)  '(2.0  . -6))
+                ;; i (jと高さを合わせるために特別扱い)
+                ((105) '(1.18 . 10))
+                ;; その他の文字
+                (else  '(1.3  . 10)))))
+        (set! (~ c1 'xscale)  (/. (car xscale&xoffset) fchw))
+        (set! (~ c1 'yscale)  (/. (car yscale&yoffset) fchh))
+        (set! (~ c1 'xoffset) (cdr xscale&xoffset))
+        (set! (~ c1 'yoffset) (cdr yscale&yoffset))
+        (set! (~ *char-info-table* i) c1)))))
+
+;; 文字列の一括表示(フォントは固定)
+;;   ・文字ごとに倍率とオフセット値を適用して、等幅フォントのように表示する
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
 ;;     (図形表示とは座標系が異なるので注意)
 ;;   ・日本語表示不可
@@ -171,21 +212,13 @@
                               (*width* <real>) (*height* <real>)
                               (chw <real>) (chh <real>)
                               :optional (align 'left))
+  (force *char-info-table-init*)
   (gl-ortho-on *width* *height*)
-  ;; 倍率とオフセット値を調整して、等幅フォントのように表示する
-  (let* ((font    *font-stroke-1*)   ; フォント(固定)
-         (fchw    0)                 ; フォントの文字幅
-         (fchh    (+ 152.38 20))     ; フォントの文字高さ
-         (xscale  0)                 ; X方向の倍率
-         (xscale2 (* chw 0.9))       ; X方向の倍率の計算用
-         (yscale  0)                 ; Y方向の倍率
-         (yscale2 (/. chh fchh))     ; Y方向の倍率の計算用
-         (yoffset 0)                 ; Y方向のオフセット値
-         (x1      0)                 ; X座標
-         (x2      x)                 ; X座標の計算用
-         (y1      (- *height* y))    ; Y座標
-         (w       (~ ts 'width))
-         (i       0))
+  (let ((x1 0)
+        (x2 x)
+        (y1 (- *height* y))
+        (w  (~ ts 'width))
+        (i  0))
     (cond
      ((eq? align 'center) ; 中央寄せ
       (set! x2 (- x2 (/. (* w chw) 2))))
@@ -193,39 +226,19 @@
       (set! x2 (- x2 (* w chw)))))
     (for-each
      (lambda (c)
-       (when (= i 0)
-         (set! x1 x2)
-         (set! y1 (- y1 chh)))
-       (set! fchw (glut-stroke-width font c))
-       (if (<= fchw 0) (set! fchw 104.76))
-       (set! xscale (/. xscale2 fchw))
-       (case c
-         ;; 文字によって場合分け
-         ;; #  $  (  )  ,  .  /  :  ;  [  \  ]  ^  _  g   j   p   q   y   {   |   }  phy
-         ((35 36 40 41 44 46 47 58 59 91 92 93 94 95 103 106 112 113 121 123 124 125 127)
-          (set! yscale  (* yscale2 0.9))
-          (set! yoffset (+ 33.33 10)))
-         ;; @ (特に小さいので特別扱い)
-         ((64)
-          (set! yscale  (* yscale2 2.0))
-          (set! yoffset -6))
-         ;; i (jと高さを合わせるために特別扱い)
-         ((105)
-          (set! yscale  (* yscale2 1.18))
-          (set! yoffset 10))
-         ;; その他の文字
-         (else
-          (set! yscale  (* yscale2 1.3))
-          (set! yoffset 10)))
-       (gl-load-identity)
-       (gl-translate x1 y1 0)
-       (gl-scale xscale yscale 1)
-       (gl-translate 0 yoffset 0)
-       (glut-stroke-character font c)
-       (set! x1 (+ x1 chw))
-       (inc! i)
-       (if (>= i w) (set! i 0))
-       )
+       (let1 c1 (~ *char-info-table* c)
+         (when (= i 0)
+           (set! x1 x2)
+           (set! y1 (- y1 chh)))
+         (gl-load-identity)
+         (gl-translate x1 y1 0)
+         (gl-scale (* (~ c1 'xscale) chw) (* (~ c1 'yscale) chh) 1)
+         (gl-translate (~ c1 'xoffset) (~ c1 'yoffset) 0)
+         (glut-stroke-character *font-stroke-1* c)
+         (set! x1 (+ x1 chw))
+         (inc! i)
+         (if (>= i w) (set! i 0))
+         ))
      (~ ts 'data))
     )
   (gl-ortho-off))
