@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-29 v1.12
+;; 2016-4-29 v1.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -160,46 +160,47 @@
   )
 
 ;; 文字情報テーブル(文字列の一括表示用)
-(define-class <char-info> () (xscale yscale xoffset yoffset))
-(define *char-info-table* (make-vector 128 #f))
-(define *char-info-table-init*
+(define-class <char-info> () (xscale yscale xoffset yoffset)) ; 文字情報クラス
+(define *char-info-table*
   (delay
-    (do ((i 0 (+ i 1)))
-        ((>= i (vector-length *char-info-table*)) #f)
-      (let* ((c1     (make <char-info>))
-             (fchw-1 (glut-stroke-width *font-stroke-1* i))
-             (fchw   (if (<= fchw-1 0) 104.76 fchw-1))
-             (fchh   (+ 152.38 20))
-             (xscale&xoffset
-              ;; X方向の倍率とオフセット値を設定
-              (case i
-                ;; !  ,  .  :  ;
-                ((33 44 46 58 59) '(0.4  . 16))
-                ;; "
-                ((34)  '(0.4  . 28))
-                ;; '
-                ((39)  '(0.4  . 12))
-                ;; `
-                ((96)  '(0.4  . 42))
-                ;; その他の文字
-                (else  '(0.9  .  0))))
-             (yscale&yoffset
-              ;; Y方向の倍率とオフセット値を設定
-              (case i
-                ;; #  $  (  )  ,  .  /  :  ;  [  \  ]  ^  _  g   j   p   q   y   {   |   }  phi
-                ((35 36 40 41 44 46 47 58 59 91 92 93 94 95 103 106 112 113 121 123 124 125 127)
-                 `(0.9 . ,(+ 33.33 10)))
-                ;; @ (特に小さいので特別扱い)
-                ((64)  '(2.0  . -6))
-                ;; i (jと高さを合わせるために特別扱い)
-                ((105) '(1.18 . 10))
-                ;; その他の文字
-                (else  '(1.3  . 10)))))
-        (set! (~ c1 'xscale)  (/. (car xscale&xoffset) fchw))
-        (set! (~ c1 'yscale)  (/. (car yscale&yoffset) fchh))
-        (set! (~ c1 'xoffset) (cdr xscale&xoffset))
-        (set! (~ c1 'yoffset) (cdr yscale&yoffset))
-        (set! (~ *char-info-table* i) c1)))))
+    (let1 tbl (make-vector 128 #f)
+      (do ((i 0 (+ i 1)))
+          ((>= i (vector-length tbl)) #f)
+        (let* ((c1     (make <char-info>))
+               (fchw-1 (glut-stroke-width *font-stroke-1* i))
+               (fchw   (if (<= fchw-1 0) 104.76 fchw-1))
+               (fchh   (+ 152.38 20))
+               (xscale&xoffset
+                ;; X方向の倍率とオフセット値を設定
+                (case i
+                  ;; !  ,  .  :  ;
+                  ((33 44 46 58 59) '(0.4  . 16))
+                  ;; "
+                  ((34)  '(0.4  . 28))
+                  ;; '
+                  ((39)  '(0.4  . 12))
+                  ;; `
+                  ((96)  '(0.4  . 42))
+                  ;; その他の文字
+                  (else  '(0.9  .  0))))
+               (yscale&yoffset
+                ;; Y方向の倍率とオフセット値を設定
+                (case i
+                  ;; #  $  (  )  ,  .  /  :  ;  [  \  ]  ^  _  g   j   p   q   y   {   |   }  phi
+                  ((35 36 40 41 44 46 47 58 59 91 92 93 94 95 103 106 112 113 121 123 124 125 127)
+                   `(0.9 . ,(+ 33.33 10)))
+                  ;; @ (特に小さいので特別扱い)
+                  ((64)  '(2.0  . -6))
+                  ;; i (jと高さを合わせるために特別扱い)
+                  ((105) '(1.18 . 10))
+                  ;; その他の文字
+                  (else  '(1.3  . 10)))))
+          (set! (~ c1 'xscale)  (/. (car xscale&xoffset) fchw))
+          (set! (~ c1 'yscale)  (/. (car yscale&yoffset) fchh))
+          (set! (~ c1 'xoffset) (cdr xscale&xoffset))
+          (set! (~ c1 'yoffset) (cdr yscale&yoffset))
+          (set! (~ tbl i) c1)))
+      tbl)))
 
 ;; 文字列の一括表示(フォントは固定)
 ;;   ・文字ごとに倍率とオフセット値を適用して、等幅フォントのように表示する
@@ -212,7 +213,6 @@
                               (*width* <real>) (*height* <real>)
                               (chw <real>) (chh <real>)
                               :optional (align 'left))
-  (force *char-info-table-init*)
   (gl-ortho-on *width* *height*)
   (let ((x1 0)
         (x2 x)
@@ -226,7 +226,7 @@
       (set! x2 (- x2 (* w chw)))))
     (for-each
      (lambda (c)
-       (let1 c1 (~ *char-info-table* c)
+       (let1 c1 (~ (force *char-info-table*) c)
          (when (= i 0)
            (set! x1 x2)
            (set! y1 (- y1 chh)))
@@ -528,7 +528,7 @@
         (h       (~ ts 'height))
         (data    (~ ts 'data))
         (strdata (string->u32vector str))
-        (ret   #f))
+        (ret     #f))
     (let loop ((x3 x1) (y3 y1))
       (if (and (>= y3 0) (< y3 h) (>= x3 0) (< x3 w))
         (let1 c1 (~ data (+ (* y3 w) x3))
