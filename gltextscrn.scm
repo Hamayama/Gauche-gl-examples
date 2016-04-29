@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-29 v1.14
+;; 2016-4-29 v1.15
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -161,11 +161,12 @@
 
 ;; 文字情報テーブル(文字列の一括表示用)
 (define-class <char-info> () (xscale yscale xoffset yoffset)) ; 文字情報クラス
+(define *char-info-num*   128)
 (define *char-info-table*
   (delay
-    (rlet1 tbl (make-vector 128 #f)
+    (rlet1 tbl (make-vector *char-info-num* #f)
       (do ((i 0 (+ i 1)))
-          ((>= i (vector-length tbl)) #f)
+          ((>= i *char-info-num*) #f)
         (let* ((c1     (make <char-info>))
                (fchw-1 (glut-stroke-width *font-stroke-1* i))
                (fchw   (if (<= fchw-1 0) 104.76 fchw-1))
@@ -188,7 +189,7 @@
                 (case i
                   ;; #  $  (  )  ,  .  /  :  ;  [  \  ]  ^  _  g   j   p   q   y   {   |   }  phi
                   ((35 36 40 41 44 46 47 58 59 91 92 93 94 95 103 106 112 113 121 123 124 125 127)
-                   `(0.9 . ,(+ 33.33 10)))
+                   `(0.9  . ,(+ 33.33 10)))
                   ;; @ (特に小さいので特別扱い)
                   ((64)  '(2.0  . -6))
                   ;; i (jと高さを合わせるために特別扱い)
@@ -225,19 +226,20 @@
       (set! x2 (- x2 (* w chw)))))
     (for-each
      (lambda (c)
-       (let1 c1 (~ (force *char-info-table*) c)
-         (when (= i 0)
-           (set! x1 x2)
-           (set! y1 (- y1 chh)))
-         (gl-load-identity)
-         (gl-translate x1 y1 0)
-         (gl-scale (* (~ c1 'xscale) chw) (* (~ c1 'yscale) chh) 1)
-         (gl-translate (~ c1 'xoffset) (~ c1 'yoffset) 0)
-         (glut-stroke-character *font-stroke-1* c)
-         (set! x1 (+ x1 chw))
-         (inc! i)
-         (if (>= i w) (set! i 0))
-         ))
+       (when (= i 0)
+         (set! x1 x2)
+         (set! y1 (- y1 chh)))
+       (if (and (>= c 0) (< c *char-info-num*))
+         (let1 c1 (~ (force *char-info-table*) c)
+           (gl-load-identity)
+           (gl-translate x1 y1 0)
+           (gl-scale (* (~ c1 'xscale) chw) (* (~ c1 'yscale) chh) 1)
+           (gl-translate (~ c1 'xoffset) (~ c1 'yoffset) 0)
+           (glut-stroke-character *font-stroke-1* c)))
+       (set! x1 (+ x1 chw))
+       (inc! i)
+       (if (>= i w) (set! i 0))
+       )
      (~ ts 'data))
     )
   (gl-ortho-off))
