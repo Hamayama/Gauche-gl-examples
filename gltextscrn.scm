@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-29 v1.13
+;; 2016-4-29 v1.14
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -163,7 +163,7 @@
 (define-class <char-info> () (xscale yscale xoffset yoffset)) ; 文字情報クラス
 (define *char-info-table*
   (delay
-    (let1 tbl (make-vector 128 #f)
+    (rlet1 tbl (make-vector 128 #f)
       (do ((i 0 (+ i 1)))
           ((>= i (vector-length tbl)) #f)
         (let* ((c1     (make <char-info>))
@@ -199,8 +199,7 @@
           (set! (~ c1 'yscale)  (/. (car yscale&yoffset) fchh))
           (set! (~ c1 'xoffset) (cdr xscale&xoffset))
           (set! (~ c1 'yoffset) (cdr yscale&yoffset))
-          (set! (~ tbl i) c1)))
-      tbl)))
+          (set! (~ tbl i) c1))))))
 
 ;; 文字列の一括表示(フォントは固定)
 ;;   ・文字ごとに倍率とオフセット値を適用して、等幅フォントのように表示する
@@ -524,11 +523,11 @@
 (define-method textscrn-check-str ((ts <textscrn>)
                                    (str <string>)
                                    (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>))
-  (let ((w       (~ ts 'width))
+  (let ((ret     #f)
+        (w       (~ ts 'width))
         (h       (~ ts 'height))
         (data    (~ ts 'data))
-        (strdata (string->u32vector str))
-        (ret     #f))
+        (strdata (string->u32vector str)))
     (let loop ((x3 x1) (y3 y1))
       (if (and (>= y3 0) (< y3 h) (>= x3 0) (< x3 w))
         (let1 c1 (~ data (+ (* y3 w) x3))
