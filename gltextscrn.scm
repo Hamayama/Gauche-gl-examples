@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-29 v1.15
+;; 2016-4-30 v1.16
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -60,14 +60,14 @@
 (define (draw-bitmap-text str x y *width* *height*
                           :optional (size 24) (align 'left) (font *font-bitmap-1*))
   (gl-ortho-on *width* *height*)
-  (let ((stw (string-fold (lambda (ch n) (+ (glut-bitmap-width font (char->integer ch)) n)) 0 str))
-        (x1  x)
-        (y1  (- *height* y size)))
-    (cond
-     ((eq? align 'center) ; 中央寄せ
-      (set! x1 (- x1 (/. stw 2))))
-     ((eq? align 'right)  ; 右寄せ
-      (set! x1 (- x1 stw))))
+  (let* ((stw
+          (and (memq align '(center right))
+               (string-fold (lambda (ch n) (+ (glut-bitmap-width font (char->integer ch)) n)) 0 str)))
+         (x1 (case align
+               ((center) (- x (/. stw 2)))
+               ((right)  (- x stw))
+               (else     x)))
+         (y1 (- *height* y size)))
     (gl-raster-pos x1 y1)
     (string-for-each (lambda (ch) (glut-bitmap-character font (char->integer ch))) str)
     )
@@ -81,17 +81,17 @@
 (define (draw-stroke-text str x y *width* *height*
                           :optional (size 24) (align 'left) (font *font-stroke-1*))
   (gl-ortho-on *width* *height*)
-  (let ((stw     (string-fold (lambda (ch n) (+ (glut-stroke-width font (char->integer ch)) n)) 0 str))
-        (x1      x)
-        (y1      (- *height* y size))
-        (scale   (/. size (+ 152.38 20)))
-        (xoffset 0)
-        (yoffset (+ 33.33 10)))
-    (cond
-     ((eq? align 'center) ; 中央寄せ
-      (set! xoffset (- (/. stw 2))))
-     ((eq? align 'right)  ; 右寄せ
-      (set! xoffset (- stw))))
+  (let* ((stw
+          (and (memq align '(center right))
+               (string-fold (lambda (ch n) (+ (glut-stroke-width font (char->integer ch)) n)) 0 str)))
+         (x1      x)
+         (y1      (- *height* y size))
+         (scale   (/. size (+ 152.38 20)))
+         (xoffset (case align
+                    ((center) (- (/. stw 2)))
+                    ((right)  (- stw))
+                    (else     0)))
+         (yoffset (+ 33.33 10)))
     (gl-translate x1 y1 0)
     (gl-scale scale scale 1)
     (gl-translate xoffset yoffset 0)
@@ -105,13 +105,11 @@
 ;;     (図形表示とは座標系が異なるので注意)
 (define (fill-win-rect x y w h *width* *height* :optional (align 'left))
   (gl-ortho-on *width* *height*)
-  (let ((x1 x)
+  (let ((x1 (case align
+              ((center) (- x (/. w 2)))
+              ((right)  (- x w))
+              (else     x)))
         (y1 (- *height* y)))
-    (cond
-     ((eq? align 'center) ; 中央寄せ
-      (set! x1 (- x1 (/. w 2))))
-     ((eq? align 'right)  ; 右寄せ
-      (set! x1 (- x1 w))))
     (gl-translate x1 y1 0)
     ;; Gauche-gl の gl-rect の不具合対策
     ;; (Gauche-gl の開発最新版では修正済み)
@@ -126,16 +124,14 @@
 ;;     (図形表示とは座標系が異なるので注意)
 (define (fill-win-circle x y r a b *width* *height* :optional (align 'left))
   (gl-ortho-on *width* *height*)
-  (let ((x1 x)
+  (let ((x1 (case align
+              ((left)  (+ x r))
+              ((right) (- x r))
+              (else     x)))
         (y1 (- *height* y))
         (q  (make <glu-quadric>)))
     (if (= a 0) (set! a 1))
     (if (= b 0) (set! b 1))
-    (cond
-     ((eq? align 'left)  ; 左寄せ
-      (set! x1 (+ x1 r)))
-     ((eq? align 'right) ; 右寄せ
-      (set! x1 (- x1 r))))
     (gl-translate x1 y1 0)
     (gl-scale (/. 1 a) (/. 1 b) 1)
     (glu-disk q 0 r 40 1)
@@ -174,19 +170,20 @@
                (xscale&xoffset
                 ;; X方向の倍率とオフセット値を設定
                 (case i
-                  ;; !  ,  .  :  ;
+                  ;; !  ,  .  :  ; (幅が狭いので特別扱い)
                   ((33 44 46 58 59) '(0.4  . 16))
-                  ;; "
+                  ;; " (幅が狭いので特別扱い)
                   ((34)  '(0.4  . 28))
-                  ;; '
+                  ;; ' (幅が狭いので特別扱い)
                   ((39)  '(0.4  . 12))
-                  ;; `
+                  ;; ` (幅が狭いので特別扱い)
                   ((96)  '(0.4  . 42))
                   ;; その他の文字
                   (else  '(0.9  .  0))))
                (yscale&yoffset
                 ;; Y方向の倍率とオフセット値を設定
                 (case i
+                  ;; (ベースラインの分だけ上にずらす)
                   ;; #  $  (  )  ,  .  /  :  ;  [  \  ]  ^  _  g   j   p   q   y   {   |   }  phi
                   ((35 36 40 41 44 46 47 58 59 91 92 93 94 95 103 106 112 113 121 123 124 125 127)
                    `(0.9  . ,(+ 33.33 10)))
@@ -214,16 +211,14 @@
                               (chw <real>) (chh <real>)
                               :optional (align 'left))
   (gl-ortho-on *width* *height*)
-  (let ((x1 0)
-        (x2 x)
-        (y1 (- *height* y))
-        (w  (~ ts 'width))
-        (i  0))
-    (cond
-     ((eq? align 'center) ; 中央寄せ
-      (set! x2 (- x2 (/. (* w chw) 2))))
-     ((eq? align 'right)  ; 右寄せ
-      (set! x2 (- x2 (* w chw)))))
+  (let* ((w  (~ ts 'width))
+         (x1 0)
+         (x2 (case align
+               ((center) (- x (/. (* w chw) 2)))
+               ((right)  (- x (* w chw)))
+               (else     x)))
+         (y1 (- *height* y))
+         (i  0))
     (for-each
      (lambda (c)
        (when (= i 0)
@@ -274,13 +269,10 @@
                              (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>)
                              (str <string>))
   (let ((strdata (string->u32vector str))
-        (x3 0) (y3 0) (x4 0) (y4 0))
-    (cond
-     ((> x1 x2) (set! x3 x2) (set! x4 x1))
-     (else      (set! x3 x1) (set! x4 x2)))
-    (cond
-     ((> y1 y2) (set! y3 y2) (set! y4 y1))
-     (else      (set! y3 y1) (set! y4 y2)))
+        (x3      (min x1 x2))
+        (y3      (min y1 y2))
+        (x4      (max x1 x2))
+        (y4      (max y1 y2)))
     (let ((strdata1 (textscrn-repeat-sub ts strdata (+ (- x4 x3) 1)))
           (c        (~ strdata 0)))
       (textscrn-over-sub ts x3 y3 strdata1)
@@ -297,13 +289,10 @@
                               (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>)
                               (str <string>))
   (let ((strdata (string->u32vector str))
-        (x3 0) (y3 0) (x4 0) (y4 0))
-    (cond
-     ((> x1 x2) (set! x3 x2) (set! x4 x1))
-     (else      (set! x3 x1) (set! x4 x2)))
-    (cond
-     ((> y1 y2) (set! y3 y2) (set! y4 y1))
-     (else      (set! y3 y1) (set! y4 y2)))
+        (x3      (min x1 x2))
+        (y3      (min y1 y2))
+        (x4      (max x1 x2))
+        (y4      (max y1 y2)))
     (let1 strdata1 (textscrn-repeat-sub ts strdata (+ (- x4 x3) 1))
       (do ((i y3 (+ i 1)))
           ((> i y4) #f)
@@ -567,11 +556,11 @@
 ;; 文字列の上書き処理サブ(内部処理用)
 (define-method textscrn-over-sub ((ts <textscrn>) (x <integer>) (y <integer>) (strdata <u32vector>))
   (let* ((strdatalen (u32vector-length strdata))
-         (w  (~ ts 'width))
-         (h  (~ ts 'height))
-         (i1 (+ (* y w) (clamp x 0 (- w 1))))
-         (i2 (clamp (- x)   0 strdatalen))
-         (i3 (clamp (- w x) 0 strdatalen)))
+         (w          (~ ts 'width))
+         (h          (~ ts 'height))
+         (i1         (+ (* y w) (clamp x 0 (- w 1))))
+         (i2         (clamp (- x)   0 strdatalen))
+         (i3         (clamp (- w x) 0 strdatalen)))
     (if (and (>= y 0) (< y h) (< i2 i3))
       (u32vector-copy! (~ ts 'data) i1 strdata i2 i3))))
 
