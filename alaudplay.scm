@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; alaudplay.scm
-;; 2016-5-1 v1.05
+;; 2016-5-2 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-al を使って音楽を演奏するためのモジュールです。
@@ -43,7 +43,7 @@
      (begin (set! name (with-module mod name)) ...))))
 
 ;; Gauche-al モジュールの定数のダミー設定
-(define-macro (al-constants func . args)
+(define-macro (call/al-constants func . args)
   `(,func
     ,@args
     AL_PITCH AL_GAIN AL_MAX_DISTANCE AL_ROLLOFF_FACTOR AL_REFERENCE_DISTANCE
@@ -54,13 +54,13 @@
     AL_SOURCE_STATE AL_INITIAL AL_PLAYING AL_PAUSED AL_STOPPED
     AL_BUFFERS_QUEUED AL_BUFFERS_PROCESSED
     ))
-(al-constants define-dummy-constants)
+(call/al-constants define-dummy-constants)
 
 ;; Gauche-al モジュールのロード
 (define *al-loaded*
   (rlet1 ret (load "al" :error-if-not-found #f)
     ;; Gauche-al モジュールの定数の上書き
-    (if ret (al-constants overwrite-module-constants al))))
+    (if ret (call/al-constants overwrite-module-constants al))))
 
 ;; mmlproc モジュールのロード
 (define *mmlproc-loaded*
