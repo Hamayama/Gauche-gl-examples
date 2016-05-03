@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-4-30 v1.16
+;; 2016-5-3 v1.17
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -60,14 +60,13 @@
 (define (draw-bitmap-text str x y *width* *height*
                           :optional (size 24) (align 'left) (font *font-bitmap-1*))
   (gl-ortho-on *width* *height*)
-  (let* ((stw
-          (and (memq align '(center right))
-               (string-fold (lambda (ch n) (+ (glut-bitmap-width font (char->integer ch)) n)) 0 str)))
-         (x1 (case align
-               ((center) (- x (/. stw 2)))
-               ((right)  (- x stw))
-               (else     x)))
-         (y1 (- *height* y size)))
+  (let ((x1 x)
+        (y1 (- *height* y size)))
+    (if (memq align '(center right))
+      (let1 stw (string-fold (lambda (ch n) (+ (glut-bitmap-width font (char->integer ch)) n)) 0 str)
+        (set! x1 (if (eq? align 'center)
+                   (- x (/. stw 2)) ; 中央寄せ
+                   (- x stw)))))    ; 右寄せ
     (gl-raster-pos x1 y1)
     (string-for-each (lambda (ch) (glut-bitmap-character font (char->integer ch))) str)
     )
@@ -81,17 +80,16 @@
 (define (draw-stroke-text str x y *width* *height*
                           :optional (size 24) (align 'left) (font *font-stroke-1*))
   (gl-ortho-on *width* *height*)
-  (let* ((stw
-          (and (memq align '(center right))
-               (string-fold (lambda (ch n) (+ (glut-stroke-width font (char->integer ch)) n)) 0 str)))
-         (x1      x)
-         (y1      (- *height* y size))
-         (scale   (/. size (+ 152.38 20)))
-         (xoffset (case align
-                    ((center) (- (/. stw 2)))
-                    ((right)  (- stw))
-                    (else     0)))
-         (yoffset (+ 33.33 10)))
+  (let ((x1      x)
+        (y1      (- *height* y size))
+        (scale   (/. size (+ 152.38 20)))
+        (xoffset 0)
+        (yoffset (+ 33.33 10)))
+    (if (memq align '(center right))
+      (let1 stw (string-fold (lambda (ch n) (+ (glut-stroke-width font (char->integer ch)) n)) 0 str)
+        (set! xoffset (if (eq? align 'center)
+                        (- (/. stw 2)) ; 中央寄せ
+                        (- stw)))))    ; 右寄せ
     (gl-translate x1 y1 0)
     (gl-scale scale scale 1)
     (gl-translate xoffset yoffset 0)
@@ -106,8 +104,8 @@
 (define (fill-win-rect x y w h *width* *height* :optional (align 'left))
   (gl-ortho-on *width* *height*)
   (let ((x1 (case align
-              ((center) (- x (/. w 2)))
-              ((right)  (- x w))
+              ((center) (- x (/. w 2))) ; 中央寄せ
+              ((right)  (- x w))        ; 右寄せ
               (else     x)))
         (y1 (- *height* y)))
     (gl-translate x1 y1 0)
@@ -125,8 +123,8 @@
 (define (fill-win-circle x y r a b *width* *height* :optional (align 'left))
   (gl-ortho-on *width* *height*)
   (let ((x1 (case align
-              ((left)  (+ x r))
-              ((right) (- x r))
+              ((left)  (+ x r)) ; 左寄せ
+              ((right) (- x r)) ; 右寄せ
               (else     x)))
         (y1 (- *height* y))
         (q  (make <glu-quadric>)))
@@ -214,8 +212,8 @@
   (let* ((w  (~ ts 'width))
          (x1 0)
          (x2 (case align
-               ((center) (- x (/. (* w chw) 2)))
-               ((right)  (- x (* w chw)))
+               ((center) (- x (/. (* w chw) 2))) ; 中央寄せ
+               ((right)  (- x (* w chw)))        ; 右寄せ
                (else     x)))
          (y1 (- *height* y))
          (i  0))
@@ -401,14 +399,14 @@
 (define-class <edgeinfo> () (a ydir y1 y2 x)) ; 辺情報クラス
 (define-method textscrn-fpoly ((ts <textscrn>)
                                (point <list>) (str <string>))
-  (let* ((pnum      (length point))
-         (x1 0) (y1 0) (x2 0) (y2 0) (miny 0) (maxy 0)
-         (e1        #f)  ; 辺情報
-         (edgelist  '()) ; 辺情報のリスト
-         (enum      0)   ; 辺の数
-         (wn        0)   ; 巻き数
-         (linestart #f)  ; 線分開始フラグ
-         (strdata   (string->u32vector str)))
+  (let ((pnum      (length point))
+        (x1 0) (y1 0) (x2 0) (y2 0) (miny 0) (maxy 0)
+        (e1        #f)  ; 辺情報
+        (edgelist  '()) ; 辺情報のリスト
+        (enum      0)   ; 辺の数
+        (wn        0)   ; 巻き数
+        (linestart #f)  ; 線分開始フラグ
+        (strdata   (string->u32vector str)))
 
     ;; 辺情報の取得
     (set! miny (~ point 0 1))
@@ -522,13 +520,12 @@
     (let loop ((x3 x1) (y3 y1))
       (if (and (>= y3 0) (< y3 h) (>= x3 0) (< x3 w))
         (let1 c1 (~ data (+ (* y3 w) x3))
-          (set! ret (find (lambda (c2) (= c1 c2)) strdata))))
+          (for-each (lambda (c2) (if (= c1 c2) (set! ret #t))) strdata)))
       (if (not ret)
         (cond
          ((< x3 x2) (loop (+ x3 1) y3))
          ((< y3 y2) (loop x1 (+ y3 1)))))
       )
-    (if ret (set! ret #t))
     ;(print ret " " x1 " " y1 " " x2 " " y2)
     ret))
 
@@ -540,18 +537,17 @@
                                         (x1 <real>) (y1 <real>) (x2 <real>) (y2 <real>)
                                         (chw <real>) (chh <real>)
                                         :optional (xoffset 0) (yoffset 0) (align 'left))
-  (let1 w (~ ts 'width)
-    (cond
-     ((eq? align 'center) ; 中央寄せ
-      (set! xoffset (- xoffset (/. (* w chw) 2))))
-     ((eq? align 'right)  ; 右寄せ
-      (set! xoffset (- xoffset (* w chw)))))
-    (let ((x3 (floor->exact (/. (- x1 xoffset) chw)))
-          (y3 (floor->exact (/. (- y1 yoffset) chh)))
-          (x4 (- (ceiling->exact (/. (- x2 xoffset) chw)) 1))
-          (y4 (- (ceiling->exact (/. (- y2 yoffset) chh)) 1)))
-      (textscrn-check-str ts str x3 y3 x4 y4)
-      )))
+  (if (memq align '(center right))
+    (let1 w (~ ts 'width)
+      (set! xoffset (if (eq? align 'center)
+                      (- xoffset (/. (* w chw) 2)) ; 中央寄せ
+                      (- xoffset (* w chw))))))    ; 右寄せ
+  (let ((x3 (floor->exact (/. (- x1 xoffset) chw)))
+        (y3 (floor->exact (/. (- y1 yoffset) chh)))
+        (x4 (- (ceiling->exact (/. (- x2 xoffset) chw)) 1))
+        (y4 (- (ceiling->exact (/. (- y2 yoffset) chh)) 1)))
+    (textscrn-check-str ts str x3 y3 x4 y4)
+    ))
 
 ;; 文字列の上書き処理サブ(内部処理用)
 (define-method textscrn-over-sub ((ts <textscrn>) (x <integer>) (y <integer>) (strdata <u32vector>))
