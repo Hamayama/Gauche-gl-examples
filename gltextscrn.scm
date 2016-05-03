@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-5-3 v1.17
+;; 2016-5-3 v1.18
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -266,36 +266,34 @@
 (define-method textscrn-box ((ts <textscrn>)
                              (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>)
                              (str <string>))
-  (let ((strdata (string->u32vector str))
-        (x3      (min x1 x2))
-        (y3      (min y1 y2))
-        (x4      (max x1 x2))
-        (y4      (max y1 y2)))
-    (let ((strdata1 (textscrn-repeat-sub ts strdata (+ (- x4 x3) 1)))
-          (c        (~ strdata 0)))
-      (textscrn-over-sub ts x3 y3 strdata1)
-      (textscrn-over-sub ts x3 y4 strdata1)
-      (do ((i y3 (+ i 1)))
-          ((> i y4) #f)
-        (textscrn-pset-sub ts x3 i c)
-        (textscrn-pset-sub ts x4 i c))
-      )
+  (let* ((strdata  (string->u32vector str))
+         (x3       (min x1 x2))
+         (y3       (min y1 y2))
+         (x4       (max x1 x2))
+         (y4       (max y1 y2))
+         (strdata1 (textscrn-repeat-sub ts strdata (+ (- x4 x3) 1)))
+         (c        (~ strdata 0)))
+    (textscrn-over-sub ts x3 y3 strdata1)
+    (textscrn-over-sub ts x3 y4 strdata1)
+    (do ((i y3 (+ i 1)))
+        ((> i y4) #f)
+      (textscrn-pset-sub ts x3 i c)
+      (textscrn-pset-sub ts x4 i c))
     ))
 
 ;; 文字列の四角形塗りつぶし表示処理
 (define-method textscrn-fbox ((ts <textscrn>)
                               (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>)
                               (str <string>))
-  (let ((strdata (string->u32vector str))
-        (x3      (min x1 x2))
-        (y3      (min y1 y2))
-        (x4      (max x1 x2))
-        (y4      (max y1 y2)))
-    (let1 strdata1 (textscrn-repeat-sub ts strdata (+ (- x4 x3) 1))
-      (do ((i y3 (+ i 1)))
-          ((> i y4) #f)
-        (textscrn-over-sub ts x3 i strdata1))
-      )
+  (let* ((strdata  (string->u32vector str))
+         (x3       (min x1 x2))
+         (y3       (min y1 y2))
+         (x4       (max x1 x2))
+         (y4       (max y1 y2))
+         (strdata1 (textscrn-repeat-sub ts strdata (+ (- x4 x3) 1))))
+    (do ((i y3 (+ i 1)))
+        ((> i y4) #f)
+      (textscrn-over-sub ts x3 i strdata1))
     ))
 
 ;; 文字列の円表示処理
