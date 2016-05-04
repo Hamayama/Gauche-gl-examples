@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-5-3 v1.18
+;; 2016-5-4 v1.19
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -120,7 +120,7 @@
 ;;   ・円 (x,y,r,a,b) -> (x*x)/(a*a)+(y*y)/(b*b)=r*r の塗りつぶし表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
 ;;     (図形表示とは座標系が異なるので注意)
-(define (fill-win-circle x y r a b *width* *height* :optional (align 'left))
+(define (fill-win-circle x y r a b *width* *height* :optional (align 'center))
   (gl-ortho-on *width* *height*)
   (let ((x1 (case align
               ((left)  (+ x r)) ; 左寄せ
@@ -154,6 +154,8 @@
   )
 
 ;; 文字情報テーブル(文字列の一括表示用)
+;;   ・文字ごとに倍率とオフセット値を設定して、等幅フォントのように表示可能とする
+;;   ・フォントは固定
 (define-class <char-info> () (xscale yscale xoffset yoffset)) ; 文字情報クラス
 (define *char-info-num*   128)
 (define *char-info-table*
@@ -197,12 +199,13 @@
           (set! (~ c1 'yoffset) (cdr yscale&yoffset))
           (set! (~ tbl i) c1))))))
 
-;; 文字列の一括表示(フォントは固定)
+;; 文字列の一括表示
 ;;   ・文字ごとに倍率とオフセット値を適用して、等幅フォントのように表示する
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
 ;;     (図形表示とは座標系が異なるので注意)
 ;;   ・日本語表示不可
 ;;   ・文字のサイズは、幅 chw と高さ chh の指定が必要
+;;   ・フォントは固定
 (define-method textscrn-disp ((ts <textscrn>)
                               (x <real>) (y <real>)
                               (*width* <real>) (*height* <real>)
