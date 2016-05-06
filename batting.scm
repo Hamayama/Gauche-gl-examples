@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-5-6 v1.27
+;; 2016-5-6 v1.28
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -51,11 +51,8 @@
 (define *playcount*  0) ; プレイ数
 (define *scsum*      0) ; スコア累積
 
-;; データファイルのパス名取得
-(define get-data-path
-  (let1 dir (if-let1 path (current-load-path)
-              (string-append (sys-dirname path) "/") "")
-    (lambda (fname) (string-append dir fname))))
+;; アプリのディレクトリのパス名
+(define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
 
 ;; 音楽データクラスのインスタンス生成
 (define *adata-start* (make <auddata>))
@@ -154,16 +151,16 @@
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; 音楽データの初期化
-  (auddata-load-wav-file *adata-start* (get-data-path "sound/warp1.wav"))
+  (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/warp1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.2)
   (auddata-set-prop *adata-start* AL_PITCH 1.2)
-  (auddata-load-wav-file *adata-hit*   (get-data-path "sound/pattern05.wav"))
+  (auddata-load-wav-file *adata-hit*   (make-fpath *app-dpath* "sound/pattern05.wav"))
   (auddata-set-prop *adata-hit*   AL_GAIN  0.4)
   (auddata-set-prop *adata-hit*   AL_PITCH 2.0)
-  (auddata-load-wav-file *adata-end1*  (get-data-path "sound/pattern05.wav"))
+  (auddata-load-wav-file *adata-end1*  (make-fpath *app-dpath* "sound/pattern05.wav"))
   (auddata-set-prop *adata-end1*  AL_GAIN  0.2)
   (auddata-set-prop *adata-end1*  AL_PITCH 1.3)
-  (auddata-load-wav-file *adata-end2*  (get-data-path "sound/pattern03.wav"))
+  (auddata-load-wav-file *adata-end2*  (make-fpath *app-dpath* "sound/pattern03.wav"))
   (auddata-set-prop *adata-end2*  AL_GAIN  0.3)
   )
 

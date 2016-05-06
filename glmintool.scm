@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-5-6 v1.06
+;; 2016-5-6 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -12,7 +12,7 @@
   (use gauche.uvector)
   (use math.mt-random)
   (export
-    randint round-n truncate-n recthit?
+    randint round-n truncate-n recthit? make-fpath
     <keystateinfo> key-on key-off spkey-on spkey-off key-on? spkey-on? mdkey-on?
     <keywaitinfo>  keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
@@ -48,6 +48,12 @@
        (< x2 (+ x1 w1))
        (< y1 (+ y2 h2))
        (< y2 (+ y1 h1))))
+
+;; ファイルのパス名生成
+(define (make-fpath dpath fname)
+  (cond ((#/^\s*$/   dpath) fname)
+        ((#/[\/\\]$/ dpath) (string-append dpath fname))
+        (else (string-append dpath "/" fname))))
 
 
 ;; キー入力状態管理クラス

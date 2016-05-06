@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-5-6 v1.28
+;; 2016-5-6 v1.29
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -62,11 +62,8 @@
 (define *demotmin* 0.0) ; デモ生存時間最小値
 (define *demotavg* 0.0) ; デモ生存時間平均値
 
-;; データファイルのパス名取得
-(define get-data-path
-  (let1 dir (if-let1 path (current-load-path)
-              (string-append (sys-dirname path) "/") "")
-    (lambda (fname) (string-append dir fname))))
+;; アプリのディレクトリのパス名
+(define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
 
 ;; 音楽データクラスのインスタンス生成
 (define *adata-start* (make <auddata>))
@@ -465,13 +462,13 @@
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (gl-enable GL_BLEND)
   ;; 音楽データの初期化
-  (auddata-load-wav-file *adata-start* (get-data-path "sound/appear1.wav"))
+  (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.05)
   (auddata-set-prop *adata-start* AL_PITCH 3.0)
-  (auddata-load-wav-file *adata-hit*   (get-data-path "sound/decide2.wav"))
+  (auddata-load-wav-file *adata-hit*   (make-fpath *app-dpath* "sound/decide2.wav"))
   (auddata-set-prop *adata-hit*   AL_GAIN  0.4)
   (auddata-set-prop *adata-hit*   AL_PITCH 1.1)
-  (auddata-load-wav-file *adata-end*   (get-data-path "sound/pattern05.wav"))
+  (auddata-load-wav-file *adata-end*   (make-fpath *app-dpath* "sound/pattern05.wav"))
   (auddata-set-prop *adata-end*   AL_GAIN  0.2)
   (auddata-set-prop *adata-end*   AL_PITCH 1.3)
   )
