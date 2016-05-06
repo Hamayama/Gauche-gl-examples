@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-5-4 v1.19
+;; 2016-5-6 v1.20
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -156,7 +156,7 @@
 ;; 文字情報テーブル(文字列の一括表示用)
 ;;   ・文字ごとに倍率とオフセット値を設定して、等幅フォントのように表示可能とする
 ;;   ・フォントは固定
-(define-class <char-info> () (xscale yscale xoffset yoffset)) ; 文字情報クラス
+(define-class <char-info> () (xscale/fchw yscale/fchh xoffset yoffset)) ; 文字情報クラス
 (define *char-info-num*   128)
 (define *char-info-table*
   (delay
@@ -193,8 +193,8 @@
                   ((105) '(1.18 . 10))
                   ;; その他の文字
                   (else  '(1.3  . 10)))))
-          (set! (~ c1 'xscale)  (/. (car xscale&xoffset) fchw))
-          (set! (~ c1 'yscale)  (/. (car yscale&yoffset) fchh))
+          (set! (~ c1 'xscale/fchw) (/. (car xscale&xoffset) fchw))
+          (set! (~ c1 'yscale/fchh) (/. (car yscale&yoffset) fchh))
           (set! (~ c1 'xoffset) (cdr xscale&xoffset))
           (set! (~ c1 'yoffset) (cdr yscale&yoffset))
           (set! (~ tbl i) c1))))))
@@ -229,7 +229,7 @@
          (let1 c1 (~ (force *char-info-table*) c)
            (gl-load-identity)
            (gl-translate x1 y1 0)
-           (gl-scale (* (~ c1 'xscale) chw) (* (~ c1 'yscale) chh) 1)
+           (gl-scale (* (~ c1 'xscale/fchw) chw) (* (~ c1 'yscale/fchh) chh) 1)
            (gl-translate (~ c1 'xoffset) (~ c1 'yoffset) 0)
            (glut-stroke-character *font-stroke-1* c)))
        (set! x1 (+ x1 chw))

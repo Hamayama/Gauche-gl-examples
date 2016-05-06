@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-4-24 v1.46
+;; 2016-5-6 v1.47
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -28,8 +28,6 @@
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
 (define *tanvan*     (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
-(define *keystate*   (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
-(define *spkeystate* (make-hash-table 'eqv?)) ; 特殊キー入力状態(ハッシュテーブル)
 
 (define *wd/2*     400) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
@@ -49,7 +47,7 @@
 (define *playcount*  0) ; プレイ数
 (define *wincount*   0) ; 勝利数
 
-;; データファイルのパス名を取得する
+;; データファイルのパス名取得
 (define get-data-path
   (let1 dir (if-let1 path (current-load-path)
               (string-append (sys-dirname path) "/") "")
@@ -60,8 +58,11 @@
 (define *adata-hit*   (make <auddata>))
 (define *adata-end*   (make <auddata>))
 
+;; キー入力状態管理クラスのインスタンス生成
+(define *ksinfo* (make <keystateinfo>))
+
 ;; キー入力待ちクラスのインスタンス生成
-(define *kwinfo* (make <keywaitinfo> :keystate *keystate*))
+(define *kwinfo* (make <keywaitinfo> :keystate (~ *ksinfo* 'keystate)))
 
 ;; 時間待ちクラスのインスタンス生成
 (define *twinfo* (make <timewaitinfo> :waitinterval *wait*))
@@ -114,21 +115,19 @@
         ((and (= (~ f1 'type) 0) (not *demoflg*))
          ;; キー操作で行動を決定する
          (cond
-          ((hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
+          ((spkey-on? *ksinfo* GLUT_KEY_LEFT)
            (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0)))) ; 左移動
-          ((hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
+          ((spkey-on? *ksinfo* GLUT_KEY_RIGHT)
            (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0)))) ; 右移動
           (else (set! (~ f1 'vx) 0)))
          (let ((d     (abs (- (~ f2 'x) (~ f1 'x)))) ; 相手との間合い
                (f2atk (or  (= (~ f2 'act) 2) (= (~ f2 'act) 3)))) ; 相手攻撃状態
-           (when (or (hash-table-get *keystate* (char->integer #\z) #f)
-                     (hash-table-get *keystate* (char->integer #\Z) #f))
+           (when (key-on? *ksinfo* '(#\z #\Z))
              (set! (~ f1 'act) 2) ; パンチ
              (if (and (< d *chw*) f2atk) (set! (~ f1 'dir) (- (~ f2 'dir))))
              (set! (~ f1 'vx) (* (~ f1 'dir) 15))
              (set! (~ f1 'vy) 50))
-           (when (or (hash-table-get *keystate* (char->integer #\x) #f)
-                     (hash-table-get *keystate* (char->integer #\X) #f))
+           (when (key-on? *ksinfo* '(#\x #\X))
              (set! (~ f1 'act) 3) ; キック
              (if (and (< d *chw*) f2atk) (set! (~ f1 'dir) (- (~ f2 'dir))))
              (set! (~ f1 'vx) (* (~ f1 'dir) 23))
@@ -525,26 +524,26 @@
 
 ;; キー入力ON
 (define (keyboard key x y)
+  (key-on *ksinfo* key)
   (cond
    ;; ESCキーで終了
    ((= key (char->integer #\escape)) (exit-main-loop 0))
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
     (gc) (print (gc-stat)))
-   )
-  (hash-table-put! *keystate* key #t))
+   ))
 
 ;; キー入力OFF
 (define (keyboardup key x y)
-  (hash-table-put! *keystate* key #f))
+  (key-off *ksinfo* key))
 
 ;; 特殊キー入力ON
 (define (specialkey key x y)
-  (hash-table-put! *spkeystate* key #t))
+  (spkey-on *ksinfo* key))
 
 ;; 特殊キー入力OFF
 (define (specialkeyup key x y)
-  (hash-table-put! *spkeystate* key #f))
+  (spkey-off *ksinfo* key))
 
 ;; タイマー
 (define (timer val)
@@ -613,9 +612,7 @@
            (if (fighter-finished? *f2*) (inc! *wincount*)))
           ))
        ;; デモを抜けるチェック
-       (when (and *demoflg*
-                  (or (hash-table-get *keystate* (char->integer #\d) #f)
-                      (hash-table-get *keystate* (char->integer #\D) #f)))
+       (when (and *demoflg* (key-on? *ksinfo* '(#\d #\D)))
          (set! *scene*   0)
          (set! *demoflg* #f))
        )

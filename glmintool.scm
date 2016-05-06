@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-4-24 v1.05
+;; 2016-5-6 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -13,7 +13,8 @@
   (use math.mt-random)
   (export
     randint round-n truncate-n recthit?
-    <keywaitinfo> keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
+    <keystateinfo> key-on key-off spkey-on spkey-off key-on? spkey-on? mdkey-on?
+    <keywaitinfo>  keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
     <waitcalcinfo> waitcalc
     ))
@@ -49,6 +50,58 @@
        (< y2 (+ y1 h1))))
 
 
+;; キー入力状態管理クラス
+;;   ・キー入力のON/OFF状態を管理する
+;;   ・glut-keyboard-func, glut-keyboard-up-func, glut-special-func,
+;;     glut-special-up-func と組み合わせて使用する
+(define-class <keystateinfo> ()
+  ((keystate   :init-form (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
+   (spkeystate :init-form (make-hash-table 'eqv?)) ; 特殊キー入力状態(ハッシュテーブル)
+   (mdkeystate :init-form (make-hash-table 'eqv?)) ; Shift,Ctrl,Altキー入力状態(ハッシュテーブル)
+   ))
+(define (%check-mdkey k)
+  ;; Shift,Ctrl,Altキーの入力チェック
+  ;;   glut-get-modifiers は、入力デバイス関連のコールバック内でしか使用できない。
+  ;;   また、環境によっては、他のキーと同時押ししないと状態を取得できない
+  (let1 mdkey (glut-get-modifiers)
+    (hash-table-put! (~ k 'mdkeystate) GLUT_ACTIVE_SHIFT
+                     (not (= (logand mdkey GLUT_ACTIVE_SHIFT) 0)))
+    (hash-table-put! (~ k 'mdkeystate) GLUT_ACTIVE_CTRL
+                     (not (= (logand mdkey GLUT_ACTIVE_CTRL)  0)))
+    (hash-table-put! (~ k 'mdkeystate) GLUT_ACTIVE_ALT
+                     (not (= (logand mdkey GLUT_ACTIVE_ALT)   0)))
+    ))
+(define-method key-on ((k <keystateinfo>) (key <integer>))
+  (%check-mdkey k)
+  (hash-table-put! (~ k 'keystate) key #t))
+(define-method key-off ((k <keystateinfo>) (key <integer>))
+  (%check-mdkey k)
+  ;; アルファベットの大文字と小文字は両方OFFにする
+  ;; (Shiftキー同時押しの対策)
+  (cond ((<= #x41 key #x5A) (hash-table-put! (~ k 'keystate) (+ key #x20) #f))
+        ((<= #x61 key #x7A) (hash-table-put! (~ k 'keystate) (- key #x20) #f)))
+  (hash-table-put! (~ k 'keystate) key #f))
+(define-method spkey-on ((k <keystateinfo>) (key <integer>))
+  (%check-mdkey k)
+  (hash-table-put! (~ k 'spkeystate) key #t))
+(define-method spkey-off ((k <keystateinfo>) (key <integer>))
+  (%check-mdkey k)
+  (hash-table-put! (~ k 'spkeystate) key #f))
+(define (%check-keystate keystate key/keylist)
+  (cond
+   ((list? key/keylist)
+    (any (lambda (key) (hash-table-get keystate (x->integer key) #f)) key/keylist))
+   (else
+    (hash-table-get keystate (x->integer key/keylist) #f))))
+(define-method key-on? ((k <keystateinfo>) key/keylist)
+  (%check-keystate (~ k 'keystate)   key/keylist))
+(define-method spkey-on? ((k <keystateinfo>) key/keylist)
+  (%check-keystate (~ k 'spkeystate) key/keylist))
+(define-method mdkey-on? ((k <keystateinfo>) key/keylist)
+  (%check-keystate (~ k 'mdkeystate) key/keylist))
+;(define *ksinfo* (make <keystateinfo>)) ; インスタンス生成例
+
+
 ;; キー入力待ちクラス
 ;;   ・指定したキーが入力されるまで待つ
 ;;   ・glut-timer-func と組み合わせて使用する
@@ -74,7 +127,7 @@
   (or (= (~ k 'state) 1) (= (~ k 'state) 2)))
 (define-method keywait-finished? ((k <keywaitinfo>))
   (= (~ k 'state) 3))
-;(define *kwinfo* (make <keywaitinfo> :keystate *keystate*)) ; インスタンス生成例
+;(define *kwinfo* (make <keywaitinfo> :keystate (~ *ksinfo* 'keystate))) ; インスタンス生成例
 
 
 ;; 時間待ちクラス

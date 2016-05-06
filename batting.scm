@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-4-24 v1.26
+;; 2016-5-6 v1.27
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -25,8 +25,6 @@
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*   100) ; 視野角(度)
 (define *tanvan*     (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
-(define *keystate*   (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
-(define *spkeystate* (make-hash-table 'eqv?)) ; 特殊キー入力状態(ハッシュテーブル)
 
 (define *wd/2*     120) ; 画面幅/2
 (define *ht/2*     120) ; 画面高さ/2
@@ -53,7 +51,7 @@
 (define *playcount*  0) ; プレイ数
 (define *scsum*      0) ; スコア累積
 
-;; データファイルのパス名を取得する
+;; データファイルのパス名取得
 (define get-data-path
   (let1 dir (if-let1 path (current-load-path)
               (string-append (sys-dirname path) "/") "")
@@ -65,8 +63,11 @@
 (define *adata-end1*  (make <auddata>))
 (define *adata-end2*  (make <auddata>))
 
+;; キー入力状態管理クラスのインスタンス生成
+(define *ksinfo* (make <keystateinfo>))
+
 ;; キー入力待ちクラスのインスタンス生成
-(define *kwinfo* (make <keywaitinfo> :keystate *keystate*))
+(define *kwinfo* (make <keywaitinfo> :keystate (~ *ksinfo* 'keystate)))
 
 ;; 時間待ちクラスのインスタンス生成
 (define *twinfo* (make <timewaitinfo> :waitinterval *wait*))
@@ -251,26 +252,26 @@
 
 ;; キー入力ON
 (define (keyboard key x y)
+  (key-on *ksinfo* key)
   (cond
    ;; ESCキーで終了
    ((= key (char->integer #\escape)) (exit-main-loop 0))
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
     (gc) (print (gc-stat)))
-   )
-  (hash-table-put! *keystate* key #t))
+   ))
 
 ;; キー入力OFF
 (define (keyboardup key x y)
-  (hash-table-put! *keystate* key #f))
+  (key-off *ksinfo* key))
 
 ;; 特殊キー入力ON
 (define (specialkey key x y)
-  (hash-table-put! *spkeystate* key #t))
+  (spkey-on *ksinfo* key))
 
 ;; 特殊キー入力OFF
 (define (specialkeyup key x y)
-  (hash-table-put! *spkeystate* key #f))
+  (spkey-off *ksinfo* key))
 
 ;; タイマー
 (define (timer val)
@@ -316,13 +317,13 @@
        (set! *y* (+ *y* *vy*))
        (set! *z* (+ *z* *vz*))
        ;; カーソル移動
-       (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
+       (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)
          (set! *cx* (clamp (+ *cx* -1) (- *wd/2*) *wd/2*)))
-       (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
+       (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT)
          (set! *cx* (clamp (+ *cx*  1) (- *wd/2*) *wd/2*)))
        ;; 打撃判定
        (when (and (> *z* (- *zend* 100))
-                  (hash-table-get *keystate* (char->integer #\space) #f)
+                  (key-on? *ksinfo* #\space)
                   (= *hit* 0))
          (set! *hit* 1)
          (when (<= (abs (- *x* *cx*)) (* *r* 2))

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-5-4 v1.27
+;; 2016-5-6 v1.28
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -29,9 +29,6 @@
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
 (define *tanvan*     (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
-(define *keystate*   (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
-(define *spkeystate* (make-hash-table 'eqv?)) ; 特殊キー入力状態(ハッシュテーブル)
-(define *mdkeystate* (make-hash-table 'eqv?)) ; Shift,Ctrl,Altキー入力状態(ハッシュテーブル)
 
 (define *wd/2*     400) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
@@ -65,7 +62,7 @@
 (define *demotmin* 0.0) ; デモ生存時間最小値
 (define *demotavg* 0.0) ; デモ生存時間平均値
 
-;; データファイルのパス名を取得する
+;; データファイルのパス名取得
 (define get-data-path
   (let1 dir (if-let1 path (current-load-path)
               (string-append (sys-dirname path) "/") "")
@@ -76,8 +73,11 @@
 (define *adata-hit*   (make <auddata>))
 (define *adata-end*   (make <auddata>))
 
+;; キー入力状態管理クラスのインスタンス生成
+(define *ksinfo* (make <keystateinfo>))
+
 ;; キー入力待ちクラスのインスタンス生成
-(define *kwinfo* (make <keywaitinfo> :keystate *keystate*))
+(define *kwinfo* (make <keywaitinfo> :keystate (~ *ksinfo* 'keystate)))
 
 ;; 時間待ちクラスのインスタンス生成
 (define *twinfo* (make <timewaitinfo> :waitinterval *wait*))
@@ -211,21 +211,17 @@
    ;; デモでないとき
    (else
     ;; 自機の移動
-    (if (hash-table-get *spkeystate* GLUT_KEY_LEFT  #f)
+    (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)
       (set! *x* (clamp (+ *x* -8) *minx* *maxx*)))
-    (if (hash-table-get *spkeystate* GLUT_KEY_RIGHT #f)
+    (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT)
       (set! *x* (clamp (+ *x*  8) *minx* *maxx*)))
-    (if (hash-table-get *spkeystate* GLUT_KEY_UP    #f)
+    (if (spkey-on? *ksinfo* GLUT_KEY_UP)
       (set! *y* (clamp (+ *y*  8) *miny* *maxy*)))
-    (if (hash-table-get *spkeystate* GLUT_KEY_DOWN  #f)
+    (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)
       (set! *y* (clamp (+ *y* -8) *miny* *maxy*)))
     ;; 自機ビーム発射
-    (if (or (hash-table-get *mdkeystate* GLUT_ACTIVE_CTRL #f)
-            (hash-table-get *keystate* (char->integer #\space) #f)
-            (hash-table-get *keystate* (char->integer #\a) #f)
-            (hash-table-get *keystate* (char->integer #\A) #f)
-            (hash-table-get *keystate* (char->integer #\z) #f)
-            (hash-table-get *keystate* (char->integer #\Z) #f))
+    (if (or (mdkey-on? *ksinfo* GLUT_ACTIVE_CTRL)
+            (key-on?   *ksinfo* '(#\space #\a #\A #\z #\Z)))
       (set! *bc* 1)
       (set! *bc* 0))
     )
@@ -571,43 +567,26 @@
 
 ;; キー入力ON
 (define (keyboard key x y)
-  (check-modifier-keys)
+  (key-on *ksinfo* key)
   (cond
    ;; ESCキーで終了
    ((= key (char->integer #\escape)) (exit-main-loop 0))
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
     (gc) (print (gc-stat)))
-   )
-  (hash-table-put! *keystate* key #t))
+   ))
 
 ;; キー入力OFF
 (define (keyboardup key x y)
-  (check-modifier-keys)
-  (hash-table-put! *keystate* key #f))
+  (key-off *ksinfo* key))
 
 ;; 特殊キー入力ON
 (define (specialkey key x y)
-  (check-modifier-keys)
-  (hash-table-put! *spkeystate* key #t))
+  (spkey-on *ksinfo* key))
 
 ;; 特殊キー入力OFF
 (define (specialkeyup key x y)
-  (check-modifier-keys)
-  (hash-table-put! *spkeystate* key #f))
-
-;; Shift,Ctrl,Altキーの入力チェック
-;;   glut-get-modifiers は、入力デバイス関連のコールバック内でしか使用できない。
-;;   また、環境によっては、他のキーと同時押ししないと状態を取得できない
-(define (check-modifier-keys)
-  (let1 mdkey (glut-get-modifiers)
-    (hash-table-put! *mdkeystate* GLUT_ACTIVE_SHIFT
-                     (not (= (logand mdkey GLUT_ACTIVE_SHIFT) 0)))
-    (hash-table-put! *mdkeystate* GLUT_ACTIVE_CTRL
-                     (not (= (logand mdkey GLUT_ACTIVE_CTRL)  0)))
-    (hash-table-put! *mdkeystate* GLUT_ACTIVE_ALT
-                     (not (= (logand mdkey GLUT_ACTIVE_ALT)   0)))
-    ))
+  (spkey-off *ksinfo* key))
 
 ;; タイマー
 (define (timer val)
@@ -700,9 +679,7 @@
        ;; 敵ミサイルの当たり判定
        (if (hit-enemies? *missiles*) (set! *scene* 2))
        ;; デモを抜けるチェック
-       (when (and *demoflg*
-                  (or (hash-table-get *keystate* (char->integer #\d) #f)
-                      (hash-table-get *keystate* (char->integer #\D) #f)))
+       (when (and *demoflg* (key-on? *ksinfo* '(#\d #\D)))
          (set! *scene*   0)
          (set! *demoflg* #f)
          (set! (~ *wcinfo* 'waittime) *wait*))
@@ -735,8 +712,7 @@
          (set! *demotime1* (+ *demotime1* *wait*))
          (if (>= *demotime1* 1600) (set! *scene* 0))
          ;; デモを抜けるチェック
-         (when (or (hash-table-get *keystate* (char->integer #\d) #f)
-                   (hash-table-get *keystate* (char->integer #\D) #f))
+         (when (key-on? *ksinfo* '(#\d #\D))
            (set! *scene*   0)
            (set! *demoflg* #f)
            (set! (~ *wcinfo* 'waittime) *wait*))
