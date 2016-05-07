@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-5-6 v1.29
+;; 2016-5-7 v1.30
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -485,10 +485,10 @@
      (*demoflg*
       (set! str1 "== Demo ==")
       (set! str2 "HIT [D] KEY")
-      (set! str6 (format #f "TIME=(MAX=~D, MIN=~D, AVG=~D, NOW=~D)"
+      (set! str6 (format "TIME=(MAX=~D, MIN=~D, AVG=~D, NOW=~D)"
                          *demotmax*  *demotmin*  *demotavg*
                          (round-n (* *ssc* *wait* 0.001) 1)))
-      (set! str7 (format #f "PARAM=(~D, ~D) COUNT=~D"
+      (set! str7 (format "PARAM=(~D, ~D) COUNT=~D"
                          (~ *dparam* 'p1) (~ *dparam* 'p2) *democount*))
       )
      ;; デモでないとき
@@ -507,9 +507,9 @@
         )
       )
      )
-    (set! str3 (format #f "SCORE : ~D"    *sc*))
-    (set! str4 (format #f "HI-SCORE : ~D" *hs*))
-    (set! str5 (format #f "LEVEL : ~D/~D" *mr* *mmr*))
+    (set! str3 (format "SCORE : ~D"    *sc*))
+    (set! str4 (format "HI-SCORE : ~D" *hs*))
+    (set! str5 (format "LEVEL : ~D/~D" *mr* *mmr*))
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text-over str1 (/. *width* 2) (/. (* *height* 36) 100) (/. *height* 13) 'center)
     (gl-color 1.0 1.0 0.0 1.0)

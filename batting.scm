@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-5-6 v1.28
+;; 2016-5-7 v1.29
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -182,20 +182,20 @@
       ((2) ; 打撃後
        )
       ((3) ; 結果画面
-       (set! str1 (format #f "SCORE : ~Dm" *sc*))
+       (set! str1 (format "SCORE : ~Dm" *sc*))
        (if (= *hit* 3) (set! str1 (string-append str1 " (MAXIMUM!!)")))
        (if *foul*      (set! str1 (string-append str1 " (FOUL!!)")))
        (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
       )
-    (set! str3 (format #f "TOP=~Dm AVG=~Dm PLAY=~D"
+    (set! str3 (format "TOP=~Dm AVG=~Dm PLAY=~D"
                        *hs*
                        (if (= *playcount* 0)
                          0.0
                          (round-n (/. *scsum* *playcount*) 1))
                        *playcount*))
-    (set! str4 (format #f "(X=~D Y=~D Z=~D)"
+    (set! str4 (format "(X=~D Y=~D Z=~D)"
                        (truncate->exact *x*) (truncate->exact *y*) (truncate->exact *z*)))
-    (set! str5 (format #f "(VX=~D VY=~D VZ=~D)"
+    (set! str5 (format "(VX=~D VY=~D VZ=~D)"
                        (if (= *scene* 0) 0.0 (truncate-n *vx* 2))
                        (truncate-n *vy* 2)
                        (truncate-n *vz* 2)))

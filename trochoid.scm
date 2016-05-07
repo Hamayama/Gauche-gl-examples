@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; trochoid.scm
-;; 2016-2-9 v1.11
+;; 2016-5-7 v1.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、内トロコイド曲線を描くサンプルです。
@@ -125,7 +125,7 @@
 
 ;; タイトル文字列の生成
 (define (make-title rm rd)
-  (format #f "trochoid (~d,~d)" rm rd))
+  (format "trochoid (~d,~d)" rm rd))
 
 ;; メイン処理
 (define (main args)

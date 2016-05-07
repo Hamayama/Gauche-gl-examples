@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-5-6 v1.48
+;; 2016-5-7 v1.49
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -478,7 +478,7 @@
        (set! str1 (if (fighter-finished? *f2*) "You win!!" "You lose!!"))
        (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
       )
-    (set! str3 (format #f "(W=~D L=~D R=~D)"
+    (set! str3 (format "(W=~D L=~D R=~D)"
                        *wincount*
                        (- *playcount* *wincount*)
                        (if (= *playcount* 0)
