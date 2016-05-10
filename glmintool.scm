@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-5-6 v1.07
+;; 2016-5-10 v1.08
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -50,6 +50,7 @@
        (< y2 (+ y1 h1))))
 
 ;; ファイルのパス名生成
+;;   ディレクトリのパス名とファイル名から、ファイルのパス名を生成する
 (define (make-fpath dpath fname)
   (cond ((#/^\s*$/   dpath) fname)
         ((#/[\/\\]$/ dpath) (string-append dpath fname))
@@ -100,7 +101,7 @@
    (else
     (hash-table-get keystate (x->integer key/keylist) #f))))
 (define-method key-on? ((k <keystateinfo>) key/keylist)
-  (%check-keystate (~ k 'keystate)   key/keylist))
+  (%check-keystate (~ k 'keystate) key/keylist))
 (define-method spkey-on? ((k <keystateinfo>) key/keylist)
   (%check-keystate (~ k 'spkeystate) key/keylist))
 (define-method mdkey-on? ((k <keystateinfo>) key/keylist)

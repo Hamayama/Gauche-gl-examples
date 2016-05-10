@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-5-7 v1.30
+;; 2016-5-10 v1.31
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -41,6 +41,7 @@
 (define *maxy*       (- *ht/2* *chh*))           ; 自機のY座標最大値
 (define *miny*       (+ (- *ht/2*) (* *chh* 2))) ; 自機のY座標最小値
 (define *bc*         0) ; 自機ビームカウンタ
+(define *maxbc*     26) ; 自機ビームカウンタの最大値
 (define *bs*       240) ; 爆風のサイズ
 (define *waku*       4) ; 当たり判定調整用
 (define *mr*         1) ; 敵の数
@@ -94,7 +95,7 @@
 (textscrn-pset *tscrn-mychr2* 0 1 "@@@")
 ;; (自機ビーム)
 (define *tscrn-beam1* (make <textscrn>))
-(textscrn-init *tscrn-beam1* 1 25)
+(textscrn-init *tscrn-beam1* 1 *maxbc*)
 ;; (敵)
 (define *tscrn-enemy1* (make <textscrn>))
 (textscrn-init *tscrn-enemy1* 5 3)
@@ -342,27 +343,35 @@
 
 ;; 自機ビームの当たり判定
 (define (hit-beam?)
-  (let ((ret #f)
-        (x1  (get-win-x (+ *x* (* *chw* -0.5)       *waku* )))
-        (y1  (get-win-y (+ *y* (* *chh* *bc*)    (- *waku*))))
-        (x2  (get-win-x (+ *x* (* *chw*  0.5)    (- *waku*))))
-        (y2  (get-win-y (+ *y* (* *chh* (- *bc* 1)) *waku* ))))
+  (let ((ret  #f)
+        (x1   (get-win-x (+ *x* (* *chw* -0.5)        *waku* )))
+        (y1   (get-win-y (+ *y* (* *chh*  *maxbc*) (- *waku*))))
+        (x2   (get-win-x (+ *x* (* *chw*  0.5)     (- *waku*))))
+        (y2   (get-win-y (+ *y* (* *chh*  0)          *waku* )))
+        (miny 1000000)
+        (e2   #f))
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
-         (when (textscrn-disp-check-str
-                (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
-                (get-win-w *chw*) (get-win-h *chh*)
-                (get-win-x (~ e1 'x)) (get-win-y (~ e1 'y)) 'center)
-           (set! ret #t)
-           (dec! (~ e1 'life))
-           (when (<= (~ e1 'life) 0)
-             (set! (~ e1 'state) 1)
-             (when (not *demoflg*)
-               (set! *sc* (+ *sc* 100))
-               (auddata-play *adata-hit*))))
+         (when (and (< (~ e1 'y) miny)
+                    (textscrn-disp-check-str
+                     (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
+                     (get-win-w *chw*) (get-win-h *chh*)
+                     (get-win-x (~ e1 'x)) (get-win-y (~ e1 'y)) 'center))
+           (set! e2 e1)
+           (set! miny (~ e1 'y)))
          ))
      *enemies*)
+    (set! *bc* *maxbc*)
+    (when e2
+      (set! ret #t)
+      (set! *bc* (- (floor->exact (/. (- miny *y*) *chh*)) 1))
+      (dec! (~ e2 'life))
+      (when (<= (~ e2 'life) 0)
+        (set! (~ e2 'state) 1)
+        (when (not *demoflg*)
+          (set! *sc* (+ *sc* 100))
+          (auddata-play *adata-hit*))))
     ret))
 
 ;; 爆風の表示
@@ -664,11 +673,7 @@
        ;; 自機の操作
        (control-mychr)
        ;; 自機ビーム処理
-       (if (= *bc* 1)
-         (let loop ()
-           (when (and (<= *bc* 25) (not (hit-beam?)))
-             (inc! *bc*)
-             (loop))))
+       (if (= *bc* 1) (hit-beam?))
        ;; 爆風の当たり判定
        (hit-blast?)
        ;; 敵の当たり判定
