@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-5-10 v1.08
+;; 2016-5-29 v1.09
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -51,10 +51,13 @@
 
 ;; ファイルのパス名生成
 ;;   ディレクトリのパス名とファイル名から、ファイルのパス名を生成する
-(define (make-fpath dpath fname)
-  (cond ((#/^\s*$/   dpath) fname)
-        ((#/[\/\\]$/ dpath) (string-append dpath fname))
-        (else (string-append dpath "/" fname))))
+(define (make-fpath . paths)
+  (fold (lambda (p1 path)
+          (cond ((equal? path "") p1)
+                ((#/[\/\\]$/ path) (string-append path p1))
+                (else (string-append path "/" p1))))
+        ""
+        paths))
 
 
 ;; キー入力状態管理クラス
