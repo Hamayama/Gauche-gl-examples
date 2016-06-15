@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-5-6 v1.20
+;; 2016-6-15 v1.21
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -159,6 +159,7 @@
 (define-class <char-info> () (xscale/fchw yscale/fchh xoffset yoffset)) ; 文字情報クラス
 (define *char-info-num*   128)
 (define *char-info-table*
+  ;; Gauche-gl を初期化するまでは実行できないので、実行を遅延する
   (delay
     (rlet1 tbl (make-vector *char-info-num* #f)
       (do ((i 0 (+ i 1)))
