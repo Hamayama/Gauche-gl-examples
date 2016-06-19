@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-5-10 v1.31
+;; 2016-6-19 v1.32
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -41,7 +41,6 @@
 (define *maxy*       (- *ht/2* *chh*))           ; 自機のY座標最大値
 (define *miny*       (+ (- *ht/2*) (* *chh* 2))) ; 自機のY座標最小値
 (define *bc*         0) ; 自機ビームカウンタ
-(define *maxbc*     26) ; 自機ビームカウンタの最大値
 (define *bs*       240) ; 爆風のサイズ
 (define *waku*       4) ; 当たり判定調整用
 (define *mr*         1) ; 敵の数
@@ -95,7 +94,7 @@
 (textscrn-pset *tscrn-mychr2* 0 1 "@@@")
 ;; (自機ビーム)
 (define *tscrn-beam1* (make <textscrn>))
-(textscrn-init *tscrn-beam1* 1 *maxbc*)
+(textscrn-init *tscrn-beam1* 1 (floor->exact (/. (* *ht/2* 2) *chh*)))
 ;; (敵)
 (define *tscrn-enemy1* (make <textscrn>))
 (textscrn-init *tscrn-enemy1* 5 3)
@@ -343,29 +342,28 @@
 
 ;; 自機ビームの当たり判定
 (define (hit-beam?)
-  (let ((ret  #f)
-        (x1   (get-win-x (+ *x* (* *chw* -0.5)        *waku* )))
-        (y1   (get-win-y (+ *y* (* *chh*  *maxbc*) (- *waku*))))
-        (x2   (get-win-x (+ *x* (* *chw*  0.5)     (- *waku*))))
-        (y2   (get-win-y (+ *y* (* *chh*  0)          *waku* )))
-        (miny 1000000)
-        (e2   #f))
+  (let ((ret   #f)
+        (x1    (get-win-x (+ *x* (* *chw* -0.5)    *waku* )))
+        (y1    (get-win-y (+ *ht/2*             (- *waku*))))
+        (x2    (get-win-x (+ *x* (* *chw*  0.5) (- *waku*))))
+        (y2    (get-win-y (+ *y*                   *waku* )))
+        (minby *ht/2*)
+        (e2    #f))
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
-         (when (and (< (~ e1 'y) miny)
+         (when (and (< (~ e1 'y) minby)
                     (textscrn-disp-check-str
                      (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
                      (get-win-w *chw*) (get-win-h *chh*)
                      (get-win-x (~ e1 'x)) (get-win-y (~ e1 'y)) 'center))
            (set! e2 e1)
-           (set! miny (~ e1 'y)))
+           (set! minby (~ e1 'y)))
          ))
      *enemies*)
-    (set! *bc* *maxbc*)
+    (set! *bc* (max (- (floor->exact (/. (- minby *y*) *chh*)) 1) 1))
     (when e2
       (set! ret #t)
-      (set! *bc* (- (floor->exact (/. (- miny *y*) *chh*)) 1))
       (dec! (~ e2 'life))
       (when (<= (~ e2 'life) 0)
         (set! (~ e2 'state) 1)
