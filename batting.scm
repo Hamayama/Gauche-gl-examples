@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-5-7 v1.29
+;; 2016-7-16 v1.30
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -110,25 +110,14 @@
 ;; 空(正射影で表示)
 (define (sky)
   (gl-color 0.0 0.0 1.0 1.0)
-  (gl-disable GL_LIGHTING)
-  (gl-matrix-mode GL_PROJECTION)
-  (gl-push-matrix)
-  (gl-load-identity)
-  (gl-ortho 0 *width* 0 *height* -1.0 1.0)
-  (gl-matrix-mode GL_MODELVIEW)
-  (gl-push-matrix)
-  (gl-load-identity)
+  (gl-ortho-on *width* *height*)
   ;; できるだけ奥に表示する
   (gl-translate 0 0 -0.99999)
   ;; Gauche-gl の gl-rect の不具合対策
   ;; (Gauche-gl の開発最新版では修正済み)
   ;(gl-rect 0 0 *width* *height*)
   (gl-rect (f32vector 0 0) (f32vector *width* *height*))
-  (gl-pop-matrix)
-  (gl-matrix-mode GL_PROJECTION)
-  (gl-pop-matrix)
-  (gl-matrix-mode GL_MODELVIEW)
-  (gl-enable GL_LIGHTING)
+  (gl-ortho-off)
   )
 
 ;; 地面(上面に原点あり)
@@ -245,6 +234,8 @@
   (gl-load-identity)
   ;; 透視射影する範囲を設定
   (glu-perspective *vangle* (/. *width* *height*) 1 10000)
+  ;; 視点の位置と方向を設定
+  (glu-look-at 0 0 0 0 0 -1 0 1 0)
   )
 
 ;; キー入力ON

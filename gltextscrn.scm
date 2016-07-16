@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-6-15 v1.21
+;; 2016-7-16 v1.22
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -14,6 +14,7 @@
   (use gauche.sequence)
   (use srfi-13) ; string-fold,string-for-each用
   (export
+    gl-ortho-on gl-ortho-off
     draw-bitmap-text draw-stroke-text
     fill-win-rect fill-win-circle
     <textscrn> textscrn-init textscrn-disp

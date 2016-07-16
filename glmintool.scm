@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-5-29 v1.09
+;; 2016-7-16 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -17,6 +17,7 @@
     <keywaitinfo>  keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
     <waitcalcinfo> waitcalc
+    <xrand> xrand-init xrand-randint xrand-test
     ))
 (select-module glmintool)
 
@@ -192,5 +193,54 @@
     ;(print tdiffmsec " " waitmsec)
     waitmsec))
 ;(define *wcinfo* (make <waitcalcinfo> :waittime *wait*)) ; インスタンス生成例
+
+
+;; 疑似乱数生成クラス
+;;   ・シード値が同じならば同じ乱数列になる
+(define-class <xrand> ()
+  ((seed  :init-value 1) ; 乱数のシード値(0はNG)
+   (value :init-value 1) ; 乱数の値
+   ))
+;; 疑似乱数の初期化
+(define-method xrand-init ((x <xrand>) (seed <integer>))
+  (set! (~ x 'seed)  seed)
+  (set! (~ x 'value) seed)
+  ;; 最初の10個は捨てる
+  (do ((i 0 (+ i 1))) ((>= i 10) #f) (%xorshift32 x)))
+;; 疑似乱数の範囲を指定して取得
+(define-method xrand-randint ((x <xrand>) (minx <integer>) (maxx <integer>))
+  (if (> minx maxx) (let1 t minx (set! minx maxx) (set! maxx t)))
+  ;; 別件との互換性のため、符号を変換
+  ;(+ (modulo (%xorshift32 x) (+ (- maxx minx) 1)) minx)
+  (let* ((v  (%xorshift32 x))
+         (v2 (if (= (logand v #x80000000) 0)
+               v
+               (- (+ (logand (lognot v) #xFFFFFFFF) 1)))))
+    (+ (modulo (abs v2) (+ (- maxx minx) 1)) minx)
+    ))
+;; 疑似乱数の内部計算処理(xorshift 32bit)
+(define-method %xorshift32 ((x <xrand>))
+  (rlet1 v (~ x 'value)
+    (set! v (logand v #xFFFFFFFF))
+    (set! v (logxor v (logand (ash v  13) #xFFFFFFFF)))
+    (set! v (logxor v (logand (ash v -17) #x7FFF))) ; 符号なしの右シフト
+    (set! v (logxor v (logand (ash v  15) #xFFFFFFFF)))
+    ;(print v)
+    (set! (~ x 'value) v)))
+;; 疑似乱数のテスト(デバッグ用)
+(define (xrand-test)
+  (let ((x      (make <xrand>))
+        (result (make-vector 10 0))
+        (count  (make-vector 10 0)))
+    (xrand-init x 1)
+    (do ((i 0 (+ i 1))) ((>= i 10) #f)
+      (set! (~ result i) (xrand-randint x 0 9)))
+    (print "xrand-randint(0,9)=" result " -> "
+           (if (equal? result #(7 2 4 5 0 5 0 9 5 6)) "OK" "NG"))
+    (do ((i 0 (+ i 1))) ((>= i 10000) #f)
+      (inc! (~ count (xrand-randint x 0 9))))
+    (print "count[0-9]=" count " -> "
+           (if (equal? count #(998 981 997 1010 1006 1052 1008 997 995 956)) "OK" "NG"))
+    ))
 
 
