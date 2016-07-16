@@ -1,11 +1,10 @@
 # Gauche-gl-examples
 
-![image](image/image0101.png)
-![image](image/image0201.png)
-![image](image/image0301.png)
-![image](image/image0401.png)
-![image](image/image0501.png)
-![image](image/image0601.png)
+|   |   |
+|---|---|
+|![image](image/image0101.png)|![image](image/image0201.png)|
+|![image](image/image0301.png)|![image](image/image0401.png)|
+|![image](image/image0501.png)|![image](image/image0601.png)|
 
 ## 概要
 - Gauche-gl を使用したサンプルプログラム等です。  
