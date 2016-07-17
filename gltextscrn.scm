@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-7-16 v1.22
+;; 2016-7-17 v1.23
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -14,9 +14,8 @@
   (use gauche.sequence)
   (use srfi-13) ; string-fold,string-for-each用
   (export
-    gl-ortho-on gl-ortho-off
     draw-bitmap-text draw-stroke-text
-    fill-win-rect fill-win-circle
+    draw-win-line fill-win-rect fill-win-circle
     <textscrn> textscrn-init textscrn-disp
     textscrn-cls textscrn-pset textscrn-pget
     textscrn-line textscrn-box textscrn-fbox
@@ -98,18 +97,34 @@
     )
   (gl-ortho-off))
 
+;; 線の表示
+;;   ・線 (x1,y1)-(x2,y2) の表示を行う
+;;   ・座標は、左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
+;;     (図形表示とは座標系が異なるので注意)
+(define (draw-win-line x1 y1 x2 y2 *width* *height* :optional (z 0))
+  (gl-ortho-on *width* *height*)
+  (let ((y3 (- *height* y1))
+        (y4 (- *height* y2)))
+    (gl-translate 0 0 z)
+    (gl-begin GL_LINES)
+    (gl-vertex (f32vector x1 y3))
+    (gl-vertex (f32vector x2 y4))
+    (gl-end)
+    )
+  (gl-ortho-off))
+
 ;; 長方形の塗りつぶし
 ;;   ・長方形 (x,y,w,h) の塗りつぶし表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
 ;;     (図形表示とは座標系が異なるので注意)
-(define (fill-win-rect x y w h *width* *height* :optional (align 'left))
+(define (fill-win-rect x y w h *width* *height* :optional (align 'left) (z 0))
   (gl-ortho-on *width* *height*)
   (let ((x1 (case align
               ((center) (- x (/. w 2))) ; 中央寄せ
               ((right)  (- x w))        ; 右寄せ
               (else     x)))
         (y1 (- *height* y)))
-    (gl-translate x1 y1 0)
+    (gl-translate x1 y1 z)
     ;; Gauche-gl の gl-rect の不具合対策
     ;; (Gauche-gl の開発最新版では修正済み)
     ;(gl-rect 0 0 w (- h))
@@ -121,7 +136,7 @@
 ;;   ・円 (x,y,r,a,b) -> (x*x)/(a*a)+(y*y)/(b*b)=r*r の塗りつぶし表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
 ;;     (図形表示とは座標系が異なるので注意)
-(define (fill-win-circle x y r a b *width* *height* :optional (align 'center))
+(define (fill-win-circle x y r a b *width* *height* :optional (align 'center) (z 0))
   (gl-ortho-on *width* *height*)
   (let ((x1 (case align
               ((left)  (+ x r)) ; 左寄せ
@@ -131,7 +146,7 @@
         (q  (make <glu-quadric>)))
     (if (= a 0) (set! a 1))
     (if (= b 0) (set! b 1))
-    (gl-translate x1 y1 0)
+    (gl-translate x1 y1 z)
     (gl-scale (/. 1 a) (/. 1 b) 1)
     (glu-disk q 0 r 40 1)
     )

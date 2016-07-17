@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-7-16 v1.30
+;; 2016-7-17 v1.31
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -110,14 +110,7 @@
 ;; 空(正射影で表示)
 (define (sky)
   (gl-color 0.0 0.0 1.0 1.0)
-  (gl-ortho-on *width* *height*)
-  ;; できるだけ奥に表示する
-  (gl-translate 0 0 -0.99999)
-  ;; Gauche-gl の gl-rect の不具合対策
-  ;; (Gauche-gl の開発最新版では修正済み)
-  ;(gl-rect 0 0 *width* *height*)
-  (gl-rect (f32vector 0 0) (f32vector *width* *height*))
-  (gl-ortho-off)
+  (fill-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
   )
 
 ;; 地面(上面に原点あり)

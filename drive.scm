@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-7-16 v1.00
+;; 2016-7-17 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -57,7 +57,7 @@
 (define *rdx*        0) ; 道路のX方向の差分
 (define *scz*     -400) ; スクリーンのZ座標
 (define *stg*        1) ; ステージ
-(define *goal*       0) ; ゴール情報(0-3)
+(define *goal*       0) ; ゴール情報(=0:未ゴール,=1,2:ウィニングラン,=3:ゴール終了)
 (define *sc*         0) ; スコア
 (define *hs*         0) ; ハイスコア
 (define *ssc*        0) ; 制御カウンタ
@@ -111,6 +111,7 @@
      (/. *height* 2)))
 
 ;; 比例の計算
+;; ( maxx-x:x-minx = maxy-y:y-miny となるような y を求める )
 (define (calcbyratio x minx maxx miny maxy)
   (/. (+ (* (- maxy miny) x)
          (- (* miny maxx) (* maxy minx)))
@@ -137,20 +138,14 @@
                    (format "~2,'0D" msec/10))
     ))
 
-;; 背景の表示(正射影で表示)
-(define (disp-back)
-  (gl-color *backcolor*)
-  (gl-ortho-on *width* *height*)
-  ;; できるだけ奥に表示する
-  (gl-translate 0 0 -0.99999)
-  ;; Gauche-gl の gl-rect の不具合対策
-  ;; (Gauche-gl の開発最新版では修正済み)
-  ;(gl-rect 0 0 *width* *height*)
-  (gl-rect (f32vector 0 0) (f32vector *width* *height*))
-  (gl-ortho-off)
-  )
-
 ;; 道路の表示
+;; (Z座標はプレイヤーの視点が原点で奥方向をマイナスとする。
+;;  そして、Z=*scz* の位置に 幅 *wd/2* x 高さ *ht/2* のスクリーンがあるものとして、
+;;  投影座標 (scx,scy) を計算する。
+;;  ただし、OpenGLを使う場合には、ライブラリが投影を処理してくれるので、
+;;  投影座標 (scx,scy) を自前で計算する必要はない。
+;;  しかし、今回は、下り坂の視点から見えない部分を非表示にするために、
+;;  scy だけは自前でも計算している。)
 (define (disp-road)
   (let ((sczr  0)   ; 投影座標計算用(Z座標による縮小倍率)
         (rdy1  0)   ; 道路のY座標の差分1
@@ -176,14 +171,8 @@
         (unless rline
           (set! rline #t)
           (gl-color 0.5 0.5 0.5 1.0)
-          (gl-ortho-on *width* *height*)
-          ;; できるだけ奥に表示する
-          (gl-translate 0 0 -0.99999)
-          (gl-begin GL_LINES)
-          (gl-vertex (f32vector (- *width*) (- *height* (get-win-y scy1))))
-          (gl-vertex (f32vector    *width*  (- *height* (get-win-y scy1))))
-          (gl-end)
-          (gl-ortho-off)
+          (draw-win-line (- *width*) (get-win-y scy1) *width* (get-win-y scy1)
+                         *width* *height* -0.99999)
           )
         ;; 道路の境界マークの表示
         (gl-material GL_FRONT GL_SPECULAR #f32(0.2 0.2 0.2 1.0))
@@ -220,7 +209,7 @@
       (set! *rcy2* 0)
       (if (= *goal* 1) (auddata-play *adata-end2*)))
      ))
-  ;; 道路の曲がり量の更新
+  ;; 道路の曲がり量の更新(少しずつ変化させる)
   (let1 rdc 0.0000007
     (if (< (abs (- *rcx1* *rcx2*)) rdc)
       (set! *rcx1* *rcx2*)
@@ -342,7 +331,8 @@
   ;; 道路の表示
   (disp-road)
   ;; 背景の表示
-  (disp-back)
+  (gl-color *backcolor*)
+  (fill-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
   ;(gl-flush)
   (glut-swap-buffers)
   )
