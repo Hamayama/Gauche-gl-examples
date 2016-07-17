@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-7-17 v1.01
+;; 2016-7-17 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -142,7 +142,7 @@
 ;; (Z座標はプレイヤーの視点が原点で奥方向をマイナスとする。
 ;;  そして、Z=*scz* の位置に 幅 *wd/2* x 高さ *ht/2* のスクリーンがあるものとして、
 ;;  投影座標 (scx,scy) を計算する。
-;;  ただし、OpenGLを使う場合には、ライブラリが投影を処理してくれるので、
+;;  ただし、OpenGLを使う場合には、ライブラリが投影変換(および表示)を行ってくれるので、
 ;;  投影座標 (scx,scy) を自前で計算する必要はない。
 ;;  しかし、今回は、下り坂の視点から見えない部分を非表示にするために、
 ;;  scy だけは自前でも計算している。)
@@ -180,7 +180,7 @@
                      (~ *roadcolor*
                         (if (> *goal* 0) 0 (modulo (- *stg* 1) 5))
                         (modulo (+ *ssc* (- *rnum* i 1)) 3)))
-        (gl-material GL_FRONT GL_SHININESS 10.0)
+        ;(gl-material GL_FRONT GL_SHININESS 10.0)
         (gl-push-matrix)
         (gl-translate (+ *rx1* *rdx*) (+ *ry* rdy1) (~ *rz* i))
         (glut-solid-sphere *rr* 20 20)
@@ -257,9 +257,6 @@
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
-  ;; 透過設定
-  (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
-  (gl-enable GL_BLEND)
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.05)
