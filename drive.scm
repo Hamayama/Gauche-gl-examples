@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-7-17 v1.02
+;; 2016-7-17 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -171,7 +171,7 @@
         (unless rline
           (set! rline #t)
           (gl-color 0.5 0.5 0.5 1.0)
-          (draw-win-line (- *width*) (get-win-y scy1) *width* (get-win-y scy1)
+          (draw-win-line 0 (get-win-y scy1) *width* (get-win-y scy1)
                          *width* *height* -0.99999)
           )
         ;; 道路の境界マークの表示
