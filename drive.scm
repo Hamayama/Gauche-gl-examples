@@ -1,14 +1,14 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-7-17 v1.03
+;; 2016-7-18 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
 ;;   矢印キーで左右移動。
 ;;   スペースキーでブレーキをかけます。
 ;;   アクセルは自動です。スピードが上がると曲がりにくくなります。
-;;   ゴールするかコースアウトすると終了です。
+;;   ゴールするかコースアウトするとゲーム終了です。
 ;;   (道路の端が画面の中心に来ると、コースアウトと判定されます)
 ;;   ESCキーを押すと終了します。
 ;;
@@ -261,10 +261,8 @@
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.05)
   (auddata-set-prop *adata-start* AL_PITCH 3.0)
-  (auddata-load-wav-file *adata-brake* (make-fpath *app-dpath* "sound/cursor8.wav"))
-  (auddata-set-prop *adata-brake* AL_GAIN  0.1)
-  (auddata-set-prop *adata-brake* AL_PITCH 2.0)
-  (set! (~ *adata-brake* 'waittime) 150)
+  (auddata-load-wav-file *adata-brake* (make-fpath *app-dpath* "sound/cursor4.wav"))
+  (auddata-set-prop *adata-brake* AL_GAIN  0.16)
   (auddata-load-wav-file *adata-end1*  (make-fpath *app-dpath* "sound/pattern05.wav"))
   (auddata-set-prop *adata-end1*  AL_GAIN  0.2)
   (auddata-set-prop *adata-end1*  AL_PITCH 1.3)
