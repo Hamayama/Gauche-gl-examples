@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-7-19 v1.05
+;; 2016-7-20 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -51,9 +51,9 @@
   ;(set! (~ *rz* i) (- *rzmax* (* (- *rnum* i 1) 80))))
   (set! (~ *rz* i) (- *rzmax* (* (- *rnum* i 1) 80 (+ 1 (* (- *rnum* i 1) 0.2))))))
 (define *rcx1*       0) ; 道路のX方向の曲がり量1
-(define *rcx2*       0) ; 道路のX方向の曲がり量2
+(define *rcx2*       0) ; 道路のX方向の曲がり量2(目標値)
 (define *rcy1*       0) ; 道路のY方向の曲がり量1
-(define *rcy2*       0) ; 道路のY方向の曲がり量2
+(define *rcy2*       0) ; 道路のY方向の曲がり量2(目標値)
 (define *rdx*        0) ; 道路のX方向の差分
 (define *scz*     -400) ; スクリーンのZ座標
 (define *stg*        1) ; ステージ
@@ -63,6 +63,7 @@
 (define *ssc*        0) ; 制御カウンタ
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:プレイ中,=2:プレイ終了)
 (define *backcolor*  #f32(0.2 0.2 0.2 1.0)) ; 背景色
+(define *hlinecolor* #f32(0.5 0.5 0.5 1.0)) ; 地平線の色
 (define *roadcolor*     ; 道路の境界マークの色(明暗の3色 x 5ステージ分)
   #(#(#f32(0.8 0.8 0.8 1.0) #f32(0.5 0.5 0.5 1.0) #f32(0.2 0.2 0.2 1.0))
     #(#f32(0.0 0.9 0.0 1.0) #f32(0.0 0.6 0.0 1.0) #f32(0.0 0.3 0.0 1.0))
@@ -113,8 +114,7 @@
 ;; 比例の計算
 ;; ( maxx-x:x-minx = maxy-y:y-miny となるような y を求める )
 (define (calcbyratio x minx maxx miny maxy)
-  (/. (+ (* (- maxy miny) x)
-         (- (* miny maxx) (* maxy minx)))
+  (/. (+ (* maxy (- x minx)) (* miny (- maxx x)))
       (- maxx minx)))
 
 ;; 曲がり量から差分を計算
@@ -159,27 +159,27 @@
       (set! *rdx* (+ *x* (calcbycurv *rcx1* (- *rzmax* (~ *rz* i)))))
       (set! rdy1         (calcbycurv *rcy1* (- *rzmax* (~ *rz* i))))
       (set! scy1  (* (+ *ry* rdy1) sczr))
-      ;; 次の道路の境界マークのY座標も取得
+      ;; 次の境界マークのY座標も取得
       (when (< i (- *rnum* 1))
         (set! sczr (/. *scz* (~ *rz* (+ i 1))))
         (set! rdy2 (calcbycurv *rcy1* (- *rzmax* (~ *rz* (+ i 1)))))
         (set! scy2 (* (+ *ry* rdy2) sczr))
         )
-      ;; Y座標が減少するときは、視点から見えないと判断して非表示にする
+      ;; Y座標が増加するときは、視点から見えないと判断して非表示にする
       (when (or (= i (- *rnum* 1)) (>= scy1 scy2))
         ;; 地平線の表示(正射影で表示)
         (unless rline
           (set! rline #t)
-          (gl-color 0.5 0.5 0.5 1.0)
+          (gl-color *hlinecolor*)
           (draw-win-line 0 (get-win-y scy1) *width* (get-win-y scy1)
                          *width* *height* -0.99999)
           )
         ;; 道路の境界マークの表示
-        (gl-material GL_FRONT GL_SPECULAR #f32(0.2 0.2 0.2 1.0))
         (gl-material GL_FRONT GL_DIFFUSE
                      (~ *roadcolor*
                         (if (> *goal* 0) 0 (modulo (- *stg* 1) 5))
                         (modulo (+ *ssc* (- *rnum* i 1)) 3)))
+        (gl-material GL_FRONT GL_SPECULAR #f32(0.2 0.2 0.2 1.0))
         ;(gl-material GL_FRONT GL_SHININESS 10.0)
         (gl-push-matrix)
         (gl-translate (+ *rx1* *rdx*) (+ *ry* rdy1) (~ *rz* i))
@@ -191,8 +191,7 @@
         (gl-pop-matrix)
         )
       )
-    )
-  )
+    ))
 
 ;; 道路の状態更新
 (define (update-road)
@@ -285,12 +284,11 @@
        (set! y2 37))
       ((1) ; プレイ中
        (if (<= *sc* 4000)
-         (set! str2 "MOVE : [<-] [->]  BRAKE : [SPACE]"))
-       )
+         (set! str2 "MOVE : [<-] [->]  BRAKE : [SPACE]")))
       ((2) ; プレイ終了
        (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
       )
-    (unless (= *scene* 0)
+    (when (or (= *scene* 1) (= *scene* 2))
       (cond
        ((> *goal* 0)
         (set! str1 "== GOAL!! ==")
@@ -407,7 +405,7 @@
        ;; ウェイト時間の調整(速度に反比例)
        (set! *wait* (truncate->exact
                      (calcbyratio *spd* *minspd* *maxspd* *maxwait* *minwait*)))
-       (set! (~ *wcinfo* 'waittime) *wait*)
+       (waitcalc-set-wait *wcinfo* *wait*)
        ;; スコアと制御カウンタの処理等
        (cond
         ((= *goal* 0)
@@ -432,7 +430,7 @@
       ((2) ; プレイ終了
        ;; ウェイト時間の復旧
        (set! *wait* *minwait*)
-       (set! (~ *wcinfo* 'waittime) *wait*)
+       (waitcalc-set-wait *wcinfo* *wait*)
        ;; 時間待ち
        ;(timewait *twinfo* 1500
        (timewait *twinfo* (if (>= *goal* 3) 500 1500)

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-7-16 v1.10
+;; 2016-7-20 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -16,7 +16,7 @@
     <keystateinfo> key-on key-off spkey-on spkey-off key-on? spkey-on? mdkey-on?
     <keywaitinfo>  keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
-    <waitcalcinfo> waitcalc
+    <waitcalcinfo> waitcalc waitcalc-set-wait
     <xrand> xrand-init xrand-randint xrand-test
     ))
 (select-module glmintool)
@@ -192,6 +192,8 @@
     (set! (~ w 'waitdata) (+ tnowmsec waitmsec))
     ;(print tdiffmsec " " waitmsec)
     waitmsec))
+(define-method waitcalc-set-wait ((w <waitcalcinfo>) (wt <integer>))
+  (set! (~ w 'waittime) wt))
 ;(define *wcinfo* (make <waitcalcinfo> :waittime *wait*)) ; インスタンス生成例
 
 
