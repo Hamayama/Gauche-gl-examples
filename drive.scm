@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-7-20 v1.06
+;; 2016-7-25 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -57,7 +57,7 @@
 (define *rdx*        0) ; 道路のX方向の差分
 (define *scz*     -400) ; スクリーンのZ座標
 (define *stg*        1) ; ステージ
-(define *goal*       0) ; ゴール情報(=0:未ゴール,=1,2:ウィニングラン,=3:ゴール終了)
+(define *goal*       0) ; ゴール情報(=0:未ゴール,=1-4:ウィニングラン,=5:ゴール終了)
 (define *sc*         0) ; スコア
 (define *hs*         0) ; ハイスコア
 (define *ssc*        0) ; 制御カウンタ
@@ -73,7 +73,7 @@
 
 ;; コース番号から疑似乱数によりステージ情報を生成する
 (define *courceno*   1) ; コース番号(=疑似乱数のシード値)
-(define *maxstg*    10) ; ステージ数
+(define *maxstg*    30) ; ステージ数
 (define *rcx*        (make-vector (+ *maxstg* 1))) ; 各ステージの道路のX方向の曲がり量
 (define *rcy*        (make-vector (+ *maxstg* 1))) ; 各ステージの道路のY方向の曲がり量
 ;; 疑似乱数クラスのインスタンス生成
@@ -196,7 +196,7 @@
 ;; 道路の状態更新
 (define (update-road)
   ;; ステージの更新
-  (when (= (modulo *ssc* 200) 0)
+  (when (= (modulo *ssc* 100) 0)
     (cond
      ((< *stg* *maxstg*)
       (inc! *stg*)
@@ -423,7 +423,7 @@
        ;; 終了判定
        (when (or (> (+ *rx1* *rdx*) 0)
                  (< (+ *rx2* *rdx*) 0)
-                 (>= *goal* 3))
+                 (>= *goal* 5))
          (if (= *goal* 0) (auddata-play *adata-end1*))
          (set! *scene* 2))
        )
@@ -433,7 +433,7 @@
        (waitcalc-set-wait *wcinfo* *wait*)
        ;; 時間待ち
        ;(timewait *twinfo* 1500
-       (timewait *twinfo* (if (>= *goal* 3) 500 1500)
+       (timewait *twinfo* (if (>= *goal* 5) 500 1500)
                  (lambda ()
                    ;; キー入力待ち
                    (keywait *kwinfo* '(#\d #\D)
