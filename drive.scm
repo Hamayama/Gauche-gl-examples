@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-7-25 v1.07
+;; 2016-7-25 v1.08
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -209,7 +209,8 @@
       (if (= *goal* 1) (auddata-play *adata-end2*)))
      ))
   ;; 道路の曲がり量の更新(少しずつ変化させる)
-  (let1 rdc 0.0000007
+  ;(let1 rdc 0.0000007
+  (let1 rdc 0.0000005
     (if (< (abs (- *rcx1* *rcx2*)) rdc)
       (set! *rcx1* *rcx2*)
       (set! *rcx1* (+ *rcx1* (if (< *rcx1* *rcx2*) rdc (- rdc)))))
