@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-6-19 v1.32
+;; 2016-7-26 v1.33
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -207,15 +207,14 @@
     )
    ;; デモでないとき
    (else
-    ;; 自機の移動
-    (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)
-      (set! *x* (clamp (+ *x* -8) *minx* *maxx*)))
-    (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT)
-      (set! *x* (clamp (+ *x*  8) *minx* *maxx*)))
-    (if (spkey-on? *ksinfo* GLUT_KEY_UP)
-      (set! *y* (clamp (+ *y*  8) *miny* *maxy*)))
-    (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)
-      (set! *y* (clamp (+ *y* -8) *miny* *maxy*)))
+    (let ((vx 0) (vy 0))
+      ;; 自機の移動
+      (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx -8))
+      (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx +8))
+      (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy +8))
+      (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! vy -8))
+      (set! *x* (clamp (+ *x* vx) *minx* *maxx*))
+      (set! *y* (clamp (+ *y* vy) *miny* *maxy*)))
     ;; 自機ビーム発射
     (if (or (mdkey-on? *ksinfo* GLUT_ACTIVE_CTRL)
             (key-on?   *ksinfo* '(#\space #\a #\A #\z #\Z)))
@@ -638,7 +637,7 @@
                    (lambda ()
                      (set! *scene*   1)
                      (set! *demoflg* #t)
-                     (set! (~ *wcinfo* 'waittime) (if (> *demomode* 0) 1 *wait*))
+                     (waitcalc-set-wait *wcinfo* (if (> *demomode* 0) 1 *wait*))
                      ))
          (when (= *scene* 1)
            (keywait-clear  *kwinfo*)
@@ -682,7 +681,7 @@
        (when (and *demoflg* (key-on? *ksinfo* '(#\d #\D)))
          (set! *scene*   0)
          (set! *demoflg* #f)
-         (set! (~ *wcinfo* 'waittime) *wait*))
+         (waitcalc-set-wait *wcinfo* *wait*))
        )
       ((2) ; プレイ終了
        (cond
@@ -715,7 +714,7 @@
          (when (key-on? *ksinfo* '(#\d #\D))
            (set! *scene*   0)
            (set! *demoflg* #f)
-           (set! (~ *wcinfo* 'waittime) *wait*))
+           (waitcalc-set-wait *wcinfo* *wait*))
          )
         ;; デモでないとき
         (else
