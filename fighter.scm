@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-7-17 v1.50
+;; 2016-7-27 v1.51
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -433,7 +433,7 @@
   (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
-  (auddata-set-prop *adata-start* AL_GAIN  0.05)
+  (auddata-set-prop *adata-start* AL_GAIN  0.07)
   (auddata-set-prop *adata-start* AL_PITCH 3.0)
   (auddata-load-wav-file *adata-hit*   (make-fpath *app-dpath* "sound/decide2.wav"))
   (auddata-set-prop *adata-hit*   AL_GAIN  0.4)
