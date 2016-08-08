@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-7-27 v1.09
+;; 2016-8-9 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -133,10 +133,7 @@
     (set! second  (quotient msec  1000))
     (set! msec    (modulo   msec  1000))
     (set! msec/10 (quotient msec    10))
-    (string-append (format "~2,'0D" minute) "'"
-                   (format "~2,'0D" second) "\""
-                   (format "~2,'0D" msec/10))
-    ))
+    (format "~2,'0D'~2,'0D\"~2,'0D" minute second msec/10)))
 
 ;; 道路の表示
 ;; (Z座標はプレイヤーの視点が原点で奥方向をマイナスとする。
