@@ -1,11 +1,12 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; テキスト画面クラスのテスト
-;; 2016-4-20
+;; 2016-9-12
 ;;
 (add-load-path "." :relative)
 (use gl)
 (use gl.glut)
+(use gauche.uvector)
 (use math.const)
 (use gltextscrn)
 
@@ -19,6 +20,7 @@
 (define *ht/2*     400) ; 画面高さ/2
 (define *chw*       16) ; 文字の幅
 (define *chh*       32) ; 文字の高さ
+(define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 
 ;; テキスト画面クラスのインスタンス生成
 (define *tscrn1* (make <textscrn>))
@@ -92,7 +94,7 @@
   (textscrn-disp *tscrn2* (get-win-x 0) (get-win-y 0) *width* *height*
                  (get-win-w *chw*) (get-win-h *chh*) 'right)
   ;; 背景の表示
-  (gl-color 0.0 0.0 0.3 1.0)
+  (gl-color *backcolor*)
   (fill-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)
   ;(gl-flush)
   (glut-swap-buffers)
