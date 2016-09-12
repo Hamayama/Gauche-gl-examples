@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-8-9 v1.10
+;; 2016-9-12 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -124,15 +124,10 @@
 
 ;; 時間(msec)を文字列にする
 (define (timetext msec)
-  (let ((minute  0)
-        (second  0)
-        (msec/10 0))
-    (set! msec    (x->integer msec))
-    (set! minute  (quotient msec 60000))
-    (set! msec    (modulo   msec 60000))
-    (set! second  (quotient msec  1000))
-    (set! msec    (modulo   msec  1000))
-    (set! msec/10 (quotient msec    10))
+  (let* ((msec1   (x->integer msec))
+         (minute  (quotient         msec1 60000))
+         (second  (quotient (modulo msec1 60000) 1000))
+         (msec/10 (quotient (modulo msec1  1000)   10)))
     (format "~2,'0D'~2,'0D\"~2,'0D" minute second msec/10)))
 
 ;; 道路の表示

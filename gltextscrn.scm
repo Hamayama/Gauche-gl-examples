@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-7-19 v1.24
+;; 2016-9-12 v1.25
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -13,6 +13,7 @@
   (use gauche.uvector)
   (use gauche.sequence)
   (use srfi-13) ; string-fold,string-for-each用
+  (use binary.pack)
   (export
     draw-bitmap-text draw-stroke-text
     draw-win-line fill-win-rect fill-win-circle
@@ -21,6 +22,8 @@
     textscrn-line textscrn-box textscrn-fbox
     textscrn-circle textscrn-fcircle textscrn-poly textscrn-fpoly
     textscrn-check-str textscrn-disp-check-str
+    load-texture-bitmap-file draw-texture-rect
+    set-char-texture textscrn-disp-texture
     ))
 (select-module gltextscrn)
 
@@ -34,9 +37,8 @@
 ;; 正射影設定ON/OFF(内部処理用)
 ;;   ・投影方法を正射影に設定し、また、
 ;;     画面の座標系を「左下」を原点として (0,0)-(*width*,*height*) の範囲に設定する
-;;     (ここで「左上」を原点にすると、モデルもすべて上下反転してしまう。
-;;      このため、個別の表示ルーチンの方で、Y座標を *height* - y のように指定して、
-;;      それによって (モデルは上下反転せずに) 左上が原点になるようにする)
+;;     (ここでは「左上」を原点とはしない (モデルもすべて上下反転してしまうため)
+;;      個別の表示ルーチンの方で、必要に応じて、*height* - y として反転するようにする)
 ;;   ・光源は無効に設定する
 ;;   ・ONとOFFは常にセットで使用する
 (define (gl-ortho-on *width* *height*)
@@ -172,7 +174,7 @@
   ;  (set! (~ ts 'data i) (+ (modulo i (- 128 32)) 32)))
   )
 
-;; 文字情報テーブル(文字列の一括表示用)
+;; 文字情報テーブル(文字列の一括表示用)(内部処理用)
 ;;   ・文字ごとに倍率とオフセット値を設定して、等幅フォントのように表示可能とする
 ;;   ・フォントは固定
 (define-class <char-info> () (xscale/fchw yscale/fchh xoffset yoffset)) ; 文字情報クラス
@@ -233,18 +235,15 @@
                               :optional (align 'left))
   (gl-ortho-on *width* *height*)
   (let* ((w  (~ ts 'width))
-         (x1 0)
-         (x2 (case align
+         (x1 (case align
                ((center) (- x (/. (* w chw) 2))) ; 中央寄せ
                ((right)  (- x (* w chw)))        ; 右寄せ
                (else     x)))
-         (y1 (- *height* y))
+         (x2 x1)
+         (y1 (- *height* y chh))
          (i  0))
     (for-each
      (lambda (c)
-       (when (= i 0)
-         (set! x1 x2)
-         (set! y1 (- y1 chh)))
        (if (and (>= c 0) (< c *char-info-num*))
          (let1 c1 (~ (force *char-info-table*) c)
            (gl-load-identity)
@@ -254,7 +253,10 @@
            (glut-stroke-character *font-stroke-1* c)))
        (set! x1 (+ x1 chw))
        (inc! i)
-       (if (>= i w) (set! i 0))
+       (when (>= i w)
+         (set! i 0)
+         (set! x1 x2)
+         (set! y1 (- y1 chh)))
        )
      (~ ts 'data))
     )
@@ -649,5 +651,233 @@
 
 ;(define *tscrn1* (make <textscrn>)) ; インスタンス生成例
 ;(textscrn-init *tscrn1* 50 25)
+
+
+;; 画像データクラス(内部処理用)
+(define-class <imgdata> ()
+  ((width  :init-value 0) ; 画像データの幅(単位:px)
+   (height :init-value 0) ; 画像データの高さ(単位:px)
+   (data   :init-form (make-u32vector 0)) ; 画像データ(u8vector)(1画素は要素4個(RGBA))
+   ))
+
+;; ビットマップファイルを読み込み 画像データを生成する(内部処理用)
+;;   ・ビットマップファイルは、24bitカラーで無圧縮のもののみ使用可能
+;;   ・画像サイズは、幅も高さも 2のべき乗 である必要がある
+;;   ・データは上下反転しているので注意
+;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
+(define-method imgdata-load-bitmap-file ((img <imgdata>)
+                                         (file <string>) :optional (trans-color #f))
+  (define (err msg . rest)
+    (apply errorf (cons (format "bitmap file load error (file=~a)\n~a" file msg)
+                        rest)))
+  (define (get-param header index)
+    (let1 p (~ header index)
+      (if (eof-object? p)
+        (err "file size is too small")
+        p)))
+  (define (read-one-data in)
+    (let1 d (read-byte in)
+      (if (eof-object? d)
+        (err "file size is too small")
+        d)))
+  (call-with-input-file file
+    (lambda (in)
+      ;; ファイルヘッダーの読み込み
+      (let* ((file-header (unpack "nVvvV" :input in))
+             (ftype       (get-param file-header 0))
+             (fsize       (get-param file-header 1))
+             (foffbits    (get-param file-header 4))
+             (pos         0))
+        (unless (= ftype #x424D)
+          (err "file type is invalid (ftype=~4,'0Xh)" ftype))
+        ;; (fsize はチェックしない)
+        ;(unless (>= fsize 0)
+        ;  (err "file size is invalid (fsize=~d)" fsize))
+        (unless (>= foffbits 0)
+          (err "file offset is invalid (foffbits=~d)" foffbits))
+        (set! pos (+ pos 14))
+        ;; 情報ヘッダーの読み込み
+        (let* ((info-header  (unpack "VV!V!vvVVV!V!VV" :input in))
+               (isize        (get-param info-header 0))
+               (iwidth       (get-param info-header 1))
+               (iheight      (get-param info-header 2))
+               (ibitcount    (get-param info-header 4))
+               (icompression (get-param info-header 5))
+               (isizeimage   (get-param info-header 6)))
+          ;; (サイズの大きい拡張版が存在する)
+          ;(unless (= isize 40)
+          (unless (>= isize 40)
+            (err "can't load this type of bitmap (isize=~d)" isize))
+          (unless (>= iwidth 0)
+            (err "can't load this type of bitmap (iwidth=~d)" iwidth))
+          (unless (>= iheight 0)
+            (err "can't load this type of bitmap (iheight=~d)" iheight))
+          (unless (= ibitcount 24)
+            (err "can't load this type of bitmap (ibitcount=~d)" ibitcount))
+          (unless (= icompression 0)
+            (err "can't load this type of bitmap (icompression=~d)" icompression))
+          ;; (isizeimage はチェックしない)
+          ;(unless (>= isizeimage 0)
+          ;  (err "can't load this type of bitmap (isizeimage=~d)" isizeimage))
+          (set! pos (+ pos 40))
+          ;; データの読み込み
+          (let* ((data-size (* iwidth iheight 4))
+                 (data      (make-u8vector data-size 0))
+                 (trans-r   (list-ref trans-color 0 -1))
+                 (trans-g   (list-ref trans-color 1 -1))
+                 (trans-b   (list-ref trans-color 2 -1)))
+            (do ((i pos (+ i 1))
+                 (j 0 j)
+                 (k 0 k)
+                 (x 0 x))
+                ;; (fsize と isizeimage はチェックしない)
+                ;((or (>= i fsize) (>= j isizeimage) (>= k data-size)) #f)
+                ((>= k data-size) #f)
+              ;(print i " " fsize " " j " " isizeimage " " k " " data-size)
+              (cond
+               ;; オフセットの位置まで読み飛ばす
+               ((< i foffbits)
+                (read-one-data in))
+               ;; 1ライン読み込み後は、4バイト境界まで読み飛ばす
+               ((and (>= x iwidth) (not (= (modulo j 4) 0)))
+                (read-one-data in)
+                (inc! j))
+               ;; 1画素分のデータを読み込む
+               (else
+                (let* ((b (read-one-data in))
+                       (g (read-one-data in))
+                       (r (read-one-data in)))
+                  (set! (~ data k)       r)
+                  (set! (~ data (+ k 1)) g)
+                  (set! (~ data (+ k 2)) b)
+                  (set! (~ data (+ k 3))
+                        (if (and (= r trans-r) (= g trans-g) (= b trans-b)) 0 255))
+                  (set! j (+ j 3))
+                  (set! k (+ k 4))
+                  (inc! x)
+                  (if (and (>= x iwidth) (= (modulo j 4) 0))
+                    (set! x 0))
+                  )))
+              )
+            ;; 戻り値をセット
+            ;(print iwidth " " iheight " " data)
+            (set! (~ img 'width)  iwidth)
+            (set! (~ img 'height) iheight)
+            (set! (~ img 'data)   data))
+          ))
+      )))
+
+;; テクスチャに画像データを設定する(内部処理用)
+;;   各種パラメータは決め打ち
+;;   画像サイズは、幅も高さも 2のべき乗 である必要がある
+(define-method imgdata-set-texture ((img <imgdata>) tex)
+  (gl-bind-texture GL_TEXTURE_2D tex)
+  (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_WRAP_S GL_REPEAT)
+  (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_WRAP_T GL_REPEAT)
+  (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER GL_NEAREST)
+  (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER GL_NEAREST)
+  (gl-tex-image-2d GL_TEXTURE_2D 0 GL_RGBA
+                   (~ img 'width) (~ img 'height) 0
+                   GL_RGBA GL_UNSIGNED_BYTE (~ img 'data))
+  )
+
+;; ビットマップファイルを読み込み テクスチャに設定する
+;;   ・ビットマップファイルは、24bitカラーで無圧縮のもののみ使用可能
+;;   ・画像サイズは、幅も高さも 2のべき乗 である必要がある
+;;   ・データは上下反転しているので注意
+;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
+(define-method load-texture-bitmap-file (tex (file <string>) :optional (trans-color #f))
+  (let1 img (make <imgdata>)
+    (imgdata-load-bitmap-file img file trans-color)
+    (imgdata-set-texture img tex)
+    ))
+
+;; テクスチャ付き長方形の表示
+;;   ・テクスチャ tex を貼り付けた長方形 (x,y,w,h) の表示を行う
+;;   ・座標は、左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
+;;     (図形表示とは座標系が異なるので注意)
+(define (draw-texture-rect tex x y w h *width* *height*
+                           :optional (align 'left) (z 0) (xnum 1.0) (ynum 1.0))
+  (gl-ortho-on *width* *height*)
+  (gl-enable GL_TEXTURE_2D)
+  (let ((x1 (case align
+              ((center) (- x (/. w 2))) ; 中央寄せ
+              ((right)  (- x w))        ; 右寄せ
+              (else     x)))
+        (y1 (- *height* y)))
+    (gl-bind-texture GL_TEXTURE_2D tex)
+    (gl-translate x1 y1 z)
+    (gl-begin GL_QUADS)
+    (gl-tex-coord 0.0  ynum) (gl-vertex (f32vector 0 0 0))
+    (gl-tex-coord xnum ynum) (gl-vertex (f32vector w 0 0))
+    (gl-tex-coord xnum 0.0)  (gl-vertex (f32vector w (- h) 0))
+    (gl-tex-coord 0.0  0.0)  (gl-vertex (f32vector 0 (- h) 0))
+    (gl-end))
+  (gl-disable GL_TEXTURE_2D)
+  (gl-ortho-off))
+
+;; 文字テクスチャ割り付け用テーブル(テクスチャの一括表示用)(内部処理用)
+(define-class <tex-info> () (tex xoffset yoffset xnum ynum)) ; テクスチャ情報クラス
+(define *char-tex-table* (make-hash-table 'eqv?))
+
+;; 文字にテクスチャを割り付ける(テクスチャの一括表示用)
+(define (set-char-texture ch tex :optional (xoffset 0) (yoffset 0)
+                          (xnum 1.0) (ynum 1.0))
+  (let1 t (make <tex-info>)
+    (set! (~ t 'tex)     tex)
+    (set! (~ t 'xoffset) xoffset)
+    (set! (~ t 'yoffset) yoffset)
+    (set! (~ t 'xnum)    xnum)
+    (set! (~ t 'ynum)    ynum)
+    (hash-table-put! *char-tex-table* (char->integer ch) t)
+    ))
+
+;; 文字に割り付けたテクスチャの一括表示
+;;   ・座標 (x,y) は左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
+;;     (図形表示とは座標系が異なるので注意)
+;;   ・1文字あたりの表示サイズは、幅 chw と高さ chh の指定が必要
+(define-method textscrn-disp-texture ((ts <textscrn>)
+                                      (x <real>) (y <real>)
+                                      (*width* <real>) (*height* <real>)
+                                      (chw <real>) (chh <real>)
+                                      :optional (align 'left) (z 0))
+  (gl-ortho-on *width* *height*)
+  (gl-enable GL_TEXTURE_2D)
+  (let* ((w  (~ ts 'width))
+         (x1 (case align
+               ((center) (- x (/. (* w chw) 2))) ; 中央寄せ
+               ((right)  (- x (* w chw)))        ; 右寄せ
+               (else     x)))
+         (x2 x1)
+         (y1 (- *height* y))
+         (i  0))
+    (for-each
+     (lambda (c)
+       (if-let1 t (hash-table-get *char-tex-table* c #f)
+         (let ((tex  (~ t 'tex))
+               (x3   (+ x1 (~ t 'xoffset)))
+               (y3   (- y1 (~ t 'yoffset)))
+               (xnum (~ t 'xnum))
+               (ynum (~ t 'ynum)))
+           (gl-bind-texture GL_TEXTURE_2D tex)
+           (gl-load-identity)
+           (gl-translate x3 y3 z)
+           (gl-begin GL_QUADS)
+           (gl-tex-coord 0.0  ynum) (gl-vertex (f32vector 0 0 0))
+           (gl-tex-coord xnum ynum) (gl-vertex (f32vector chw 0 0))
+           (gl-tex-coord xnum 0.0)  (gl-vertex (f32vector chw (- chh) 0))
+           (gl-tex-coord 0.0  0.0)  (gl-vertex (f32vector 0 (- chh) 0))
+           (gl-end)))
+       (set! x1 (+ x1 chw))
+       (inc! i)
+       (when (>= i w)
+         (set! i 0)
+         (set! x1 x2)
+         (set! y1 (- y1 chh)))
+       )
+     (~ ts 'data))
+    )
+  (gl-disable GL_TEXTURE_2D)
+  (gl-ortho-off))
 
 
