@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 画像表示のテスト
-;; 2016-9-12
+;; 2016-9-13
 ;;
 (add-load-path "." :relative)
 (use gl)
@@ -27,6 +27,7 @@
 ;; テクスチャの配列(u32vector)
 (define *tex* #f)
 
+;; テキスト画面クラスのインスタンス生成
 (define *tscrn1* (make <textscrn>))
 (textscrn-init *tscrn1* 3 2)
 (textscrn-pset *tscrn1* 0 0 "AAA")
@@ -90,7 +91,7 @@
   (draw-texture-rect (~ *tex* 0) (get-win-x -50) (get-win-y 50)
                      (get-win-w 200) (get-win-h 200) *width* *height* 'center)
   (draw-texture-rect (~ *tex* 1) (get-win-x  50) (get-win-y 150)
-                     (get-win-w 200) (get-win-h 200) *width* *height* 'center 0 -1.0)
+                     (get-win-w 200) (get-win-h 200) *width* *height* 'center)
   ;; 背景の表示
   (gl-color *backcolor*)
   (fill-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)

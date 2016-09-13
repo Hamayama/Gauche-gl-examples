@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-12 v1.25
+;; 2016-9-13 v1.26
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -771,14 +771,14 @@
 ;;   各種パラメータは決め打ち
 ;;   画像サイズは、幅も高さも 2のべき乗 である必要がある
 (define-method imgdata-set-texture ((img <imgdata>) tex)
-  (gl-bind-texture GL_TEXTURE_2D tex)
+  (gl-bind-texture  GL_TEXTURE_2D tex)
   (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_WRAP_S GL_REPEAT)
   (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_WRAP_T GL_REPEAT)
   (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER GL_NEAREST)
   (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER GL_NEAREST)
-  (gl-tex-image-2d GL_TEXTURE_2D 0 GL_RGBA
-                   (~ img 'width) (~ img 'height) 0
-                   GL_RGBA GL_UNSIGNED_BYTE (~ img 'data))
+  (gl-tex-image-2d  GL_TEXTURE_2D 0 GL_RGBA
+                    (~ img 'width) (~ img 'height) 0
+                    GL_RGBA GL_UNSIGNED_BYTE (~ img 'data))
   )
 
 ;; ビットマップファイルを読み込み テクスチャに設定する
@@ -786,7 +786,7 @@
 ;;   ・画像サイズは、幅も高さも 2のべき乗 である必要がある
 ;;   ・データは上下反転しているので注意
 ;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
-(define-method load-texture-bitmap-file (tex (file <string>) :optional (trans-color #f))
+(define (load-texture-bitmap-file tex file :optional (trans-color #f))
   (let1 img (make <imgdata>)
     (imgdata-load-bitmap-file img file trans-color)
     (imgdata-set-texture img tex)
@@ -797,7 +797,7 @@
 ;;   ・座標は、左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
 ;;     (図形表示とは座標系が異なるので注意)
 (define (draw-texture-rect tex x y w h *width* *height*
-                           :optional (align 'left) (z 0) (xnum 1.0) (ynum 1.0))
+                           :optional (align 'left) (z 0) (xcrd 1.0) (ycrd 1.0))
   (gl-ortho-on *width* *height*)
   (gl-enable GL_TEXTURE_2D)
   (let ((x1 (case align
@@ -808,27 +808,27 @@
     (gl-bind-texture GL_TEXTURE_2D tex)
     (gl-translate x1 y1 z)
     (gl-begin GL_QUADS)
-    (gl-tex-coord 0.0  ynum) (gl-vertex (f32vector 0 0 0))
-    (gl-tex-coord xnum ynum) (gl-vertex (f32vector w 0 0))
-    (gl-tex-coord xnum 0.0)  (gl-vertex (f32vector w (- h) 0))
+    (gl-tex-coord 0.0  ycrd) (gl-vertex (f32vector 0 0 0))
+    (gl-tex-coord xcrd ycrd) (gl-vertex (f32vector w 0 0))
+    (gl-tex-coord xcrd 0.0)  (gl-vertex (f32vector w (- h) 0))
     (gl-tex-coord 0.0  0.0)  (gl-vertex (f32vector 0 (- h) 0))
     (gl-end))
   (gl-disable GL_TEXTURE_2D)
   (gl-ortho-off))
 
 ;; 文字テクスチャ割り付け用テーブル(テクスチャの一括表示用)(内部処理用)
-(define-class <tex-info> () (tex xoffset yoffset xnum ynum)) ; テクスチャ情報クラス
+(define-class <tex-info> () (tex xoffset yoffset xcrd ycrd)) ; テクスチャ情報クラス
 (define *char-tex-table* (make-hash-table 'eqv?))
 
 ;; 文字にテクスチャを割り付ける(テクスチャの一括表示用)
 (define (set-char-texture ch tex :optional (xoffset 0) (yoffset 0)
-                          (xnum 1.0) (ynum 1.0))
+                          (xcrd 1.0) (ycrd 1.0))
   (let1 t (make <tex-info>)
     (set! (~ t 'tex)     tex)
     (set! (~ t 'xoffset) xoffset)
     (set! (~ t 'yoffset) yoffset)
-    (set! (~ t 'xnum)    xnum)
-    (set! (~ t 'ynum)    ynum)
+    (set! (~ t 'xcrd)    xcrd)
+    (set! (~ t 'ycrd)    ycrd)
     (hash-table-put! *char-tex-table* (char->integer ch) t)
     ))
 
@@ -857,15 +857,15 @@
          (let ((tex  (~ t 'tex))
                (x3   (+ x1 (~ t 'xoffset)))
                (y3   (- y1 (~ t 'yoffset)))
-               (xnum (~ t 'xnum))
-               (ynum (~ t 'ynum)))
+               (xcrd (~ t 'xcrd))
+               (ycrd (~ t 'ycrd)))
            (gl-bind-texture GL_TEXTURE_2D tex)
            (gl-load-identity)
            (gl-translate x3 y3 z)
            (gl-begin GL_QUADS)
-           (gl-tex-coord 0.0  ynum) (gl-vertex (f32vector 0 0 0))
-           (gl-tex-coord xnum ynum) (gl-vertex (f32vector chw 0 0))
-           (gl-tex-coord xnum 0.0)  (gl-vertex (f32vector chw (- chh) 0))
+           (gl-tex-coord 0.0  ycrd) (gl-vertex (f32vector 0 0 0))
+           (gl-tex-coord xcrd ycrd) (gl-vertex (f32vector chw 0 0))
+           (gl-tex-coord xcrd 0.0)  (gl-vertex (f32vector chw (- chh) 0))
            (gl-tex-coord 0.0  0.0)  (gl-vertex (f32vector 0 (- chh) 0))
            (gl-end)))
        (set! x1 (+ x1 chw))
