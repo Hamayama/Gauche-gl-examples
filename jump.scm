@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-19 v1.01
+;; 2016-9-19 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -608,6 +608,7 @@
 
 ;; 終了
 (define (exit-main-loop code)
+  (aud-end)
   (exit code))
 
 ;; メイン処理
