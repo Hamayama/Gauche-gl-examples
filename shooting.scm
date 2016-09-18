@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-7-27 v1.34
+;; 2016-9-19 v1.35
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -125,9 +125,9 @@
    (maxy    :init-value 0)  ; Y座標の最大値
    ))
 ;; 敵クラスのインスタンス生成
-(define *enemies*  (make-vector *mmmr* #f))
-(do ((i 0 (+ i 1))) ((>= i (vector-length *enemies* )) #f)
-  (set! (~ *enemies*  i) (make <enemy>)))
+(define *enemies* (make-vector *mmmr* #f))
+(do ((i 0 (+ i 1))) ((>= i (vector-length *enemies*)) #f)
+  (set! (~ *enemies* i) (make <enemy>)))
 (define *missiles* (make-vector *mmmr* #f))
 (do ((i 0 (+ i 1))) ((>= i (vector-length *missiles*)) #f)
   (set! (~ *missiles* i) (make <enemy>)))
@@ -325,10 +325,9 @@
                 (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
                 (get-win-w *chw*) (get-win-h *chh*)
                 (get-win-x (~ e1 'x)) (get-win-y (~ e1 'y)) 'center)
-           (set! ret #t)
-           (if (not *demoflg*) (auddata-play *adata-end*)))
-         ))
+           (set! ret #t))))
      enemies)
+    (if (and ret (not *demoflg*)) (auddata-play *adata-end*))
     ret))
 
 ;; 自機ビームの表示

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-13 v1.26
+;; 2016-9-19 v1.27
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -663,7 +663,6 @@
 ;; ビットマップファイルを読み込み 画像データを生成する(内部処理用)
 ;;   ・ビットマップファイルは、24bitカラーで無圧縮のもののみ使用可能
 ;;   ・画像サイズは、幅も高さも 2のべき乗 である必要がある
-;;   ・データは上下反転しているので注意
 ;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
 (define-method imgdata-load-bitmap-file ((img <imgdata>)
                                          (file <string>) :optional (trans-color #f))
@@ -721,19 +720,21 @@
           ;  (err "can't load this type of bitmap (isizeimage=~d)" isizeimage))
           (set! pos (+ pos 40))
           ;; データの読み込み
-          (let* ((data-size (* iwidth iheight 4))
-                 (data      (make-u8vector data-size 0))
+          ;; (上下反転しているので、ここで戻す)
+          (let* ((data-size (* iwidth iheight))
+                 (data      (make-u8vector (* data-size 4) 0))
                  (trans-r   (list-ref trans-color 0 -1))
                  (trans-g   (list-ref trans-color 1 -1))
                  (trans-b   (list-ref trans-color 2 -1)))
             (do ((i pos (+ i 1))
                  (j 0 j)
-                 (k 0 k)
+                 (k (* iwidth 4 (- iheight 1)) k)
+                 (c 0 c)
                  (x 0 x))
                 ;; (fsize と isizeimage はチェックしない)
-                ;((or (>= i fsize) (>= j isizeimage) (>= k data-size)) #f)
-                ((>= k data-size) #f)
-              ;(print i " " fsize " " j " " isizeimage " " k " " data-size)
+                ;((or (>= i fsize) (>= j isizeimage) (>= c data-size)) #f)
+                ((>= c data-size) #f)
+              ;(print i " " fsize " " j " " isizeimage " " c " " data-size)
               (cond
                ;; オフセットの位置まで読み飛ばす
                ((< i foffbits)
@@ -754,9 +755,11 @@
                         (if (and (= r trans-r) (= g trans-g) (= b trans-b)) 0 255))
                   (set! j (+ j 3))
                   (set! k (+ k 4))
+                  (inc! c)
                   (inc! x)
-                  (if (and (>= x iwidth) (= (modulo j 4) 0))
-                    (set! x 0))
+                  (when (and (>= x iwidth) (= (modulo j 4) 0))
+                    (set! x 0)
+                    (set! k (- k (* iwidth 4 2))))
                   )))
               )
             ;; 戻り値をセット
@@ -784,7 +787,6 @@
 ;; ビットマップファイルを読み込み テクスチャに設定する
 ;;   ・ビットマップファイルは、24bitカラーで無圧縮のもののみ使用可能
 ;;   ・画像サイズは、幅も高さも 2のべき乗 である必要がある
-;;   ・データは上下反転しているので注意
 ;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
 (define (load-texture-bitmap-file tex file :optional (trans-color #f))
   (let1 img (make <imgdata>)
@@ -808,10 +810,10 @@
     (gl-bind-texture GL_TEXTURE_2D tex)
     (gl-translate x1 y1 z)
     (gl-begin GL_QUADS)
-    (gl-tex-coord 0.0  ycrd) (gl-vertex (f32vector 0 0 0))
-    (gl-tex-coord xcrd ycrd) (gl-vertex (f32vector w 0 0))
-    (gl-tex-coord xcrd 0.0)  (gl-vertex (f32vector w (- h) 0))
-    (gl-tex-coord 0.0  0.0)  (gl-vertex (f32vector 0 (- h) 0))
+    (gl-tex-coord 0.0  0.0)  (gl-vertex (f32vector 0 0 0))
+    (gl-tex-coord xcrd 0.0)  (gl-vertex (f32vector w 0 0))
+    (gl-tex-coord xcrd ycrd) (gl-vertex (f32vector w (- h) 0))
+    (gl-tex-coord 0.0  ycrd) (gl-vertex (f32vector 0 (- h) 0))
     (gl-end))
   (gl-disable GL_TEXTURE_2D)
   (gl-ortho-off))
@@ -863,10 +865,10 @@
            (gl-load-identity)
            (gl-translate x3 y3 z)
            (gl-begin GL_QUADS)
-           (gl-tex-coord 0.0  ycrd) (gl-vertex (f32vector 0 0 0))
-           (gl-tex-coord xcrd ycrd) (gl-vertex (f32vector chw 0 0))
-           (gl-tex-coord xcrd 0.0)  (gl-vertex (f32vector chw (- chh) 0))
-           (gl-tex-coord 0.0  0.0)  (gl-vertex (f32vector 0 (- chh) 0))
+           (gl-tex-coord 0.0  0.0)  (gl-vertex (f32vector 0 0 0))
+           (gl-tex-coord xcrd 0.0)  (gl-vertex (f32vector chw 0 0))
+           (gl-tex-coord xcrd ycrd) (gl-vertex (f32vector chw (- chh) 0))
+           (gl-tex-coord 0.0  ycrd) (gl-vertex (f32vector 0 (- chh) 0))
            (gl-end)))
        (set! x1 (+ x1 chw))
        (inc! i)
