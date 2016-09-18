@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-19 v1.00
+;; 2016-9-19 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -159,7 +159,7 @@
                        *width* *height* 'left 0 0.75 0.75)
     ))
 
-;; 自分の移動
+;; 自分の操作
 (define (control-mychr)
   (set! *vx* 0)
   (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! *vx* -15))
