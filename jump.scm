@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-19 v1.02
+;; 2016-9-19 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -401,7 +401,7 @@
   (auddata-set-prop *adata-start* AL_PITCH 3.0)
   (auddata-load-wav-file *adata-goal*  (make-fpath *app-dpath* "sound/decide2.wav"))
   (auddata-set-prop *adata-goal*  AL_GAIN  0.4)
-  (auddata-set-prop *adata-goal*  AL_PITCH 1.1)
+  (auddata-set-prop *adata-goal*  AL_PITCH 1.05)
   (auddata-load-wav-file *adata-end*   (make-fpath *app-dpath* "sound/pattern05.wav"))
   (auddata-set-prop *adata-end*   AL_GAIN  0.2)
   (auddata-set-prop *adata-end*   AL_PITCH 1.3)
