@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-19 v1.04
+;; 2016-9-19 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -193,20 +193,21 @@
       (set! vy1 0)
       (set! *y* *miny*))
     ;; 雲の判定
-    (for-each
-     (lambda (c1)
-       (when (and (recthit? (- *x* *chw*) (- *y*) (* *chw* 2) (* *chh* 2)
-                            (~ c1 'x) (- (~ c1 'y)) (* *chw* 10) *chh*)
-                  (>= (abs *vy*)
-                      (abs (- *y* (+ (~ c1 'y) (* *chh* 2))))))
-         (let1 y1 (+ (~ c1 'y) (* *chh* 2))
-           (when (or (not ride-flag) (> y1 *y*))
-             (set! ride-flag #t)
-             (set! vx1 (~ c1 'vx))
-             (set! vy1 0)
-             (set! *y* y1)))
-         ))
-     *clouds*)
+    (if (<= *vy* 0)
+      (for-each
+       (lambda (c1)
+         (when (and (recthit? (- *x* *chw*) (- *y*) (* *chw* 2) (* *chh* 2)
+                              (~ c1 'x) (- (~ c1 'y)) (* *chw* 10) *chh*)
+                    (>= (abs *vy*)
+                        (abs (- *y* (+ (~ c1 'y) (* *chh* 2))))))
+           (let1 y1 (+ (~ c1 'y) (* *chh* 2))
+             (when (or (not ride-flag) (> y1 *y*))
+               (set! ride-flag #t)
+               (set! vx1 (~ c1 'vx))
+               (set! vy1 0)
+               (set! *y* y1)))
+           ))
+       *clouds*))
     ;; 敵の判定
     (for-each
      (lambda (e1)
