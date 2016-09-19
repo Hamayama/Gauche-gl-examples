@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-19 v1.05
+;; 2016-9-19 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -251,9 +251,9 @@
    (lambda (c1)
      (set! (~ c1 'vx) (~ c1 'vx2))
      (set! (~ c1 'x)  (+ (~ c1 'x) (~ c1 'vx)))
-     (if (or (<= (~ c1 'x) (~ c1 'minx)) (>= (~ c1 'x) (~ c1 'maxx)))
+     (if (not (< (~ c1 'minx) (~ c1 'x) (~ c1 'maxx)))
        (set! (~ c1 'vx2) (- (~ c1 'vx2))))
-     (set! (~ c1 'x) (clamp (~ c1 'x) (~ c1 'minx) (~ c1 'maxx))))
+     (set! (~ c1 'x)  (clamp (~ c1 'x) (~ c1 'minx) (~ c1 'maxx))))
    *clouds*))
 
 ;; ゴールの表示
@@ -327,8 +327,8 @@
        ;; 次の座標を計算
        (set! (~ e1 'vx) (* (~ e1 'speed) (%cos (* (~ e1 'degree) pi/180))))
        (set! (~ e1 'vy) (* (~ e1 'speed) (%sin (* (~ e1 'degree) pi/180))))
-       (set! (~ e1 'x) (+ (~ e1 'x) (~ e1 'vx)))
-       (set! (~ e1 'y) (+ (~ e1 'y) (~ e1 'vy)))
+       (set! (~ e1 'x)  (+ (~ e1 'x) (~ e1 'vx)))
+       (set! (~ e1 'y)  (+ (~ e1 'y) (~ e1 'vy)))
        ;; 座標の範囲チェック
        (if (not (and (<= (~ e1 'minx) (~ e1 'x) (~ e1 'maxx))
                      (<= (~ e1 'miny) (~ e1 'y) (~ e1 'maxy))))
@@ -532,7 +532,7 @@
        (set! *gt1* 350)
        (set! *gt2* 350)
        (set! *gt3* 150)
-       (set! *rnum* (min *stage* *maxrnum*))
+       (set! *rnum*  (min *stage* *maxrnum*))
        (let ((minx (- *wd/2*))
              (maxx (- *wd/2* (* *chw* 10))))
          (cloud-init (~ *clouds* 0) minx -175  5 minx maxx)
@@ -570,11 +570,11 @@
        (control-mychr)
        ;; ゴールの判定
        (when (check-goal?)
-         (add-score (* *stage* 100))
          (set! *scene* 2)
+         (add-score (* *stage* 100))
          (auddata-play *adata-goal*))
        ;; 敵の当たり判定
-       (when (hit-enemies?)
+       (when (and (hit-enemies?) (= *scene* 1))
          (set! *scene* 3)
          (auddata-play *adata-end*))
        )
