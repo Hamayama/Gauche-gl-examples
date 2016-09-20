@@ -87,7 +87,7 @@
 
 3. 一部のサンプルに効果音を追加しました。  
    効果音ファイルは、sound フォルダに格納しています。  
-   これらは、TAM Music Factory ( http://www.tam-music.com/ ) 様の素材を使用しています。  
+   これらは、TAM Music Factory 様 ( http://www.tam-music.com/ ) の素材を使用しています。  
    効果音の再生には、OpenAL, freealut, Gauche-al のインストールが必要です。  
    以下のページを参考に、インストールを実施ください。  
    https://github.com/Hamayama/Gauche-al-mg  
@@ -112,10 +112,10 @@
   - Gauche-gl v0.6
   - Gauche-al v1.0
 - 効果音
-  - TAM Music Factory ( http://www.tam-music.com/ ) 様
+  - TAM Music Factory 様 ( http://www.tam-music.com/ )
 
 ## 履歴
 - 1001HISTORY.txt を参照ください。
 
 
-(2016-9-19)
+(2016-9-20)
