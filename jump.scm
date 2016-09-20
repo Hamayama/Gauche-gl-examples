@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-20 v1.07
+;; 2016-9-20 v1.08
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -92,12 +92,12 @@
 
 ;; 雲クラス
 (define-class <cloud> ()
-  ((x    :init-value 0)  ; X座標
-   (y    :init-value 0)  ; Y座標
-   (vx   :init-value 0)  ; X方向の速度
-   (vx2  :init-value 0)  ; X方向の速度2
-   (minx :init-value 0)  ; X座標の最小値
-   (maxx :init-value 0)  ; X座標の最大値
+  ((x    :init-value 0) ; X座標
+   (y    :init-value 0) ; Y座標
+   (vx   :init-value 0) ; X方向の速度
+   (vx2  :init-value 0) ; X方向の速度2
+   (minx :init-value 0) ; X座標の最小値
+   (maxx :init-value 0) ; X座標の最大値
    ))
 (define-method cloud-init ((c <cloud>) x y vx minx maxx)
   (set! (~ c 'x)    x)
@@ -222,6 +222,7 @@
                             (- (~ e1 'x) *chw*) (- (~ e1 'y)) (* *chw* 2) (* *chh* 2))
                   (>= (+ (abs *vy*) (~ e1 'speed))
                       (abs (- *y* (+ (~ e1 'y) (* *chh* 2))))))
+         ;; (ここで敵を無力化)
          (set! (~ e1 'state) 1)
          (let1 y1 (+ (~ e1 'y) (* *chh* 2))
            (when (or (not ride-flag) (> y1 *y*))
@@ -257,6 +258,7 @@
      (set! (~ c1 'vx) (~ c1 'vx2))
      (set! (~ c1 'x)  (+ (~ c1 'x) (~ c1 'vx)))
      (if (not (< (~ c1 'minx) (~ c1 'x) (~ c1 'maxx)))
+       ;; (vx は自分が上に乗るときに参照するため、vx2 の方を更新)
        (set! (~ c1 'vx2) (- (~ c1 'vx2))))
      (set! (~ c1 'x)  (clamp (~ c1 'x) (~ c1 'minx) (~ c1 'maxx))))
    *clouds*))
@@ -544,6 +546,7 @@
          (cloud-init (~ *clouds* 1) maxx    0 -5 minx maxx))
        (init-enemies)
        (cond
+        ;; ゲーム開始前のとき
         ((= *stage* 1)
          (set! *sc*  0)
          (set! *ssc* 0)
@@ -553,6 +556,7 @@
                     (set! *scene* 1)
                     (auddata-play *adata-start*)
                     (keywait-clear *kwinfo*))))
+        ;; ステージクリア後のとき
         (else
          (set! *scene* 1)
          (auddata-play *adata-start*))
@@ -573,15 +577,17 @@
        (move-enemies)
        ;; 自分の移動
        (move-mychr)
-       ;; ゴールの判定
-       (when (check-goal?)
+       ;; 各種判定処理(ゴールの判定を優先とする)
+       (cond
+        ;; ゴールの判定
+        ((check-goal?)
          (set! *scene* 2)
          (add-score (* *stage* 100))
          (auddata-play *adata-goal*))
-       ;; 敵の当たり判定
-       (when (and (hit-enemies?) (= *scene* 1))
+        ;; 敵の当たり判定
+        ((hit-enemies?)
          (set! *scene* 3)
-         (auddata-play *adata-end*))
+         (auddata-play *adata-end*)))
        )
       ((2) ; ステージクリア
        ;; 時間待ち
