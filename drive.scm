@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-9-12 v1.11
+;; 2016-9-20 v1.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -215,14 +215,10 @@
 (define (move-mychr)
   ;; 速度の更新
   (cond
-   ((key-on? *ksinfo* #\space)
-    (set! *spd* (- *spd* 6))
-    (auddata-play *adata-brake*))
-   (else
-    (if (< *spd* *maxspd*)
-      (set! *spd* (+ *spd* 2))
-      (set! *spd* (- *spd* 1))))
-   )
+   ((key-on? *ksinfo* #\space) (set! *spd* (- *spd* 6))
+                               (auddata-play *adata-brake*))
+   ((< *spd* *maxspd*)         (set! *spd* (+ *spd* 2)))
+   (else                       (set! *spd* (- *spd* 1))))
   (set! *spd* (clamp *spd* *minspd* *maxspd*))
   ;; X座標の更新
   (let ((dx1 0) (dx2 0))
@@ -405,8 +401,7 @@
          (set! *sc* (+ *sc* *wait*))
          (if (> *sc* 1000000) (set! *sc* 1000000)))
         (else
-         (if (or (= *hs* 0) (< *sc* *hs*))
-           (set! *hs* *sc*))))
+         (if (or (= *hs* 0) (< *sc* *hs*)) (set! *hs* *sc*))))
        (inc! *ssc*)
        (if (> *ssc* 1000000) (set! *ssc* 1))
        ;; 道路の状態更新

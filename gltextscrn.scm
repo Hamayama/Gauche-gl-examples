@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-19 v1.27
+;; 2016-9-20 v1.28
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -254,7 +254,7 @@
        (set! x1 (+ x1 chw))
        (inc! i)
        (when (>= i w)
-         (set! i 0)
+         (set! i  0)
          (set! x1 x2)
          (set! y1 (- y1 chh)))
        )
@@ -657,7 +657,7 @@
 (define-class <imgdata> ()
   ((width  :init-value 0) ; 画像データの幅(単位:px)
    (height :init-value 0) ; 画像データの高さ(単位:px)
-   (data   :init-form (make-u32vector 0)) ; 画像データ(u8vector)(1画素は要素4個(RGBA))
+   (data   :init-form (make-u8vector 0)) ; 画像データ(u8vector)(1画素は要素4個(RGBA))
    ))
 
 ;; ビットマップファイルを読み込み 画像データを生成する(内部処理用)
@@ -873,7 +873,7 @@
        (set! x1 (+ x1 chw))
        (inc! i)
        (when (>= i w)
-         (set! i 0)
+         (set! i  0)
          (set! x1 x2)
          (set! y1 (- y1 chh)))
        )
