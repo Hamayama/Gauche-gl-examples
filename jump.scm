@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-20 v1.08
+;; 2016-9-21 v1.09
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -421,14 +421,14 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字表示
-  (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (y2 49))
+  (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (y2 53))
     ;; シーン情報で場合分け
     (case *scene*
       ((0) ; スタート画面
        (when (= *stage* 1)
          (set! str1 "== JUMP ==")
          (set! str2 "HIT [S] KEY")
-         (set! y2 50)))
+         (set! y2 52)))
       ((1) ; プレイ中
        )
       ((2) ; ステージクリア
@@ -441,7 +441,7 @@
     (set! str4 (format "HI-SCORE : ~D" *hs*))
     (set! str5 (format "STAGE : ~D"    *stage*))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text-over str1 (/. *width* 2) (/. (* *height* 36) 100) (/. *height* 13) 'center)
+    (draw-stroke-text-over str1 (/. *width* 2) (/. (* *height* 38) 100) (/. *height* 13) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
     (draw-stroke-text-over str2 (+ (/. *width* 2) (/. *width* 130))
                            (/. (* *height* y2) 100) (/. *height* 18) 'center)
@@ -452,7 +452,7 @@
     (gl-color 1.0 1.0 0.0 1.0)
     (draw-stroke-text str5 *width* 0 *width* *height* (/. *height* 22) 'right)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str6 (/. *width* 2) (/. (* *height* 36) 100) *width* *height*
+    (draw-stroke-text str6 (/. *width* 2) (/. (* *height* 40) 100) *width* *height*
                       (/. *height* 15) 'center)
     )
   ;; 画面上部(スコア表示領域)のマスク
@@ -542,8 +542,8 @@
        (set! *rnum*  (min *stage* *maxrnum*))
        (let ((minx (- *wd/2*))
              (maxx (- *wd/2* (* *chw* 10))))
-         (cloud-init (~ *clouds* 0) minx -175  5 minx maxx)
-         (cloud-init (~ *clouds* 1) maxx    0 -5 minx maxx))
+         (cloud-init (~ *clouds* 0) minx -190  5 minx maxx)
+         (cloud-init (~ *clouds* 1) maxx  -30 -5 minx maxx))
        (init-enemies)
        (cond
         ;; ゲーム開始前のとき
