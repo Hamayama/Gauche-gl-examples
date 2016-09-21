@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-7-20 v1.11
+;; 2016-9-21 v1.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -12,7 +12,7 @@
   (use gauche.uvector)
   (use math.mt-random)
   (export
-    randint round-n truncate-n recthit? make-fpath
+    randint round-n truncate-n recthit? make-fpath make-vector-of-class
     <keystateinfo> key-on key-off spkey-on spkey-off key-on? spkey-on? mdkey-on?
     <keywaitinfo>  keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
@@ -59,6 +59,13 @@
                 (else (string-append path "/" p1))))
         ""
         paths))
+
+;; クラスcのインスタンスをn個生成してベクタにして返す
+(define (make-vector-of-class n c)
+  (rlet1 v (make-vector n)
+    (do ((i 0 (+ i 1)))
+        ((>= i n) #f)
+      (set! (~ v i) (make c)))))
 
 
 ;; キー入力状態管理クラス

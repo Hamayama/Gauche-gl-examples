@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-9-19 v1.35
+;; 2016-9-21 v1.36
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -125,12 +125,8 @@
    (maxy    :init-value 0)  ; Y座標の最大値
    ))
 ;; 敵クラスのインスタンス生成
-(define *enemies* (make-vector *mmmr* #f))
-(do ((i 0 (+ i 1))) ((>= i (vector-length *enemies*)) #f)
-  (set! (~ *enemies* i) (make <enemy>)))
-(define *missiles* (make-vector *mmmr* #f))
-(do ((i 0 (+ i 1))) ((>= i (vector-length *missiles*)) #f)
-  (set! (~ *missiles* i) (make <enemy>)))
+(define *enemies*  (make-vector-of-class *mmmr* <enemy>))
+(define *missiles* (make-vector-of-class *mmmr* <enemy>))
 
 ;; デモ用パラメータクラス
 (define-class <demoparam> ()
@@ -190,10 +186,9 @@
        ((and e1 (< rr1 (* *chw* *chw* (~ *dparam* 'p1) (~ *dparam* 'p1))))
         (set! vx (if (< *x* (~ e1 'x)) -8 +8)))
        ;; 中央に戻る
-       (else
-        (when (<= (randint 1 100) (~ *dparam* 'p2))
-          (if (< *x* -8) (set! vx +8))
-          (if (> *x* +8) (set! vx -8)))))
+       ((<= (randint 1 100) (~ *dparam* 'p2))
+        (if (< *x* -8) (set! vx +8))
+        (if (> *x* +8) (set! vx -8))))
       (set! *x* (clamp (+ *x* vx) *minx* *maxx*)))
     ;; 自機ビーム発射
     (cond

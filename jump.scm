@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-21 v1.09
+;; 2016-9-21 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -107,9 +107,7 @@
   (set! (~ c 'minx) minx)
   (set! (~ c 'maxx) maxx))
 ;; 雲クラスのインスタンス生成
-(define *clouds* (make-vector *cnum* #f))
-(do ((i 0 (+ i 1))) ((>= i (vector-length *clouds*)) #f)
-  (set! (~ *clouds* i) (make <cloud>)))
+(define *clouds* (make-vector-of-class *cnum* <cloud>))
 
 ;; 敵クラス
 (define-class <enemy> ()
@@ -128,9 +126,7 @@
    (maxy    :init-value 0)  ; Y座標の最大値
    ))
 ;; 敵クラスのインスタンス生成
-(define *enemies* (make-vector *maxrnum* #f))
-(do ((i 0 (+ i 1))) ((>= i (vector-length *enemies*)) #f)
-  (set! (~ *enemies* i) (make <enemy>)))
+(define *enemies* (make-vector-of-class *maxrnum* <enemy>))
 
 
 ;; ウィンドウ上のX座標を取得
