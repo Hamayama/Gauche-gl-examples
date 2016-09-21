@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-21 v1.29
+;; 2016-9-22 v1.30
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -15,7 +15,8 @@
   (use srfi-13) ; string-fold,string-for-each用
   (use binary.pack)
   (export
-    draw-bitmap-text draw-stroke-text
+    draw-bitmap-text draw-bitmap-text-over
+    draw-stroke-text draw-stroke-text-over
     draw-win-line fill-win-rect fill-win-circle
     <textscrn> textscrn-init textscrn-disp
     textscrn-cls textscrn-pset textscrn-pget
@@ -57,6 +58,10 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-enable GL_LIGHTING))
 
+;; 文字列の幅を取得(ビットマップフォント)(内部処理用)
+(define (get-bitmap-text-width str font)
+  (string-fold (lambda (ch n) (+ (glut-bitmap-width font (char->integer ch)) n)) 0 str))
+
 ;; 文字列表示(ビットマップフォント)
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
 ;;     (図形表示とは座標系が異なるので注意)
@@ -68,7 +73,7 @@
   (let ((x1 x)
         (y1 (- *height* y size)))
     (if (memq align '(center right))
-      (let1 stw (string-fold (lambda (ch n) (+ (glut-bitmap-width font (char->integer ch)) n)) 0 str)
+      (let1 stw (get-bitmap-text-width str font)
         (set! x1 (if (eq? align 'center)
                    (- x (/. stw 2)) ; 中央寄せ
                    (- x stw)))))    ; 右寄せ
@@ -76,6 +81,38 @@
     (string-for-each (lambda (ch) (glut-bitmap-character font (char->integer ch))) str)
     )
   (gl-ortho-off))
+
+;; 文字列の上書き表示(ビットマップフォント)
+;;   ・背景を塗りつぶしてから draw-bitmap-text を実行する
+(define (draw-bitmap-text-over str x y *width* *height*
+                               :optional (size 24) (align 'left)
+                               (fore-color #f32(1.0 1.0 1.0 1.0))
+                               (back-color #f32(0.0 0.0 0.0 1.0))
+                               (back-scalex 1.2) (back-scaley 1.2)
+                               (z 0) (font *font-bitmap-1*))
+  (unless (equal? str "")
+    (if fore-color (gl-color fore-color))
+    (draw-bitmap-text str x y *width* *height* size align font)
+    (if back-color (gl-color back-color))
+    (let* ((stw     (get-bitmap-text-width str font))
+           (w1      stw)
+           (h1      size)
+           (xoffset (case align
+                      ((left)  (- (* w1 (/. (- back-scalex 1.0) 2))))
+                      ((right)    (* w1 (/. (- back-scalex 1.0) 2)))
+                      (else    0)))
+           (yoffset (+ (- (* h1 (/. (- back-scaley 1.0) 2)))
+                       (* size (/. 33.33 152.38))))
+           (x1      (+ x xoffset))
+           (y1      (+ y yoffset))
+           (w2      (* w1 back-scalex))
+           (h2      (* h1 back-scaley)))
+      (fill-win-rect x1 y1 w2 h2 *width* *height* align z)
+      )))
+
+;; 文字列の幅を取得(ストロークフォント)(内部処理用)
+(define (get-stroke-text-width str font)
+  (string-fold (lambda (ch n) (+ (glut-stroke-width font (char->integer ch)) n)) 0 str))
 
 ;; 文字列表示(ストロークフォント)
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
@@ -91,7 +128,7 @@
         (xoffset 0)
         (yoffset (+ 33.33 10)))
     (if (memq align '(center right))
-      (let1 stw (string-fold (lambda (ch n) (+ (glut-stroke-width font (char->integer ch)) n)) 0 str)
+      (let1 stw (get-stroke-text-width str font)
         (set! xoffset (if (eq? align 'center)
                         (- (/. stw 2)) ; 中央寄せ
                         (- stw)))))    ; 右寄せ
@@ -101,6 +138,33 @@
     (string-for-each (lambda (ch) (glut-stroke-character font (char->integer ch))) str)
     )
   (gl-ortho-off))
+
+;; 文字列の上書き表示(ストロークフォント)
+;;   ・背景を塗りつぶしてから draw-stroke-text を実行する
+(define (draw-stroke-text-over str x y *width* *height*
+                               :optional (size 24) (align 'left)
+                               (fore-color #f32(1.0 1.0 1.0 1.0))
+                               (back-color #f32(0.0 0.0 0.0 1.0))
+                               (back-scalex 1.2) (back-scaley 1.2)
+                               (z 0) (font *font-stroke-1*))
+  (unless (equal? str "")
+    (if fore-color (gl-color fore-color))
+    (draw-stroke-text str x y *width* *height* size align font)
+    (if back-color (gl-color back-color))
+    (let* ((stw     (get-stroke-text-width str font))
+           (w1      (* stw (/. size (+ 152.38 20))))
+           (h1      size)
+           (xoffset (case align
+                      ((left)  (- (* w1 (/. (- back-scalex 1.0) 2))))
+                      ((right)    (* w1 (/. (- back-scalex 1.0) 2)))
+                      (else    0)))
+           (yoffset (- (* h1 (/. (- back-scaley 1.0) 2))))
+           (x1      (+ x xoffset))
+           (y1      (+ y yoffset))
+           (w2      (* w1 back-scalex))
+           (h2      (* h1 back-scaley)))
+      (fill-win-rect x1 y1 w2 h2 *width* *height* align z)
+      )))
 
 ;; 線の表示
 ;;   ・線 (x1,y1)-(x2,y2) の表示を行う

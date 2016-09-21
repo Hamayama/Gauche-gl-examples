@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-9-21 v1.36
+;; 2016-9-22 v1.37
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -437,15 +437,6 @@
      *enemies*)
     ret))
 
-;; 文字列の上書き表示(背景を塗りつぶしてから、その上に表示する)
-(define (draw-stroke-text-over str x y size :optional (align 'left))
-  (when (not (equal? str ""))
-    (draw-stroke-text str x y *width* *height* size align)
-    (gl-color *backcolor*)
-    (fill-win-rect x (- y (* size 0.1)) (* size (string-length str) 0.67) (* size 1.2)
-                   *width* *height* 'center)
-    ))
-
 
 ;; 初期化
 (define (init)
@@ -511,10 +502,11 @@
     (set! str4 (format "HI-SCORE : ~D" *hs*))
     (set! str5 (format "LEVEL : ~D/~D" *mr* *mmr*))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text-over str1 (/. *width* 2) (/. (* *height* 36) 100) (/. *height* 13) 'center)
+    (draw-stroke-text-over str1 (/. *width* 2) (/. (* *height* 36) 100) *width* *height*
+                           (/. *height* 13) 'center #f *backcolor*)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text-over str2 (+ (/. *width* 2) (/. *width* 130))
-                           (/. (* *height* y2) 100) (/. *height* 18) 'center)
+    (draw-stroke-text-over str2 (+ (/. *width* 2) (/. *width* 130)) (/. (* *height* y2) 100)
+                           *width* *height* (/. *height* 18) 'center #f *backcolor*)
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text str3 0 0 *width* *height* (/. *height* 22))
     (gl-color 1.0 0.0 1.0 1.0)
