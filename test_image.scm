@@ -88,9 +88,9 @@
   ;; 文字に割り付けたテクスチャの一括表示
   (textscrn-disp-texture *tscrn1* 0 0 *width* *height* (get-win-w 50) (get-win-h 50))
   ;; テクスチャ付き長方形の表示
-  (draw-texture-rect (~ *tex* 0) (get-win-x -50) (get-win-y 50)
+  (fill-texture-rect (~ *tex* 0) (get-win-x -50) (get-win-y 50)
                      (get-win-w 200) (get-win-h 200) *width* *height* 'center)
-  (draw-texture-rect (~ *tex* 1) (get-win-x  50) (get-win-y 150)
+  (fill-texture-rect (~ *tex* 1) (get-win-x  50) (get-win-y 150)
                      (get-win-w 200) (get-win-h 200) *width* *height* 'center)
   ;; 背景の表示
   (gl-color *backcolor*)

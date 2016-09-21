@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-21 v1.10
+;; 2016-9-21 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -150,7 +150,7 @@
 ;; 自分の表示
 (define (disp-mychr)
   (let1 tno (if (= *scene* 3) 1 0)
-    (draw-texture-rect (~ *tex* tno) (get-win-x (- *x* *chw*)) (get-win-y *y*)
+    (fill-texture-rect (~ *tex* tno) (get-win-x (- *x* *chw*)) (get-win-y *y*)
                        (get-win-w (* *chw* 2)) (get-win-h (* *chh* 2))
                        *width* *height* 'left 0 0.75 0.75)
     ))
@@ -262,7 +262,7 @@
 ;; ゴールの表示
 (define (disp-goal)
   (when (< *gt1* *gt3*)
-    (draw-texture-rect (~ *tex* 5) (get-win-x *gx*) (get-win-y *gy*)
+    (fill-texture-rect (~ *tex* 5) (get-win-x *gx*) (get-win-y *gy*)
                        (get-win-w (* *chw* 4)) (get-win-h (* *chh* 3))
                        *width* *height* 'left 0 0.75 0.5625)
     ))
@@ -313,7 +313,7 @@
    (lambda (e1)
      (when (~ e1 'useflag)
        (let1 tno (if (= (~ e1 'state) 0) 2 3)
-         (draw-texture-rect (~ *tex* tno)
+         (fill-texture-rect (~ *tex* tno)
                             (get-win-x (- (~ e1 'x) *chw*))
                             (get-win-y (~ e1 'y))
                             (get-win-w (* *chw* 2))

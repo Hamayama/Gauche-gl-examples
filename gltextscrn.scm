@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-20 v1.28
+;; 2016-9-21 v1.29
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -22,7 +22,7 @@
     textscrn-line textscrn-box textscrn-fbox
     textscrn-circle textscrn-fcircle textscrn-poly textscrn-fpoly
     textscrn-check-str textscrn-disp-check-str
-    load-texture-bitmap-file draw-texture-rect
+    load-texture-bitmap-file fill-texture-rect
     set-char-texture textscrn-disp-texture
     ))
 (select-module gltextscrn)
@@ -798,7 +798,7 @@
 ;;   ・テクスチャ tex を貼り付けた長方形 (x,y,w,h) の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(*width*,*height*) の範囲で指定する
 ;;     (図形表示とは座標系が異なるので注意)
-(define (draw-texture-rect tex x y w h *width* *height*
+(define (fill-texture-rect tex x y w h *width* *height*
                            :optional (align 'left) (z 0) (xcrd 1.0) (ycrd 1.0))
   (gl-ortho-on *width* *height*)
   (gl-enable GL_TEXTURE_2D)

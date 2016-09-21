@@ -175,6 +175,7 @@ jump.scm
   2016-9-20  v1.08  コメント追加等
   2016-9-21  v1.09  雲の高さ調整等
   2016-9-21  v1.10  インスタンス生成処理見直し
+  2016-9-21  v1.11  手続き名変更(draw-texture-rect → fill-texture-rect)
 
 
 glmintool.scm
@@ -227,6 +228,7 @@ gltextscrn.scm
   2016-9-13  v1.26  変数名見直し等
   2016-9-19  v1.27  ビットマップファイルの読み込み処理見直し等
   2016-9-20  v1.28  画像データクラスの初期値修正
+  2016-9-21  v1.29  手続き名変更(draw-texture-rect → fill-texture-rect)
 
 alaudplay.scm
   2016-3-31  v1.00  初版
