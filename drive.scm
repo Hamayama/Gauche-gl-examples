@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-9-20 v1.12
+;; 2016-9-22 v1.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -314,7 +314,7 @@
   (disp-road)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (fill-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
+  (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
   ;(gl-flush)
   (glut-swap-buffers)
   )

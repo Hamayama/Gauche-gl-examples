@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-7-17 v1.32
+;; 2016-9-22 v1.33
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -110,7 +110,7 @@
 ;; 空(正射影で表示)
 (define (sky)
   (gl-color 0.0 0.0 1.0 1.0)
-  (fill-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
+  (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
   )
 
 ;; 地面(上面に原点あり)

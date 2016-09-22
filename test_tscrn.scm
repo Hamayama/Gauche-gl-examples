@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; テキスト画面クラスのテスト
-;; 2016-9-12
+;; 2016-9-22
 ;;
 (add-load-path "." :relative)
 (use gl)
@@ -95,7 +95,7 @@
                  (get-win-w *chw*) (get-win-h *chh*) 'right)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (fill-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)
+  (draw-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)
   ;(gl-flush)
   (glut-swap-buffers)
   )

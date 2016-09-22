@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-22 v1.12
+;; 2016-9-22 v1.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -150,7 +150,7 @@
 ;; 自分の表示
 (define (disp-mychr)
   (let1 tno (if (= *scene* 3) 1 0)
-    (fill-texture-rect (~ *tex* tno) (get-win-x (- *x* *chw*)) (get-win-y *y*)
+    (draw-texture-rect (~ *tex* tno) (get-win-x (- *x* *chw*)) (get-win-y *y*)
                        (get-win-w (* *chw* 2)) (get-win-h (* *chh* 2))
                        *width* *height* 'left 0 0.75 0.75)
     ))
@@ -262,7 +262,7 @@
 ;; ゴールの表示
 (define (disp-goal)
   (when (< *gt1* *gt3*)
-    (fill-texture-rect (~ *tex* 5) (get-win-x *gx*) (get-win-y *gy*)
+    (draw-texture-rect (~ *tex* 5) (get-win-x *gx*) (get-win-y *gy*)
                        (get-win-w (* *chw* 4)) (get-win-h (* *chh* 3))
                        *width* *height* 'left 0 0.75 0.5625)
     ))
@@ -313,7 +313,7 @@
    (lambda (e1)
      (when (~ e1 'useflag)
        (let1 tno (if (= (~ e1 'state) 0) 2 3)
-         (fill-texture-rect (~ *tex* tno)
+         (draw-texture-rect (~ *tex* tno)
                             (get-win-x (- (~ e1 'x) *chw*))
                             (get-win-y (~ e1 'y))
                             (get-win-w (* *chw* 2))
@@ -445,7 +445,7 @@
     )
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
-  (fill-win-rect (/. *width* 2) 0 *width* (get-win-h *chh*) *width* *height* 'center)
+  (draw-win-rect (/. *width* 2) 0 *width* (get-win-h *chh*) *width* *height* 'center)
   ;; 自分の表示
   (disp-mychr)
   ;; 敵の表示
@@ -456,11 +456,11 @@
   (disp-goal)
   ;; 地面の表示
   (gl-color *floorcolor*)
-  (fill-win-rect (/. *width* 2) (get-win-y (+ (- *ht/2*) *chh*))
+  (draw-win-rect (/. *width* 2) (get-win-y (+ (- *ht/2*) *chh*))
                  *width* (get-win-h *chh*) *width* *height* 'center)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (fill-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)
+  (draw-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)
   ;(gl-flush)
   (glut-swap-buffers)
   )

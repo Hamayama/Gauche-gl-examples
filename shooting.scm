@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-9-22 v1.37
+;; 2016-9-22 v1.38
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -371,7 +371,7 @@
   (for-each
    (lambda (e1)
      (when (and (~ e1 'useflag) (> (~ e1 'state) 0))
-       (fill-win-circle (get-win-x (~ e1 'x))
+       (draw-win-circle (get-win-x (~ e1 'x))
                         (get-win-y (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
                         (get-win-w *bs*) 1 1 *width* *height*)
        ))
@@ -519,7 +519,7 @@
     )
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
-  (fill-win-rect (/. *width* 2) 0 *width* (get-win-h *chh*) *width* *height* 'center)
+  (draw-win-rect (/. *width* 2) 0 *width* (get-win-h *chh*) *width* *height* 'center)
   ;; 敵ミサイルの表示
   (disp-enemies *missiles*)
   ;; 敵の表示
@@ -533,7 +533,7 @@
   (disp-blast)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (fill-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)
+  (draw-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)
   ;(gl-flush)
   (glut-swap-buffers)
   )
