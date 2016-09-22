@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-9-22 v1.13
+;; 2016-9-23 v1.20
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -93,6 +93,10 @@
 (define *adata-end1*  (make <auddata>))
 (define *adata-end2*  (make <auddata>))
 
+;; ウィンドウ情報クラスのインスタンス生成
+(define *win* (make <wininfo>))
+(win-init *win* *width* *height* (* *wd/2* 2) (* *ht/2* 2))
+
 ;; キー入力状態管理クラスのインスタンス生成
 (define *ksinfo* (make <keystateinfo>))
 
@@ -106,24 +110,19 @@
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
 
-;; ウィンドウ上のY座標を取得
-(define (get-win-y y)
-  (+ (/. (* (- y) *height*) (* *ht/2* 2))
-     (/. *height* 2)))
-
 ;; 比例の計算
 ;; ( maxx-x:x-minx = maxy-y:y-miny となるような y を求める )
-(define (calcbyratio x minx maxx miny maxy)
+(define (calc-by-ratio x minx maxx miny maxy)
   (/. (+ (* maxy (- x minx)) (* miny (- maxx x)))
       (- maxx minx)))
 
 ;; 曲がり量から差分を計算
 ;; (ここではカーブの曲線をz座標の2次関数としている)
-(define (calcbycurv c z)
+(define (calc-by-curv c z)
   (* c z z))
 
 ;; 時間(msec)を文字列にする
-(define (timetext msec)
+(define (make-time-text msec)
   (let* ((msec1   (x->integer msec))
          (minute  (quotient         msec1 60000))
          (second  (quotient (modulo msec1 60000) 1000))
@@ -148,13 +147,13 @@
     (do ((i 0 (+ i 1))) ((>= i *rnum*) #f)
       ;; 道路の境界マークの座標を計算
       (set! sczr  (/. *scz* (~ *rz* i)))
-      (set! *rdx* (+ *x* (calcbycurv *rcx1* (- *rzmax* (~ *rz* i)))))
-      (set! rdy1         (calcbycurv *rcy1* (- *rzmax* (~ *rz* i))))
+      (set! *rdx* (+ *x* (calc-by-curv *rcx1* (- *rzmax* (~ *rz* i)))))
+      (set! rdy1         (calc-by-curv *rcy1* (- *rzmax* (~ *rz* i))))
       (set! scy1  (* (+ *ry* rdy1) sczr))
       ;; 次の境界マークのY座標も取得
       (when (< i (- *rnum* 1))
         (set! sczr (/. *scz* (~ *rz* (+ i 1))))
-        (set! rdy2 (calcbycurv *rcy1* (- *rzmax* (~ *rz* (+ i 1)))))
+        (set! rdy2 (calc-by-curv *rcy1* (- *rzmax* (~ *rz* (+ i 1)))))
         (set! scy2 (* (+ *ry* rdy2) sczr))
         )
       ;; Y座標が増加するときは、視点から見えないと判断して非表示にする
@@ -163,8 +162,7 @@
         (unless rline
           (set! rline #t)
           (gl-color *hlinecolor*)
-          (draw-win-line 0 (get-win-y scy1) *width* (get-win-y scy1)
-                         *width* *height* -0.99999)
+          (draw-win-line *win* 0 (win-y *win* scy1) *width* (win-y *win* scy1) -0.99999)
           )
         ;; 道路の境界マークの表示
         (gl-material GL_FRONT GL_DIFFUSE
@@ -225,10 +223,10 @@
     ;; ハンドル操作による差分を計算(速度に反比例)
     (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! dx1  1))
     (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! dx1 -1))
-    (set! dx1 (* dx1 (calcbyratio *spd* *minspd* *maxspd* 16  8)))
+    (set! dx1 (* dx1 (calc-by-ratio *spd* *minspd* *maxspd* 16  8)))
     ;; 道路の曲がり量による差分を計算(速度に正比例)
-    (set! dx2 (calcbycurv *rcx1* (- *rzmax* *scz*)))
-    (set! dx2 (* dx2 (calcbyratio *spd* *minspd* *maxspd*  5 16)))
+    (set! dx2 (calc-by-curv *rcx1* (- *rzmax* *scz*)))
+    (set! dx2 (* dx2 (calc-by-ratio *spd* *minspd* *maxspd*  5 16)))
     ;; 差分を反映
     (set! *x* (+ *x* dx1 dx2))
     ))
@@ -283,38 +281,38 @@
         (set! str1 "== GOAL!! ==")
         (set! y1 19)
         (set! str7 (format "TIME : ~A ~A"
-                           (timetext *sc*)
+                           (make-time-text *sc*)
                            (if (= *sc* *hs*) "(1st!!)" ""))))
        ((= *scene* 2)
         (set! str1 "COURSE OUT!!"))
        ))
-    (set! str3 (format "TIME : ~A" (timetext *sc*)))
-    (set! str4 (format "1st : ~A"  (timetext *hs*)))
+    (set! str3 (format "TIME : ~A" (make-time-text *sc*)))
+    (set! str4 (format "1st : ~A"  (make-time-text *hs*)))
     (set! str5 (format "STAGE : ~D/~D" *stg* *maxstg*))
     (set! str6 (format "~Dkm/h" (if (= *scene* 0) 0 *spd*)))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text str1 (/. *width* 2) (/. (* *height* y1) 100)
-                      *width* *height* (/. *height* 13) 'center)
+    (draw-stroke-text *win* str1 (win-w-r *win* 1/2) (win-h-r *win* y1 100)
+                      (win-h-r *win* 1/13) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str2 (+ (/. *width* 2) (/. *width* 130)) (/. (* *height* y2) 100)
-                      *width* *height* (/. *height* 18) 'center)
+    (draw-stroke-text *win* str2
+                      (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100)) (win-h-r *win* y2 100)
+                      (win-h-r *win* 1/18) 'center)
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text str3 0 0 *width* *height* (/. *height* 22))
+    (draw-stroke-text *win* str3 0 0 (win-h-r *win* 1/22))
     (gl-color 1.0 0.0 1.0 1.0)
-    (draw-stroke-text str4 (/. *width* 2) 0 *width* *height* (/. *height* 22) 'center)
+    (draw-stroke-text *win* str4 (win-w-r *win* 1/2) 0 (win-h-r *win* 1/22) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str5 *width* 0 *width* *height* (/. *height* 22) 'right)
-    (draw-stroke-text str6 *width* (/. (* *height*  5) 100)
-                      *width* *height* (/. *height* 22) 'right)
+    (draw-stroke-text *win* str5 *width* 0 (win-h-r *win* 1/22) 'right)
+    (draw-stroke-text *win* str6 *width* (win-h-r *win* 5/100) (win-h-r *win* 1/22) 'right)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str7 (/. *width* 2) (/. (* *height* 27) 100)
-                      *width* *height* (/. *height* 13) 'center)
+    (draw-stroke-text *win* str7 (win-w-r *win* 1/2) (win-h-r *win* 27/100)
+                      (win-h-r *win* 1/13) 'center)
     )
   ;; 道路の表示
   (disp-road)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
+  (draw-win-rect *win* 0 0 *width* *height* 'left -0.99999)
   ;(gl-flush)
   (glut-swap-buffers)
   )
@@ -323,6 +321,7 @@
 (define (reshape w h)
   (set! *width*  w)
   (set! *height* (min w h))
+  (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
   (if (< w h)
     (gl-viewport 0 (quotient (- h w) 2) *width* *height*)
@@ -393,7 +392,7 @@
       ((1) ; プレイ中
        ;; ウェイト時間の調整(速度に反比例)
        (set! *wait* (truncate->exact
-                     (calcbyratio *spd* *minspd* *maxspd* *maxwait* *minwait*)))
+                     (calc-by-ratio *spd* *minspd* *maxspd* *maxwait* *minwait*)))
        (waitcalc-set-wait *wcinfo* *wait*)
        ;; スコアと制御カウンタの処理等
        (cond

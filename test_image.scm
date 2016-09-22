@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 画像表示のテスト
-;; 2016-9-22
+;; 2016-9-23
 ;;
 (add-load-path "." :relative)
 (use gl)
@@ -27,30 +27,15 @@
 ;; テクスチャの配列(u32vector)
 (define *tex* #f)
 
+;; ウィンドウ情報クラスのインスタンス生成
+(define *win* (make <wininfo>))
+(win-init *win* *width* *height* (* *wd/2* 2) (* *ht/2* 2))
+
 ;; テキスト画面クラスのインスタンス生成
 (define *tscrn1* (make <textscrn>))
 (textscrn-init *tscrn1* 3 2)
 (textscrn-pset *tscrn1* 0 0 "AAA")
 (textscrn-pset *tscrn1* 0 1 "BBB")
-
-
-;; ウィンドウ上のX座標を取得
-(define (get-win-x x)
-  (+ (/. (* x *width*) (* *wd/2* 2))
-     (/. *width* 2)))
-
-;; ウィンドウ上のY座標を取得
-(define (get-win-y y)
-  (+ (/. (* (- y) *height*) (* *ht/2* 2))
-     (/. *height* 2)))
-
-;; ウィンドウ上の幅を取得
-(define (get-win-w w)
-  (/. (* w *width*) (* *wd/2* 2)))
-
-;; ウィンドウ上の高さを取得
-(define (get-win-h h)
-  (/. (* h *height*) (* *ht/2* 2)))
 
 
 ;; 初期化
@@ -86,15 +71,15 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字に割り付けたテクスチャの一括表示
-  (textscrn-disp-texture *tscrn1* 0 0 *width* *height* (get-win-w 50) (get-win-h 50))
+  (textscrn-disp-texture *tscrn1* *win* 0 0 (win-w *win* 50) (win-h *win* 50))
   ;; テクスチャ付き長方形の表示
-  (draw-texture-rect (~ *tex* 0) (get-win-x -50) (get-win-y 50)
-                     (get-win-w 200) (get-win-h 200) *width* *height* 'center)
-  (draw-texture-rect (~ *tex* 1) (get-win-x  50) (get-win-y 150)
-                     (get-win-w 200) (get-win-h 200) *width* *height* 'center)
+  (draw-texture-rect *win* (~ *tex* 0) (win-x *win* -50) (win-y *win*  50)
+                     (win-w *win* 200) (win-h *win* 200) 'center)
+  (draw-texture-rect *win* (~ *tex* 1) (win-x *win*  50) (win-y *win* 150)
+                     (win-w *win* 200) (win-h *win* 200) 'center)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)
+  (draw-win-rect *win* (win-w-r *win* 1/2) 0 *width* *height* 'center)
   ;(gl-flush)
   (glut-swap-buffers)
   )
@@ -103,6 +88,7 @@
 (define (reshape w h)
   (set! *width*  (min w h))
   (set! *height* (min w h))
+  (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
   (if (< w h)
     (gl-viewport 0 (quotient (- h w) 2) *width* *height*)

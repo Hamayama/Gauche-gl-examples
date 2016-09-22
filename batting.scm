@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-9-22 v1.33
+;; 2016-9-23 v1.40
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -60,6 +60,10 @@
 (define *adata-end1*  (make <auddata>))
 (define *adata-end2*  (make <auddata>))
 
+;; ウィンドウ情報クラスのインスタンス生成
+(define *win* (make <wininfo>))
+(win-init *win* *width* *height* (* *wd/2* 2) (* *ht/2* 2))
+
 ;; キー入力状態管理クラスのインスタンス生成
 (define *ksinfo* (make <keystateinfo>))
 
@@ -110,7 +114,7 @@
 ;; 空(正射影で表示)
 (define (sky)
   (gl-color 0.0 0.0 1.0 1.0)
-  (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
+  (draw-win-rect *win* 0 0 *width* *height* 'left -0.99999)
   )
 
 ;; 地面(上面に原点あり)
@@ -182,15 +186,15 @@
                        (truncate-n *vy* 2)
                        (truncate-n *vz* 2)))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text str1 (/. *width* 2) (/. (* *height* 26) 100) *width* *height* (/. *height* 13) 'center)
+    (draw-stroke-text *win* str1 (win-w-r *win* 1/2) (win-h-r *win* 26/100) (win-h-r *win* 1/13) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str2 (+ (/. *width* 2) (/. *height* 100))
-                      (/. (* *height* y2) 100) *width* *height* (/. *height* 18) 'center)
+    (draw-stroke-text *win* str2 (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100)) (win-h-r *win* y2 100)
+                      (win-h-r *win* 1/18) 'center)
     (gl-color 1.0 0.0 1.0 1.0)
-    (draw-stroke-text str3 (/. *height* 100) 5 *width* *height* (/. *height* 19))
+    (draw-stroke-text *win* str3 (win-h-r *win* 1/100) (win-h-r *win*  1/100) (win-h-r *win* 1/19))
     (gl-color 0.0 1.0 0.0 1.0)
-    (draw-stroke-text str4 (/. *height* 100) (/. (* *height*  7) 100) *width* *height* (/. *height* 24))
-    (draw-stroke-text str5 (/. *height* 100) (/. (* *height* 12) 100) *width* *height* (/. *height* 24))
+    (draw-stroke-text *win* str4 (win-h-r *win* 1/100) (win-h-r *win*  7/100) (win-h-r *win* 1/24))
+    (draw-stroke-text *win* str5 (win-h-r *win* 1/100) (win-h-r *win* 12/100) (win-h-r *win* 1/24))
     )
   ;; ボールを表示
   (gl-push-matrix)
@@ -219,6 +223,7 @@
 (define (reshape w h)
   (set! *width*  w)
   (set! *height* (min w h))
+  (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
   (if (< w h)
     (gl-viewport 0 (quotient (- h w) 2) *width* *height*)

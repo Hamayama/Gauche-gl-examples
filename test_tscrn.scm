@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; テキスト画面クラスのテスト
-;; 2016-9-22
+;; 2016-9-23
 ;;
 (add-load-path "." :relative)
 (use gl)
@@ -21,6 +21,10 @@
 (define *chw*       16) ; 文字の幅
 (define *chh*       32) ; 文字の高さ
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
+
+;; ウィンドウ情報クラスのインスタンス生成
+(define *win* (make <wininfo>))
+(win-init *win* *width* *height* (* *wd/2* 2) (* *ht/2* 2))
 
 ;; テキスト画面クラスのインスタンス生成
 (define *tscrn1* (make <textscrn>))
@@ -49,25 +53,6 @@
 (textscrn-box     *tscrn2* -1 -1  5  5 "x")
 
 
-;; ウィンドウ上のX座標を取得
-(define (get-win-x x)
-  (+ (/. (* x *width*) (* *wd/2* 2))
-     (/. *width* 2)))
-
-;; ウィンドウ上のY座標を取得
-(define (get-win-y y)
-  (+ (/. (* (- y) *height*) (* *ht/2* 2))
-     (/. *height* 2)))
-
-;; ウィンドウ上の幅を取得
-(define (get-win-w w)
-  (/. (* w *width*) (* *wd/2* 2)))
-
-;; ウィンドウ上の高さを取得
-(define (get-win-h h)
-  (/. (* h *height*) (* *ht/2* 2)))
-
-
 ;; 初期化
 (define (init)
   (gl-clear-color 0.0 0.0 0.0 0.0)
@@ -88,14 +73,14 @@
   (gl-load-identity)
   ;; テキスト画面の表示
   (gl-color 1.0 1.0 1.0 1.0)
-  (textscrn-disp *tscrn1* 0 0 *width* *height*
-                 (get-win-w *chw*) (get-win-h *chh*))
+  (textscrn-disp *tscrn1* *win* 0 0
+                 (win-w *win* *chw*) (win-h *win* *chh*))
   (gl-color 0.0 1.0 1.0 1.0)
-  (textscrn-disp *tscrn2* (get-win-x 0) (get-win-y 0) *width* *height*
-                 (get-win-w *chw*) (get-win-h *chh*) 'right)
+  (textscrn-disp *tscrn2* *win* (win-x *win* 0) (win-y *win* 0)
+                 (win-w *win* *chw*) (win-h *win* *chh*) 'right)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)
+  (draw-win-rect *win* (win-w-r *win* 1/2) 0 *width* *height* 'center)
   ;(gl-flush)
   (glut-swap-buffers)
   )
@@ -104,6 +89,7 @@
 (define (reshape w h)
   (set! *width*  (min w h))
   (set! *height* (min w h))
+  (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
   (if (< w h)
     (gl-viewport 0 (quotient (- h w) 2) *width* *height*)

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-7-27 v1.51
+;; 2016-9-23 v1.60
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -54,6 +54,10 @@
 (define *adata-start* (make <auddata>))
 (define *adata-hit*   (make <auddata>))
 (define *adata-end*   (make <auddata>))
+
+;; ウィンドウ情報クラスのインスタンス生成
+(define *win* (make <wininfo>))
+(win-init *win* *width* *height* (* *wd/2* 2) (* *ht/2* 2))
 
 ;; キー入力状態管理クラスのインスタンス生成
 (define *ksinfo* (make <keystateinfo>))
@@ -485,11 +489,12 @@
                          0.0
                          (round-n (/. *wincount* *playcount*) 2))))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text str1 (/. *width* 2) (/. (* *height* 14) 100) *width* *height* (/. *height*  9) 'center)
+    (draw-stroke-text *win* str1 (win-w-r *win* 1/2) (win-h-r *win* 14/100) (win-h-r *win* 1/9) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str2 (/. *width* 2) (/. (* *height* y2) 100) *width* *height* (/. *height* 18) 'center)
+    (draw-stroke-text *win* str2 (win-w-r *win* 1/2) (win-h-r *win* y2 100) (win-h-r *win* 1/18) 'center)
     (gl-color 0.0 1.0 0.0 1.0)
-    (draw-stroke-text str3 (/. *height* 100) 5 *width* *height* (/. *height* 24)))
+    (draw-stroke-text *win* str3 (win-h-r *win* 1/100) (win-h-r *win* 1/100) (win-h-r *win* 1/24))
+    )
   ;; 自分を表示
   (fighter-disp *f1*)
   ;; 敵を表示
@@ -507,6 +512,7 @@
 (define (reshape w h)
   (set! *width*  w)
   (set! *height* (min w h))
+  (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
   (if (< w h)
     (gl-viewport 0 (quotient (- h w) 2) *width* *height*)

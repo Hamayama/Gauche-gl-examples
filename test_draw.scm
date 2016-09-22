@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 2D描画のテスト
-;; 2016-9-22
+;; 2016-9-23
 ;;
 (add-load-path "." :relative)
 (use gl)
@@ -20,24 +20,9 @@
 (define *ht/2*     400) ; 画面高さ/2
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 
-
-;; ウィンドウ上のX座標を取得
-(define (get-win-x x)
-  (+ (/. (* x *width*) (* *wd/2* 2))
-     (/. *width* 2)))
-
-;; ウィンドウ上のY座標を取得
-(define (get-win-y y)
-  (+ (/. (* (- y) *height*) (* *ht/2* 2))
-     (/. *height* 2)))
-
-;; ウィンドウ上の幅を取得
-(define (get-win-w w)
-  (/. (* w *width*) (* *wd/2* 2)))
-
-;; ウィンドウ上の高さを取得
-(define (get-win-h h)
-  (/. (* h *height*) (* *ht/2* 2)))
+;; ウィンドウ情報クラスのインスタンス生成
+(define *win* (make <wininfo>))
+(win-init *win* *width* *height* (* *wd/2* 2) (* *ht/2* 2))
 
 
 ;; 初期化
@@ -60,45 +45,42 @@
   (gl-load-identity)
   ;; 文字表示(ビットマップフォント)(拡大縮小不可)
   (gl-color 1.0 1.0 1.0 1.0)
-  (draw-bitmap-text "AIJMQabcdefghijklmnopqrstuvwxyz[]"
-                    0 0 *width* *height* 24)
+  (draw-bitmap-text *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]" 0 0 24)
   (gl-color 1.0 1.0 1.0 1.0)
-  (draw-bitmap-text-over "AIJMQabcdefghijklmnopqrstuvwxyz[]"
-                         (/. *width* 2) (/. (* *height* 8) 100)
-                         *width* *height* 18 'center
-                         #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2 0
+  (draw-bitmap-text-over *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
+                         (win-w-r *win* 1/2) (win-h-r *win* 8/100)
+                         18 'center #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2 0
                          GLUT_BITMAP_HELVETICA_18)
   ;; 文字表示(ストロークフォント)(拡大縮小可能)
   (gl-color 1.0 1.0 1.0 1.0)
-  (draw-stroke-text "AIJMQabcdefghijklmnopqrstuvwxyz[]"
-                    0 (/. (* *height* 16) 100) *width* *height* (/. *height* 18))
+  (draw-stroke-text *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
+                    0 (win-h-r *win* 16/100) (win-h-r *win* 1/18))
   (gl-color 1.0 1.0 1.0 1.0)
-  (draw-stroke-text-over "AIJMQabcdefghijklmnopqrstuvwxyz[]"
-                         (/. *width* 2) (/. (* *height* 24) 100)
-                         *width* *height* (/. *height* 19) 'center
+  (draw-stroke-text-over *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
+                         (win-w-r *win* 1/2) (win-h-r *win* 24/100)
+                         (win-h-r *win* 1/20) 'center
                          #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2 0
                          GLUT_STROKE_ROMAN)
   ;; 線の表示
   (gl-color 0.0 1.0 1.0 1.0)
-  (draw-win-line 0 0 *width* *height* *width* *height*)
+  (draw-win-line *win* 0 0 *width* *height*)
   ;; 長方形の表示
   (gl-color 1.0 1.0 0.0 1.0)
-  (draw-win-rect (/. (* *width* 10) 100) (/. (* *height* 40) 100)
-                 (/. (* *width* 30) 100) (/. (* *height* 20) 100) *width* *height*)
+  (draw-win-rect *win* (win-w-r *win* 10/100) (win-h-r *win* 40/100)
+                 (win-w-r *win* 30/100) (win-h-r *win* 20/100))
   ;; 円の表示
   (gl-color 0.0 0.8 0.0 1.0)
-  (draw-win-circle (/. (* *width* 70) 100) (/. (* *height* 50) 100)
-                   (/. (* *width* 15) 100) 1 1 *width* *height*)
+  (draw-win-circle *win* (win-w-r *win* 70/100) (win-h-r *win* 50/100)
+                   (win-w-r *win* 15/100) 1 1)
   ;; 多角形の表示
   (gl-color 1.0 0.0 1.0 1.0)
-  (draw-win-poly (/. (* *width* 10) 100) (/. (* *height* 70) 100)
-                 (vector (f32vector (/. (* *width* 10) 100) 0)
-                         (f32vector 0 (/. (* *height* 20) 100))
-                         (f32vector (/. (* *width* 30) 100) (/. (* *height* 20) 100)))
-                 *width* *height*)
+  (draw-win-poly *win* (win-w-r *win* 10/100) (win-h-r *win* 70/100)
+                 (vector (f32vector (win-w-r *win* 10/100) 0)
+                         (f32vector 0 (win-h-r *win* 20/100))
+                         (f32vector (win-w-r *win* 30/100) (win-h-r *win* 20/100))))
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect (/. *width* 2) 0 *width* *height* *width* *height* 'center)
+  (draw-win-rect *win* (win-w-r *win* 1/2) 0 *width* *height* 'center)
   ;(gl-flush)
   (glut-swap-buffers)
   )
@@ -107,6 +89,7 @@
 (define (reshape w h)
   (set! *width*  (min w h))
   (set! *height* (min w h))
+  (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
   (if (< w h)
     (gl-viewport 0 (quotient (- h w) 2) *width* *height*)
