@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-22 v1.31
+;; 2016-9-22 v1.32
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -221,10 +221,13 @@
 ;;     (図形表示とは座標系が異なるので注意)
 (define (draw-win-poly x y vvec *width* *height* :optional (z 0))
   (gl-ortho-on *width* *height*)
-  (gl-translate x y z)
-  (gl-begin GL_POLYGON)
-  (for-each gl-vertex vvec)
-  (gl-end)
+  (let1 y1 (- *height* y)
+    (gl-translate x y1 z)
+    (gl-scale 1 -1  1)
+    (gl-begin GL_POLYGON)
+    (for-each gl-vertex vvec)
+    (gl-end)
+    )
   (gl-ortho-off))
 
 

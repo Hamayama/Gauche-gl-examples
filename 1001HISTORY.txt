@@ -239,6 +239,7 @@ gltextscrn.scm
   2016-9-22  v1.31  名称変更(fill- → draw-)
                     draw-win-poly追加
                     文字列表示一部見直し
+  2016-9-22  v1.32  多角形の表示処理修正
 
 alaudplay.scm
   2016-3-31  v1.00  初版
