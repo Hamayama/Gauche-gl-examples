@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-23 v1.41
+;; 2016-9-23 v1.42
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -39,7 +39,8 @@
 
 
 ;; ウィンドウ情報クラス
-;;   ・ウィンドウ上の座標を計算するために使用する
+;;   ・ウィンドウ上の画面幅 width と画面高さ height の情報を保持して、
+;;     ウィンドウ上の座標を計算可能とする
 ;;   ・glut-reshape-func のコールバックで win-update-size を呼び出して、
 ;;     ウィンドウのサイズ変更に追従する必要がある
 (define-class <wininfo> ()
@@ -57,27 +58,27 @@
 (define-method win-update-size ((wn <wininfo>) (width <real>) (height <real>))
   (set! (~ wn 'width)  width)
   (set! (~ wn 'height) height))
-;; ウィンドウ上のX座標を取得
+;; ウィンドウ上のX座標を計算
 (define-method win-x ((wn <wininfo>) (x <real>))
   (+ (/. (* x (~ wn 'width)) (~ wn 'wd))
      (/. (~ wn 'width) 2)))
-;; ウィンドウ上のY座標を取得
+;; ウィンドウ上のY座標を計算
 (define-method win-y ((wn <wininfo>) (y <real>))
   (+ (/. (* (- y) (~ wn 'height)) (~ wn 'ht))
      (/. (~ wn 'height) 2)))
-;; ウィンドウ上の幅を取得
+;; ウィンドウ上の幅を計算
 (define-method win-w ((wn <wininfo>) :optional (w #f))
   (if w (/. (* w (~ wn 'width)) (~ wn 'wd))
         (~ wn 'width)))
-;; ウィンドウ上の高さを取得
+;; ウィンドウ上の高さを計算
 (define-method win-h ((wn <wininfo>) :optional (h #f))
   (if h (/. (* h (~ wn 'height)) (~ wn 'ht))
         (~ wn 'height)))
-;; ウィンドウ上の幅を比を指定して取得
+;; ウィンドウ上の幅を、比を指定して計算
 (define-method win-w-r ((wn <wininfo>) (n1 <real>) :optional (n2 #f))
   (if n2 (/. (* (~ wn 'width) n1) n2)
          (* (~ wn 'width) (exact n1))))
-;; ウィンドウ上の高さを比を指定して取得
+;; ウィンドウ上の高さを、比を指定して計算
 (define-method win-h-r ((wn <wininfo>) (n1 <real>) :optional (n2 #f))
   (if n2 (/. (* (~ wn 'height) n1) n2)
          (* (~ wn 'height) (exact n1))))
