@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-9-24 v1.42
+;; 2016-9-24 v1.43
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -174,8 +174,8 @@
         (set! vx (if (< *x* (~ e1 'x)) (- *v*) *v*)))
        ;; 中央に戻る
        ((<= (randint 1 100) (~ *dparam* 'p2))
-        (if (< *x* -12) (set! vx    *v*))
-        (if (> *x* +12) (set! vx (- *v*)))))
+        (if (<= *x* (- *v*)) (set! vx    *v*))
+        (if (>= *x*    *v*)  (set! vx (- *v*)))))
       (set! *x* (clamp (+ *x* vx) *minx* *maxx*)))
     ;; 自機ビーム発射
     (cond
