@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-9-23 v1.41
+;; 2016-9-24 v1.42
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -36,6 +36,7 @@
 (define *chh*       32) ; 文字の高さ
 (define *x*          0) ; 自機のX座標
 (define *y*       -240) ; 自機のY座標
+(define *v*         10) ; 自機の速度
 (define *maxx*       (- *wd/2* (* *chw* 1.5)))   ; 自機のX座標最大値
 (define *minx*       (- *maxx*))                 ; 自機のX座標最小値
 (define *maxy*       (- *ht/2* *chh*))           ; 自機のY座標最大値
@@ -170,11 +171,11 @@
       (cond
        ;; 一番近い敵/敵ミサイルを避ける
        ((and e1 (< rr1 (* *chw* *chw* (~ *dparam* 'p1) (~ *dparam* 'p1))))
-        (set! vx (if (< *x* (~ e1 'x)) -8 +8)))
+        (set! vx (if (< *x* (~ e1 'x)) (- *v*) *v*)))
        ;; 中央に戻る
        ((<= (randint 1 100) (~ *dparam* 'p2))
-        (if (< *x* -8) (set! vx +8))
-        (if (> *x* +8) (set! vx -8))))
+        (if (< *x* -12) (set! vx    *v*))
+        (if (> *x* +12) (set! vx (- *v*)))))
       (set! *x* (clamp (+ *x* vx) *minx* *maxx*)))
     ;; 自機ビーム発射
     (cond
@@ -190,10 +191,10 @@
    (else
     (let ((vx 0) (vy 0))
       ;; 自機の移動
-      (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx -8))
-      (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx +8))
-      (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy +8))
-      (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! vy -8))
+      (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx (- *v*)))
+      (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx    *v*))
+      (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy    *v*))
+      (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! vy (- *v*)))
       (set! *x* (clamp (+ *x* vx) *minx* *maxx*))
       (set! *y* (clamp (+ *y* vy) *miny* *maxy*)))
     ;; 自機ビーム発射
