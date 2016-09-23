@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-9-23 v1.40
+;; 2016-9-23 v1.41
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -157,8 +157,8 @@
                    (win-w *win* *chw*) (win-h *win* *chh*) 'center)
     ))
 
-;; 自機の操作
-(define (control-mychr)
+;; 自機の移動
+(define (move-mychr)
   (cond
    ;; デモのとき
    (*demoflg*
@@ -500,14 +500,14 @@
     (gl-color 1.0 0.0 1.0 1.0)
     (draw-stroke-text *win* str4 (win-w-r *win* 1/2) 0 (win-h-r *win* 1/22) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str5 *width* 0 (win-h-r *win* 1/22) 'right)
+    (draw-stroke-text *win* str5 (win-w *win*) 0 (win-h-r *win* 1/22) 'right)
     (gl-color 0.0 1.0 0.0 1.0)
     (draw-stroke-text *win* str6 0 (win-h-r *win*  5/100) (win-h-r *win* 1/22))
     (draw-stroke-text *win* str7 0 (win-h-r *win* 10/100) (win-h-r *win* 1/22))
     )
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
-  (draw-win-rect *win* (win-w-r *win* 1/2) 0 *width* (win-h *win* *chh*) 'center)
+  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win* *chh*))
   ;; 敵ミサイルの表示
   (disp-enemies *missiles*)
   ;; 敵の表示
@@ -521,7 +521,7 @@
   (disp-blast)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect *win* (win-w-r *win* 1/2) 0 *width* *height* 'center)
+  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*))
   ;(gl-flush)
   (glut-swap-buffers)
   )
@@ -642,8 +642,8 @@
          (make-enemies *enemies* *missiles*))
        ;; 敵ミサイルの移動
        (move-enemies *missiles*)
-       ;; 自機の操作
-       (control-mychr)
+       ;; 自機の移動
+       (move-mychr)
        ;; 自機ビーム処理
        (if (= *bc* 1) (hit-beam?))
        ;; 爆風の当たり判定

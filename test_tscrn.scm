@@ -80,7 +80,7 @@
                  (win-w *win* *chw*) (win-h *win* *chh*) 'right)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect *win* (win-w-r *win* 1/2) 0 *width* *height* 'center)
+  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*))
   ;(gl-flush)
   (glut-swap-buffers)
   )

@@ -61,6 +61,7 @@ batting.scm
   2016-7-17  v1.32  リサイズ処理見直し
   2016-9-22  v1.33  名称変更(fill- → draw-)
   2016-9-23  v1.40  gltextscrn.scm v1.40 対応(I/F多数見直し)
+  2016-9-23  v1.41  width,heightの置換
 
 fighter.scm
   2015-7-21  v1.00  初版
@@ -153,6 +154,7 @@ shooting.scm
   2016-9-22  v1.37  文字表示見直し
   2016-9-22  v1.38  名称変更(fill- → draw-)
   2016-9-23  v1.40  gltextscrn.scm v1.40 対応(I/F多数見直し)
+  2016-9-23  v1.41  width,heightの置換
 
 drive.scm
   2016-7-16  v1.00  初版
@@ -170,6 +172,7 @@ drive.scm
   2016-9-20  v1.12  速度の処理見直し
   2016-9-22  v1.13  名称変更(fill- → draw-)
   2016-9-23  v1.20  gltextscrn.scm v1.40 対応(I/F多数見直し)
+  2016-9-23  v1.21  width,heightの置換
 
 jump.scm
   2016-9-19  v1.00  初版
@@ -187,6 +190,7 @@ jump.scm
   2016-9-22  v1.12  文字表示見直し
   2016-9-22  v1.13  名称変更(fill- → draw-)
   2016-9-23  v1.20  gltextscrn.scm v1.40 対応(I/F多数見直し)
+  2016-9-23  v1.21  width,heightの置換
 
 
 glmintool.scm
@@ -247,6 +251,7 @@ gltextscrn.scm
   2016-9-22  v1.32  多角形の表示処理修正
   2016-9-23  v1.40  ウィンドウ情報クラス追加
                     I/F多数見直し
+  2016-9-23  v1.41  width,heightの置換
 
 alaudplay.scm
   2016-3-31  v1.00  初版

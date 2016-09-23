@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-23 v1.20
+;; 2016-9-23 v1.21
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -427,14 +427,14 @@
     (gl-color 1.0 0.0 1.0 1.0)
     (draw-stroke-text *win* str4 (win-w-r *win* 1/2) 0 (win-h-r *win* 1/22) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str5 *width* 0 (win-h-r *win* 1/22) 'right)
+    (draw-stroke-text *win* str5 (win-w *win*) 0 (win-h-r *win* 1/22) 'right)
     (gl-color 1.0 1.0 0.0 1.0)
     (draw-stroke-text *win* str6 (win-w-r *win* 1/2) (win-h-r *win* 40/100)
                       (win-h-r *win* 1/15) 'center)
     )
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
-  (draw-win-rect *win* (win-w-r *win* 1/2) 0 *width* (win-h *win* *chh*) 'center)
+  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win* *chh*))
   ;; 自分の表示
   (disp-mychr)
   ;; 敵の表示
@@ -445,11 +445,11 @@
   (disp-goal)
   ;; 地面の表示
   (gl-color *floorcolor*)
-  (draw-win-rect *win* (win-w-r *win* 1/2) (win-y *win* (+ (- *ht/2*) *chh*))
-                 *width* (win-h *win* *chh*) 'center)
+  (draw-win-rect *win* 0 (win-y *win* (+ (- *ht/2*) *chh*))
+                 (win-w *win*) (win-h *win* *chh*))
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect *win* (win-w-r *win* 1/2) 0 *width* *height* 'center)
+  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*))
   ;(gl-flush)
   (glut-swap-buffers)
   )
