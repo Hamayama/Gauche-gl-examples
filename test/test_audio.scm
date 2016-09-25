@@ -3,10 +3,11 @@
 ;; 音楽演奏のテスト
 ;; 2016-9-26
 ;;
-(add-load-path "." :relative)
+(add-load-path ".." :relative)
 (display #\cr)(flush) ; allocate console for windows
 (use glmintool)
 (use alaudplay)
+;(use mmlproc)
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
@@ -18,8 +19,9 @@
 (aud-init)
 ;(aud-init #f)
 
-;; ファイルの読み込み
-(auddata-load-wav-file *adata1* (make-fpath *app-dpath* "sound/abcde.wav"))
+;; 音楽データの読み込み
+(auddata-load-wav-file *adata1* (make-fpath *app-dpath* "../sound/abcde.wav"))
+;(auddata-load-pcm-raw *adata1* (mml->pcm "@500cdefgab>c"))
 (auddata-set-prop *adata1* AL_GAIN  1.0)
 (auddata-set-prop *adata1* AL_PITCH 1.0)
 

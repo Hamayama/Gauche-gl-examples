@@ -1,16 +1,17 @@
 ;; -*- coding: utf-8 -*-
 ;;
-;; テキスト画面クラスのテスト
-;; 2016-9-23
+;; 画像表示のテスト
+;; 2016-9-26
 ;;
-(add-load-path "." :relative)
+(add-load-path ".." :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
 (use math.const)
+(use glmintool)
 (use gltextscrn)
 
-(define *title* "test-tscrn") ; ウィンドウのタイトル
+(define *title* "test-image") ; ウィンドウのタイトル
 (define *width*    480) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
@@ -18,9 +19,13 @@
 
 (define *wd/2*     400) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
-(define *chw*       16) ; 文字の幅
-(define *chh*       32) ; 文字の高さ
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
+
+;; アプリのディレクトリのパス名
+(define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
+
+;; テクスチャの配列(u32vector)
+(define *tex* #f)
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -28,29 +33,9 @@
 
 ;; テキスト画面クラスのインスタンス生成
 (define *tscrn1* (make <textscrn>))
-(textscrn-init    *tscrn1* 50 25)
-(textscrn-cls     *tscrn1*)
-(textscrn-pset    *tscrn1*  0  0 (list->string (map integer->char (iota 32 32))))
-(textscrn-pset    *tscrn1*  0  1 (list->string (map integer->char (iota 32 64))))
-(textscrn-pset    *tscrn1*  0  2 (list->string (map integer->char (iota 32 96))))
-(textscrn-pset    *tscrn1* 44  0 (textscrn-pget *tscrn1* 1 1 5))
-(textscrn-line    *tscrn1* 12  6 49 24 "*=")
-(textscrn-box     *tscrn1*  0  3  4  7 "012")
-(textscrn-fbox    *tscrn1*  6  3 10  7 "012")
-(textscrn-circle  *tscrn1* 26  6  7  1  2 "o")
-(textscrn-fcircle *tscrn1* 41  6  7  1  2 "o")
-(textscrn-poly    *tscrn1* '(( 3 9) (0 13) ( 6 13)) "xyz")
-(textscrn-fpoly   *tscrn1* '((11 9) (8 13) (14 13)) "xyz")
-(textscrn-fpoly   *tscrn1* '((10 15) (4 24) (19 18) (1 18) (16 24)) "#=")
-(define *tscrn2* (make <textscrn>))
-(textscrn-init    *tscrn2*  5  5)
-(textscrn-pset    *tscrn2*  0  0 "ABC")
-(textscrn-pset    *tscrn2* -1  1 "ABC")
-(textscrn-pset    *tscrn2*  3  2 "ABC")
-(textscrn-pset    *tscrn2* -3  3 "ABC")
-(textscrn-pset    *tscrn2*  5  3 "ABC")
-(textscrn-pset    *tscrn2* -1  4 "1234567")
-(textscrn-box     *tscrn2* -1 -1  5  5 "x")
+(textscrn-init *tscrn1* 3 2)
+(textscrn-pset *tscrn1* 0 0 "AAA")
+(textscrn-pset *tscrn1* 0 1 "BBB")
 
 
 ;; 初期化
@@ -64,6 +49,20 @@
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
+  ;; 透過設定
+  ;(gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
+  ;(gl-enable GL_BLEND)
+  (gl-alpha-func GL_GREATER 0.5)
+  (gl-enable GL_ALPHA_TEST)
+  ;; テクスチャ設定
+  ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_MODULATE)
+  (gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_REPLACE)
+  ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_DECAL)
+  (set! *tex* (gl-gen-textures 2))
+  (load-texture-bitmap-file (~ *tex* 0) (make-fpath *app-dpath* "../image/char0001.bmp") '(0 0 0))
+  (load-texture-bitmap-file (~ *tex* 1) (make-fpath *app-dpath* "../image/char0002.bmp") '(0 0 0))
+  (set-char-texture #\A (~ *tex* 0))
+  (set-char-texture #\B (~ *tex* 1))
   )
 
 ;; 画面表示
@@ -71,13 +70,13 @@
   (gl-clear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
-  ;; テキスト画面の表示
-  (gl-color 1.0 1.0 1.0 1.0)
-  (textscrn-disp *tscrn1* *win* 0 0
-                 (win-w *win* *chw*) (win-h *win* *chh*))
-  (gl-color 0.0 1.0 1.0 1.0)
-  (textscrn-disp *tscrn2* *win* (win-x *win* 0) (win-y *win* 0)
-                 (win-w *win* *chw*) (win-h *win* *chh*) 'right)
+  ;; 文字に割り付けたテクスチャの一括表示
+  (textscrn-disp-texture *tscrn1* *win* 0 0 (win-w *win* 50) (win-h *win* 50))
+  ;; テクスチャ付き長方形の表示
+  (draw-texture-rect *win* (~ *tex* 0) (win-x *win* -50) (win-y *win*  50)
+                     (win-w *win* 200) (win-h *win* 200) 'center)
+  (draw-texture-rect *win* (~ *tex* 1) (win-x *win*  50) (win-y *win* 150)
+                     (win-w *win* 200) (win-h *win* 200) 'center)
   ;; 背景の表示
   (gl-color *backcolor*)
   (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*))

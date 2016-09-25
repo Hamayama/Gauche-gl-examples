@@ -1,16 +1,16 @@
 ;; -*- coding: utf-8 -*-
 ;;
-;; 2D描画のテスト
-;; 2016-9-25
+;; テキスト画面クラスのテスト
+;; 2016-9-26
 ;;
-(add-load-path "." :relative)
+(add-load-path ".." :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
 (use math.const)
 (use gltextscrn)
 
-(define *title* "test-draw") ; ウィンドウのタイトル
+(define *title* "test-tscrn") ; ウィンドウのタイトル
 (define *width*    480) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
@@ -18,11 +18,39 @@
 
 (define *wd/2*     400) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
+(define *chw*       16) ; 文字の幅
+(define *chh*       32) ; 文字の高さ
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
 (win-init *win* *width* *height* (* *wd/2* 2) (* *ht/2* 2))
+
+;; テキスト画面クラスのインスタンス生成
+(define *tscrn1* (make <textscrn>))
+(textscrn-init    *tscrn1* 50 25)
+(textscrn-cls     *tscrn1*)
+(textscrn-pset    *tscrn1*  0  0 (list->string (map integer->char (iota 32 32))))
+(textscrn-pset    *tscrn1*  0  1 (list->string (map integer->char (iota 32 64))))
+(textscrn-pset    *tscrn1*  0  2 (list->string (map integer->char (iota 32 96))))
+(textscrn-pset    *tscrn1* 44  0 (textscrn-pget *tscrn1* 1 1 5))
+(textscrn-line    *tscrn1* 12  6 49 24 "*=")
+(textscrn-box     *tscrn1*  0  3  4  7 "012")
+(textscrn-fbox    *tscrn1*  6  3 10  7 "012")
+(textscrn-circle  *tscrn1* 26  6  7  1  2 "o")
+(textscrn-fcircle *tscrn1* 41  6  7  1  2 "o")
+(textscrn-poly    *tscrn1* '(( 3 9) (0 13) ( 6 13)) "xyz")
+(textscrn-fpoly   *tscrn1* '((11 9) (8 13) (14 13)) "xyz")
+(textscrn-fpoly   *tscrn1* '((10 15) (4 24) (19 18) (1 18) (16 24)) "#=")
+(define *tscrn2* (make <textscrn>))
+(textscrn-init    *tscrn2*  5  5)
+(textscrn-pset    *tscrn2*  0  0 "ABC")
+(textscrn-pset    *tscrn2* -1  1 "ABC")
+(textscrn-pset    *tscrn2*  3  2 "ABC")
+(textscrn-pset    *tscrn2* -3  3 "ABC")
+(textscrn-pset    *tscrn2*  5  3 "ABC")
+(textscrn-pset    *tscrn2* -1  4 "1234567")
+(textscrn-box     *tscrn2* -1 -1  5  5 "x")
 
 
 ;; 初期化
@@ -43,41 +71,13 @@
   (gl-clear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
-  ;; 文字表示(ビットマップフォント)(拡大縮小不可)
+  ;; テキスト画面の表示
   (gl-color 1.0 1.0 1.0 1.0)
-  (draw-bitmap-text *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]" 0 0 24)
-  (gl-color 1.0 1.0 1.0 1.0)
-  (draw-bitmap-text-over *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
-                         (win-w-r *win* 1/2) (win-h-r *win* 8/100)
-                         18 'center 0 #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2
-                         GLUT_BITMAP_HELVETICA_18)
-  ;; 文字表示(ストロークフォント)(拡大縮小可能)
-  (gl-color 1.0 1.0 1.0 1.0)
-  (draw-stroke-text *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
-                    0 (win-h-r *win* 16/100) (win-h-r *win* 1/18))
-  (gl-color 1.0 1.0 1.0 1.0)
-  (draw-stroke-text-over *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
-                         (win-w-r *win* 1/2) (win-h-r *win* 24/100)
-                         (win-h-r *win* 1/20) 'center 0
-                         #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2
-                         GLUT_STROKE_ROMAN)
-  ;; 線の表示
+  (textscrn-disp *tscrn1* *win* 0 0
+                 (win-w *win* *chw*) (win-h *win* *chh*))
   (gl-color 0.0 1.0 1.0 1.0)
-  (draw-win-line *win* 0 0 (win-w *win*) (win-h *win*))
-  ;; 長方形の表示
-  (gl-color 1.0 1.0 0.0 1.0)
-  (draw-win-rect *win* (win-w-r *win* 10/100) (win-h-r *win* 40/100)
-                 (win-w-r *win* 30/100) (win-h-r *win* 20/100))
-  ;; だ円の表示
-  (gl-color 0.0 0.8 0.0 1.0)
-  (draw-win-circle *win* (win-w-r *win* 70/100) (win-h-r *win* 50/100)
-                   (win-w-r *win* 15/100) 1 2)
-  ;; 多角形の表示
-  (gl-color 1.0 0.0 1.0 1.0)
-  (draw-win-poly *win* (win-w-r *win* 10/100) (win-h-r *win* 70/100)
-                 (vector (f32vector (win-w-r *win* 10/100) 0)
-                         (f32vector 0 (win-h-r *win* 20/100))
-                         (f32vector (win-w-r *win* 30/100) (win-h-r *win* 20/100))))
+  (textscrn-disp *tscrn2* *win* (win-x *win* 0) (win-y *win* 0)
+                 (win-w *win* *chw*) (win-h *win* *chh*) 'right)
   ;; 背景の表示
   (gl-color *backcolor*)
   (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*))

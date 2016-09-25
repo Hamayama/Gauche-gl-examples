@@ -1,17 +1,16 @@
 ;; -*- coding: utf-8 -*-
 ;;
-;; 画像表示のテスト
-;; 2016-9-23
+;; 2D描画のテスト
+;; 2016-9-26
 ;;
-(add-load-path "." :relative)
+(add-load-path ".." :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
 (use math.const)
-(use glmintool)
 (use gltextscrn)
 
-(define *title* "test-image") ; ウィンドウのタイトル
+(define *title* "test-draw") ; ウィンドウのタイトル
 (define *width*    480) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
@@ -21,21 +20,9 @@
 (define *ht/2*     400) ; 画面高さ/2
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 
-;; アプリのディレクトリのパス名
-(define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
-
-;; テクスチャの配列(u32vector)
-(define *tex* #f)
-
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
 (win-init *win* *width* *height* (* *wd/2* 2) (* *ht/2* 2))
-
-;; テキスト画面クラスのインスタンス生成
-(define *tscrn1* (make <textscrn>))
-(textscrn-init *tscrn1* 3 2)
-(textscrn-pset *tscrn1* 0 0 "AAA")
-(textscrn-pset *tscrn1* 0 1 "BBB")
 
 
 ;; 初期化
@@ -49,20 +36,6 @@
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
-  ;; 透過設定
-  ;(gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
-  ;(gl-enable GL_BLEND)
-  (gl-alpha-func GL_GREATER 0.5)
-  (gl-enable GL_ALPHA_TEST)
-  ;; テクスチャ設定
-  ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_MODULATE)
-  (gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_REPLACE)
-  ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_DECAL)
-  (set! *tex* (gl-gen-textures 2))
-  (load-texture-bitmap-file (~ *tex* 0) (make-fpath *app-dpath* "image/char0001.bmp") '(0 0 0))
-  (load-texture-bitmap-file (~ *tex* 1) (make-fpath *app-dpath* "image/char0002.bmp") '(0 0 0))
-  (set-char-texture #\A (~ *tex* 0))
-  (set-char-texture #\B (~ *tex* 1))
   )
 
 ;; 画面表示
@@ -70,13 +43,41 @@
   (gl-clear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
-  ;; 文字に割り付けたテクスチャの一括表示
-  (textscrn-disp-texture *tscrn1* *win* 0 0 (win-w *win* 50) (win-h *win* 50))
-  ;; テクスチャ付き長方形の表示
-  (draw-texture-rect *win* (~ *tex* 0) (win-x *win* -50) (win-y *win*  50)
-                     (win-w *win* 200) (win-h *win* 200) 'center)
-  (draw-texture-rect *win* (~ *tex* 1) (win-x *win*  50) (win-y *win* 150)
-                     (win-w *win* 200) (win-h *win* 200) 'center)
+  ;; 文字表示(ビットマップフォント)(拡大縮小不可)
+  (gl-color 1.0 1.0 1.0 1.0)
+  (draw-bitmap-text *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]" 0 0 24)
+  (gl-color 1.0 1.0 1.0 1.0)
+  (draw-bitmap-text-over *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
+                         (win-w-r *win* 1/2) (win-h-r *win* 8/100)
+                         18 'center 0 #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2
+                         GLUT_BITMAP_HELVETICA_18)
+  ;; 文字表示(ストロークフォント)(拡大縮小可能)
+  (gl-color 1.0 1.0 1.0 1.0)
+  (draw-stroke-text *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
+                    0 (win-h-r *win* 16/100) (win-h-r *win* 1/18))
+  (gl-color 1.0 1.0 1.0 1.0)
+  (draw-stroke-text-over *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
+                         (win-w-r *win* 1/2) (win-h-r *win* 24/100)
+                         (win-h-r *win* 1/20) 'center 0
+                         #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2
+                         GLUT_STROKE_ROMAN)
+  ;; 線の表示
+  (gl-color 0.0 1.0 1.0 1.0)
+  (draw-win-line *win* 0 0 (win-w *win*) (win-h *win*))
+  ;; 長方形の表示
+  (gl-color 1.0 1.0 0.0 1.0)
+  (draw-win-rect *win* (win-w-r *win* 10/100) (win-h-r *win* 40/100)
+                 (win-w-r *win* 30/100) (win-h-r *win* 20/100))
+  ;; だ円の表示
+  (gl-color 0.0 0.8 0.0 1.0)
+  (draw-win-circle *win* (win-w-r *win* 70/100) (win-h-r *win* 50/100)
+                   (win-w-r *win* 15/100) 1 2)
+  ;; 多角形の表示
+  (gl-color 1.0 0.0 1.0 1.0)
+  (draw-win-poly *win* (win-w-r *win* 10/100) (win-h-r *win* 70/100)
+                 (vector (f32vector (win-w-r *win* 10/100) 0)
+                         (f32vector 0 (win-h-r *win* 20/100))
+                         (f32vector (win-w-r *win* 30/100) (win-h-r *win* 20/100))))
   ;; 背景の表示
   (gl-color *backcolor*)
   (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*))
