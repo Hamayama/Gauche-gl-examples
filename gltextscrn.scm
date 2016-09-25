@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-25 v1.43
+;; 2016-9-25 v1.44
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -41,6 +41,7 @@
 ;; ウィンドウ情報クラス
 ;;   ・ウィンドウ上の画面幅 width と画面高さ height の情報を保持して、
 ;;     ウィンドウ上の座標を計算可能とする
+;;     (OpenGLの座標系とはY軸の方向が逆になる)
 ;;   ・glut-reshape-func のコールバックで win-update-size を呼び出して、
 ;;     ウィンドウのサイズ変更に追従する必要がある
 (define-class <wininfo> ()
@@ -113,7 +114,6 @@
 
 ;; 文字列表示(ビットマップフォント)
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (OpenGLとは座標系が異なるので注意)
 ;;   ・日本語表示不可
 ;;   ・文字のサイズはフォントにより固定
 (define-method draw-bitmap-text ((wn <wininfo>)
@@ -163,7 +163,6 @@
 
 ;; 文字列表示(ストロークフォント)
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (OpenGLとは座標系が異なるので注意)
 ;;   ・日本語表示不可
 ;;   ・文字のサイズは指定可能
 (define-method draw-stroke-text ((wn <wininfo>)
@@ -214,7 +213,6 @@
 ;; 線の表示
 ;;   ・線 (x1,y1)-(x2,y2) の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (OpenGLとは座標系が異なるので注意)
 (define-method draw-win-line ((wn <wininfo>)
                               (x1 <real>) (y1 <real>) (x2 <real>) (y2 <real>)
                               :optional (z 0))
@@ -232,7 +230,6 @@
 ;; 長方形の表示
 ;;   ・長方形 (x,y,w,h) の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (OpenGLとは座標系が異なるので注意)
 (define-method draw-win-rect ((wn <wininfo>)
                               (x <real>) (y <real>) (w <real>) (h <real>)
                               :optional (align 'left) (z 0))
@@ -253,7 +250,6 @@
 ;; 円の表示
 ;;   ・円 (x,y,r,a,b) -> (x*x)/(a*a)+(y*y)/(b*b)=r*r の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (OpenGLとは座標系が異なるので注意)
 (define-method draw-win-circle ((wn <wininfo>)
                                 (x <real>) (y <real>) (r <real>)
                                 :optional (a 1) (b 1) (align 'center) (z 0))
@@ -276,7 +272,6 @@
 ;;   ・頂点の座標(f32vector x y)を複数格納したベクタvvecを渡して、多角形の表示を行う
 ;;     (面は頂点が反時計回りになる方が表になる)
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (OpenGLとは座標系が異なるので注意)
 (define-method draw-win-poly ((wn <wininfo>)
                               (x <real>) (y <real>) (vvec <vector>)
                               :optional (z 0))
@@ -357,7 +352,6 @@
 ;; 文字列の一括表示
 ;;   ・文字ごとに倍率とオフセット値を適用して、等幅フォントのように表示する
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (OpenGLとは座標系が異なるので注意)
 ;;   ・日本語表示不可
 ;;   ・文字のサイズは、幅 chw と高さ chh の指定が必要
 ;;   ・フォントは固定
@@ -930,7 +924,6 @@
 ;; テクスチャ付き長方形の表示
 ;;   ・テクスチャ tex を貼り付けた長方形 (x,y,w,h) の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (OpenGLとは座標系が異なるので注意)
 (define-method draw-texture-rect ((wn <wininfo>)
                                   (tex <integer>)
                                   (x <real>) (y <real>)
@@ -974,7 +967,6 @@
 
 ;; 文字に割り付けたテクスチャの一括表示
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (OpenGLとは座標系が異なるので注意)
 ;;   ・1文字あたりの表示サイズは、幅 chw と高さ chh の指定が必要
 (define-method textscrn-disp-texture ((ts <textscrn>)
                                       (wn <wininfo>)
