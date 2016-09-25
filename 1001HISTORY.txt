@@ -243,9 +243,9 @@ gltextscrn.scm
                     fill-win-rectとfill-win-circleにオプション引数追加
                     draw-win-line追加
   2016-7-19  v1.24  コメント修正のみ
-  2016-9-12  v1.25  画像表示対応
+  2016-9-12  v1.25  画像読み込み対応
   2016-9-13  v1.26  変数名見直し等
-  2016-9-19  v1.27  ビットマップファイルの読み込み処理見直し等
+  2016-9-19  v1.27  画像読み込み処理見直し等
   2016-9-20  v1.28  画像データクラスの初期値修正
   2016-9-21  v1.29  名称変更(draw-texture-rect → fill-texture-rect)
   2016-9-22  v1.30  draw-bitmap-text-over,draw-stroke-text-over追加
