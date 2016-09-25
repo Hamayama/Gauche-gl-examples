@@ -68,10 +68,10 @@
   (gl-color 1.0 1.0 0.0 1.0)
   (draw-win-rect *win* (win-w-r *win* 10/100) (win-h-r *win* 40/100)
                  (win-w-r *win* 30/100) (win-h-r *win* 20/100))
-  ;; 円の表示
+  ;; だ円の表示
   (gl-color 0.0 0.8 0.0 1.0)
   (draw-win-circle *win* (win-w-r *win* 70/100) (win-h-r *win* 50/100)
-                   (win-w-r *win* 15/100) 1 1)
+                   (win-w-r *win* 15/100) 1 2)
   ;; 多角形の表示
   (gl-color 1.0 0.0 1.0 1.0)
   (draw-win-poly *win* (win-w-r *win* 10/100) (win-h-r *win* 70/100)
