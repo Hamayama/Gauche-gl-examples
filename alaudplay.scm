@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; alaudplay.scm
-;; 2016-5-2 v1.06
+;; 2016-9-26 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-al を使って音楽を演奏するためのモジュールです。
@@ -167,7 +167,8 @@
 ;; 音楽データのプロパティ取得
 (define-method auddata-get-prop ((a <auddata>) prop)
   (if (aud-enabled?)
-    (al-get-source (~ a 'src) prop)))
+    (al-get-source (~ a 'src) prop)
+    (undefined)))
 
 ;(define *adata1* (make <auddata>)) ; インスタンス生成例
 ;(auddata-load-wav *adata1* "sound/sound1.wav")
