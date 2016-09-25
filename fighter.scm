@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-9-23 v1.60
+;; 2016-9-25 v1.61
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -116,9 +116,9 @@
         ((and (= (~ f1 'type) 0) (not *demoflg*))
          ;; キー操作で行動を決定する
          (cond
-          ((spkey-on? *ksinfo* GLUT_KEY_LEFT)
+          ((and (spkey-on? *ksinfo* GLUT_KEY_LEFT) (not (spkey-on? *ksinfo* GLUT_KEY_RIGHT)))
            (set! (~ f1 'vx) (+ -10 (if (> (~ f1 'x) (~ f2 'x)) -2 0)))) ; 左移動
-          ((spkey-on? *ksinfo* GLUT_KEY_RIGHT)
+          ((and (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (not (spkey-on? *ksinfo* GLUT_KEY_LEFT)))
            (set! (~ f1 'vx) (+  10 (if (< (~ f1 'x) (~ f2 'x))  2 0)))) ; 右移動
           (else (set! (~ f1 'vx) 0)))
          (let ((d     (abs (- (~ f2 'x) (~ f1 'x)))) ; 相手との間合い

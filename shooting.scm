@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-9-25 v1.50
+;; 2016-9-25 v1.51
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -191,10 +191,10 @@
    (else
     (let ((vx 0) (vy 0))
       ;; 自機の移動
-      (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx (- *v*)))
-      (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx    *v*))
-      (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy    *v*))
-      (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! vy (- *v*)))
+      (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx (+ vx (- *v*))))
+      (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx (+ vx    *v*)))
+      (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy (+ vy    *v*)))
+      (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! vy (+ vy (- *v*))))
       (set! *x* (clamp (+ *x* vx) *minx* *maxx*))
       (set! *y* (clamp (+ *y* vy) *miny* *maxy*)))
     ;; 自機ビーム発射

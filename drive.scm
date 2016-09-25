@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-9-23 v1.21
+;; 2016-9-25 v1.22
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -221,8 +221,8 @@
   ;; X座標の更新
   (let ((dx1 0) (dx2 0))
     ;; ハンドル操作による差分を計算(速度に反比例)
-    (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! dx1  1))
-    (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! dx1 -1))
+    (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! dx1 (+ dx1  1)))
+    (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! dx1 (+ dx1 -1)))
     (set! dx1 (* dx1 (calc-by-ratio *spd* *minspd* *maxspd* 16  8)))
     ;; 道路の曲がり量による差分を計算(速度に正比例)
     (set! dx2 (calc-by-curv *rcx1* (- *rzmax* *scz*)))
