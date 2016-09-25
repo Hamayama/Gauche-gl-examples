@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-25 v1.45
+;; 2016-9-25 v1.50
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -118,7 +118,7 @@
 ;;   ・文字のサイズはフォントにより固定
 (define-method draw-bitmap-text ((wn <wininfo>)
                                  (str <string>) (x <real>) (y <real>)
-                                 :optional (size 24) (align 'left)
+                                 :optional (size 24) (align 'left) (z 0)
                                  (font *font-bitmap-1*))
   (unless (equal? str "")
     (gl-ortho-on wn)
@@ -128,7 +128,7 @@
                   ((right)  (- x stw))        ; 右寄せ
                   (else     x)))
            (y1  (- (win-h wn) y size)))
-      (gl-raster-pos x1 y1)
+      (gl-raster-pos x1 y1 z)
       (string-for-each (lambda (ch) (glut-bitmap-character font (char->integer ch))) str)
       )
     (gl-ortho-off wn)))
@@ -137,14 +137,14 @@
 ;;   ・背景を塗りつぶしてから draw-bitmap-text を実行する
 (define-method draw-bitmap-text-over ((wn <wininfo>)
                                       (str <string>) (x <real>) (y <real>)
-                                      :optional (size 24) (align 'left)
+                                      :optional (size 24) (align 'left) (z 0)
                                       (fore-color #f32(1.0 1.0 1.0 1.0))
                                       (back-color #f32(0.0 0.0 0.0 1.0))
                                       (back-scalex 1.2) (back-scaley 1.2)
-                                      (z 0) (font *font-bitmap-1*))
+                                      (font *font-bitmap-1*))
   (unless (equal? str "")
     (if fore-color (gl-color fore-color))
-    (draw-bitmap-text wn str x y size align font)
+    (draw-bitmap-text wn str x y size align z font)
     (if back-color (gl-color back-color))
     (let* ((stw     (get-bitmap-text-width str font))
            (xoffset (case align
@@ -167,7 +167,7 @@
 ;;   ・文字のサイズは指定可能
 (define-method draw-stroke-text ((wn <wininfo>)
                                  (str <string>) (x <real>) (y <real>)
-                                 :optional (size 24) (align 'left)
+                                 :optional (size 24) (align 'left) (z 0)
                                  (font *font-stroke-1*))
   (unless (equal? str "")
     (gl-ortho-on wn)
@@ -179,7 +179,7 @@
                       ((right)  (- stw))        ; 右寄せ
                       (else     0)))
            (yoffset (+ 33.33 10)))
-      (gl-translate x y1 0)
+      (gl-translate x y1 z)
       (gl-scale scale scale 1)
       (gl-translate xoffset yoffset 0)
       (string-for-each (lambda (ch) (glut-stroke-character font (char->integer ch))) str)
@@ -190,14 +190,14 @@
 ;;   ・背景を塗りつぶしてから draw-stroke-text を実行する
 (define-method draw-stroke-text-over ((wn <wininfo>)
                                       (str <string>) (x <real>) (y <real>)
-                                      :optional (size 24) (align 'left)
+                                      :optional (size 24) (align 'left) (z 0)
                                       (fore-color #f32(1.0 1.0 1.0 1.0))
                                       (back-color #f32(0.0 0.0 0.0 1.0))
                                       (back-scalex 1.2) (back-scaley 1.2)
-                                      (z 0) (font *font-stroke-1*))
+                                      (font *font-stroke-1*))
   (unless (equal? str "")
     (if fore-color (gl-color fore-color))
-    (draw-stroke-text wn str x y size align font)
+    (draw-stroke-text wn str x y size align z font)
     (if back-color (gl-color back-color))
     (let* ((stw     (get-stroke-text-width str font))
            (w1      (* stw (/. size (+ 152.38 20))))
@@ -359,7 +359,7 @@
                               (wn <wininfo>)
                               (x <real>) (y <real>)
                               (chw <real>) (chh <real>)
-                              :optional (align 'left))
+                              :optional (align 'left) (z 0))
   (gl-ortho-on wn)
   (let* ((w1 (~ ts 'width))
          (x1 (case align
@@ -374,7 +374,7 @@
        (if (and (>= c 0) (< c *char-info-num*))
          (let1 c1 (~ (force *char-info-table*) c)
            (gl-load-identity)
-           (gl-translate x1 y1 0)
+           (gl-translate x1 y1 z)
            (gl-scale (* (~ c1 'xscale/fchw) chw) (* (~ c1 'yscale/fchh) chh) 1)
            (gl-translate (~ c1 'xoffset) (~ c1 'yoffset) 0)
            (glut-stroke-character *font-stroke-1* c)))

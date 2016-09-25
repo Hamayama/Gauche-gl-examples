@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 2D描画のテスト
-;; 2016-9-23
+;; 2016-9-25
 ;;
 (add-load-path "." :relative)
 (use gl)
@@ -49,7 +49,7 @@
   (gl-color 1.0 1.0 1.0 1.0)
   (draw-bitmap-text-over *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
                          (win-w-r *win* 1/2) (win-h-r *win* 8/100)
-                         18 'center #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2 0
+                         18 'center 0 #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2
                          GLUT_BITMAP_HELVETICA_18)
   ;; 文字表示(ストロークフォント)(拡大縮小可能)
   (gl-color 1.0 1.0 1.0 1.0)
@@ -58,8 +58,8 @@
   (gl-color 1.0 1.0 1.0 1.0)
   (draw-stroke-text-over *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
                          (win-w-r *win* 1/2) (win-h-r *win* 24/100)
-                         (win-h-r *win* 1/20) 'center
-                         #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2 0
+                         (win-h-r *win* 1/20) 'center 0
+                         #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2
                          GLUT_STROKE_ROMAN)
   ;; 線の表示
   (gl-color 0.0 1.0 1.0 1.0)
