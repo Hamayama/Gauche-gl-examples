@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-23 v1.42
+;; 2016-9-25 v1.43
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -69,19 +69,19 @@
 ;; ウィンドウ上の幅を計算
 (define-method win-w ((wn <wininfo>) :optional (w #f))
   (if w (/. (* w (~ wn 'width)) (~ wn 'wd))
-        (~ wn 'width)))
+      (~ wn 'width)))
 ;; ウィンドウ上の高さを計算
 (define-method win-h ((wn <wininfo>) :optional (h #f))
   (if h (/. (* h (~ wn 'height)) (~ wn 'ht))
-        (~ wn 'height)))
+      (~ wn 'height)))
 ;; ウィンドウ上の幅を、比を指定して計算
 (define-method win-w-r ((wn <wininfo>) (n1 <real>) :optional (n2 #f))
   (if n2 (/. (* (~ wn 'width) n1) n2)
-         (* (~ wn 'width) (exact n1))))
+      (* (~ wn 'width) (exact n1))))
 ;; ウィンドウ上の高さを、比を指定して計算
 (define-method win-h-r ((wn <wininfo>) (n1 <real>) :optional (n2 #f))
   (if n2 (/. (* (~ wn 'height) n1) n2)
-         (* (~ wn 'height) (exact n1))))
+      (* (~ wn 'height) (exact n1))))
 
 
 ;; 正射影設定ON/OFF(内部処理用)
@@ -89,7 +89,6 @@
 ;;     画面の座標系を「左下」を原点として (0,0)-(width,height) の範囲に設定する
 ;;     (ここで「左上」を原点にはしない (モデルもすべて上下反転してしまうため)
 ;;      個別の表示ルーチンの方で、必要に応じて、height - y として反転するようにする)
-;;     (width,height はウィンドウ上の座標であり、OpenGLとは座標系が異なるので注意)
 ;;   ・光源は無効に設定する
 ;;   ・ONとOFFは常にセットで使用する
 (define-method gl-ortho-on ((wn <wininfo>))
@@ -114,7 +113,7 @@
 
 ;; 文字列表示(ビットマップフォント)
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (width,height はウィンドウ上の座標であり、OpenGLとは座標系が異なるので注意)
+;;     (OpenGLとは座標系が異なるので注意)
 ;;   ・日本語表示不可
 ;;   ・文字のサイズはフォントにより固定
 (define-method draw-bitmap-text ((wn <wininfo>)
@@ -123,13 +122,12 @@
                                  (font *font-bitmap-1*))
   (unless (equal? str "")
     (gl-ortho-on wn)
-    (let ((x1 x)
-          (y1 (- (win-h wn) y size)))
-      (if (memq align '(center right))
-        (let1 stw (get-bitmap-text-width str font)
-          (set! x1 (if (eq? align 'center)
-                     (- x (/. stw 2)) ; 中央寄せ
-                     (- x stw)))))    ; 右寄せ
+    (let* ((stw (get-bitmap-text-width str font))
+           (x1  (case align
+                  ((center) (- x (/. stw 2))) ; 中央寄せ
+                  ((right)  (- x stw))        ; 右寄せ
+                  (else     x)))
+           (y1  (- (win-h wn) y size)))
       (gl-raster-pos x1 y1)
       (string-for-each (lambda (ch) (glut-bitmap-character font (char->integer ch))) str)
       )
@@ -150,8 +148,8 @@
     (if back-color (gl-color back-color))
     (let* ((stw     (get-bitmap-text-width str font))
            (xoffset (case align
-                      ((left)  (- (* stw (/. (- back-scalex 1.0) 2))))
-                      ((right)    (* stw (/. (- back-scalex 1.0) 2)))
+                      ((left)  (- (* stw (/. (- back-scalex 1.0) 2)))) ; 左寄せ
+                      ((right)    (* stw (/. (- back-scalex 1.0) 2)))  ; 右寄せ
                       (else    0)))
            (yoffset (+ (- (* size (/. (- back-scaley 1.0) 2)))
                        (* size (/. 33.33 152.38)))))
@@ -165,7 +163,7 @@
 
 ;; 文字列表示(ストロークフォント)
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (width,height はウィンドウ上の座標であり、OpenGLとは座標系が異なるので注意)
+;;     (OpenGLとは座標系が異なるので注意)
 ;;   ・日本語表示不可
 ;;   ・文字のサイズは指定可能
 (define-method draw-stroke-text ((wn <wininfo>)
@@ -174,17 +172,15 @@
                                  (font *font-stroke-1*))
   (unless (equal? str "")
     (gl-ortho-on wn)
-    (let ((x1      x)
-          (y1      (- (win-h wn) y size))
-          (scale   (/. size (+ 152.38 20)))
-          (xoffset 0)
-          (yoffset (+ 33.33 10)))
-      (if (memq align '(center right))
-        (let1 stw (get-stroke-text-width str font)
-          (set! xoffset (if (eq? align 'center)
-                          (- (/. stw 2)) ; 中央寄せ
-                          (- stw)))))    ; 右寄せ
-      (gl-translate x1 y1 0)
+    (let* ((stw     (get-stroke-text-width str font))
+           (y1      (- (win-h wn) y size))
+           (scale   (/. size (+ 152.38 20)))
+           (xoffset (case align
+                      ((center) (- (/. stw 2))) ; 中央寄せ
+                      ((right)  (- stw))        ; 右寄せ
+                      (else     0)))
+           (yoffset (+ 33.33 10)))
+      (gl-translate x y1 0)
       (gl-scale scale scale 1)
       (gl-translate xoffset yoffset 0)
       (string-for-each (lambda (ch) (glut-stroke-character font (char->integer ch))) str)
@@ -207,8 +203,8 @@
     (let* ((stw     (get-stroke-text-width str font))
            (w1      (* stw (/. size (+ 152.38 20))))
            (xoffset (case align
-                      ((left)  (- (* w1 (/. (- back-scalex 1.0) 2))))
-                      ((right)    (* w1 (/. (- back-scalex 1.0) 2)))
+                      ((left)  (- (* w1 (/. (- back-scalex 1.0) 2)))) ; 左寄せ
+                      ((right)    (* w1 (/. (- back-scalex 1.0) 2)))  ; 右寄せ
                       (else    0)))
            (yoffset (- (* size (/. (- back-scaley 1.0) 2)))))
       (draw-win-rect wn (+ x xoffset) (+ y yoffset)
@@ -218,7 +214,7 @@
 ;; 線の表示
 ;;   ・線 (x1,y1)-(x2,y2) の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (width,height はウィンドウ上の座標であり、OpenGLとは座標系が異なるので注意)
+;;     (OpenGLとは座標系が異なるので注意)
 (define-method draw-win-line ((wn <wininfo>)
                               (x1 <real>) (y1 <real>) (x2 <real>) (y2 <real>)
                               :optional (z 0))
@@ -236,7 +232,7 @@
 ;; 長方形の表示
 ;;   ・長方形 (x,y,w,h) の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (width,height はウィンドウ上の座標であり、OpenGLとは座標系が異なるので注意)
+;;     (OpenGLとは座標系が異なるので注意)
 (define-method draw-win-rect ((wn <wininfo>)
                               (x <real>) (y <real>) (w <real>) (h <real>)
                               :optional (align 'left) (z 0))
@@ -257,7 +253,7 @@
 ;; 円の表示
 ;;   ・円 (x,y,r,a,b) -> (x*x)/(a*a)+(y*y)/(b*b)=r*r の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (width,height はウィンドウ上の座標であり、OpenGLとは座標系が異なるので注意)
+;;     (OpenGLとは座標系が異なるので注意)
 (define-method draw-win-circle ((wn <wininfo>)
                                 (x <real>) (y <real>) (r <real>)
                                 :optional (a 1) (b 1) (align 'center) (z 0))
@@ -280,7 +276,7 @@
 ;;   ・頂点の座標(f32vector x y)を複数格納したベクタvvecを渡して、多角形の表示を行う
 ;;     (面は頂点が反時計回りになる方が表になる)
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (width,height はウィンドウ上の座標であり、OpenGLとは座標系が異なるので注意)
+;;     (OpenGLとは座標系が異なるので注意)
 (define-method draw-win-poly ((wn <wininfo>)
                               (x <real>) (y <real>) (vvec <vector>)
                               :optional (z 0))
@@ -361,7 +357,7 @@
 ;; 文字列の一括表示
 ;;   ・文字ごとに倍率とオフセット値を適用して、等幅フォントのように表示する
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (width,height はウィンドウ上の座標であり、OpenGLとは座標系が異なるので注意)
+;;     (OpenGLとは座標系が異なるので注意)
 ;;   ・日本語表示不可
 ;;   ・文字のサイズは、幅 chw と高さ chh の指定が必要
 ;;   ・フォントは固定
@@ -934,7 +930,7 @@
 ;; テクスチャ付き長方形の表示
 ;;   ・テクスチャ tex を貼り付けた長方形 (x,y,w,h) の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (width,height はウィンドウ上の座標であり、OpenGLとは座標系が異なるので注意)
+;;     (OpenGLとは座標系が異なるので注意)
 (define-method draw-texture-rect ((wn <wininfo>)
                                   (tex <integer>)
                                   (x <real>) (y <real>)
@@ -978,7 +974,7 @@
 
 ;; 文字に割り付けたテクスチャの一括表示
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
-;;     (width,height はウィンドウ上の座標であり、OpenGLとは座標系が異なるので注意)
+;;     (OpenGLとは座標系が異なるので注意)
 ;;   ・1文字あたりの表示サイズは、幅 chw と高さ chh の指定が必要
 (define-method textscrn-disp-texture ((ts <textscrn>)
                                       (wn <wininfo>)
