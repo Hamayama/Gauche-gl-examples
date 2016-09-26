@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-9-21 v1.12
+;; 2016-9-26 v1.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -79,8 +79,8 @@
    ))
 (define (%check-mdkey k)
   ;; Shift,Ctrl,Altキーの入力チェック
-  ;;   glut-get-modifiers は、入力デバイス関連のコールバック内でしか使用できない。
-  ;;   また、環境によっては、他のキーと同時押ししないと状態を取得できない
+  ;; (glut-get-modifiers は、入力デバイス関連のコールバック内でしか使用できない。
+  ;;  また、環境によっては、他のキーと同時押ししないと状態を取得できない)
   (let1 mdkey (glut-get-modifiers)
     (hash-table-put! (~ k 'mdkeystate) GLUT_ACTIVE_SHIFT
                      (not (= (logand mdkey GLUT_ACTIVE_SHIFT) 0)))
@@ -94,11 +94,11 @@
   (hash-table-put! (~ k 'keystate) key #t))
 (define-method key-off ((k <keystateinfo>) (key <integer>))
   (%check-mdkey k)
-  ;; アルファベットの大文字と小文字は両方OFFにする
-  ;; (Shiftキー同時押しの対策)
-  (cond ((<= #x41 key #x5A) (hash-table-put! (~ k 'keystate) (+ key #x20) #f))
-        ((<= #x61 key #x7A) (hash-table-put! (~ k 'keystate) (- key #x20) #f)))
-  (hash-table-put! (~ k 'keystate) key #f))
+  (hash-table-put! (~ k 'keystate) key #f)
+  ;; アルファベットの大文字と小文字は両方OFFにする(Shiftキー同時押しの対策)
+  (cond
+   ((<= #x41 key #x5A) (hash-table-put! (~ k 'keystate) (+ key #x20) #f))
+   ((<= #x61 key #x7A) (hash-table-put! (~ k 'keystate) (- key #x20) #f))))
 (define-method spkey-on ((k <keystateinfo>) (key <integer>))
   (%check-mdkey k)
   (hash-table-put! (~ k 'spkeystate) key #t))
