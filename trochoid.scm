@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; trochoid.scm
-;; 2016-5-7 v1.12
+;; 2016-9-26 v1.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、内トロコイド曲線を描くサンプルです。
@@ -38,7 +38,7 @@
     #(1.0 0.0 0.0) #(1.0 0.0 1.0) #(1.0 1.0 0.0) #(1.0 1.0 1.0)))
 
 ;; 内トロコイド曲線の座標と色を設定
-(define (setup-pointers rc rm rd color-index vvec cvec vec-offset)
+(define (setup-trochoid rc rm rd color-index vvec cvec vec-offset)
   (let* ((vnum 0)
          (t1   (-  rc rm))
          (t2   (/. t1 rm))
@@ -49,17 +49,17 @@
          (colg (~ *color-table* color-index 1))
          (colb (~ *color-table* color-index 2)))
     ;; 座標と色を計算して、ユニフォームベクタに格納する
-    (do ((i  0 (+ i (/. 2pi 360)))
-         (i2 (* vec-offset 2) (+ i2 2))
-         (i3 (* vec-offset 3) (+ i3 3)))
-        ((>= i (* 2pi n)) #f)
-      (set! x1 (+ (* t1 (cos i)) (* rd     (cos (* t2 i)))))
-      (set! y1 (+ (* t1 (sin i)) (* (- rd) (sin (* t2 i)))))
-      (f32vector-set! vvec i2       x1)   ; X座標
-      (f32vector-set! vvec (+ i2 1) y1)   ; Y座標
-      (f32vector-set! cvec i3       colr) ; R
-      (f32vector-set! cvec (+ i3 1) colg) ; G
-      (f32vector-set! cvec (+ i3 2) colb) ; B
+    (do ((rad  0 (+ rad (/. 2pi 360)))
+         (i1   (* vec-offset 2) (+ i1 2))
+         (i2   (* vec-offset 3) (+ i2 3)))
+        ((>= rad (* 2pi n)) #f)
+      (set! x1 (+ (* t1 (cos rad)) (* rd     (cos (* t2 rad)))))
+      (set! y1 (+ (* t1 (sin rad)) (* (- rd) (sin (* t2 rad)))))
+      (f32vector-set! vvec i1       x1)   ; X座標
+      (f32vector-set! vvec (+ i1 1) y1)   ; Y座標
+      (f32vector-set! cvec i2       colr) ; R
+      (f32vector-set! cvec (+ i2 1) colg) ; G
+      (f32vector-set! cvec (+ i2 2) colb) ; B
       (inc! vnum))
     ;; 頂点数を返す
     vnum))
@@ -76,7 +76,7 @@
   (set! *vvec* (make-f32vector (* (+ (* 360 *rc*) 1) 2) 0))
   (set! *cvec* (make-f32vector (* (+ (* 360 *rc*) 1) 3) 0))
   ;; 内トロコイド曲線の座標と色を設定
-  (set! *vnum* (setup-pointers *rc* *rm* *rd* *color-index* *vvec* *cvec* 0))
+  (set! *vnum* (setup-trochoid *rc* *rm* *rd* *color-index* *vvec* *cvec* 0))
   ;; OpenGLの配列に設定する
   (gl-enable-client-state GL_VERTEX_ARRAY)
   (gl-enable-client-state GL_COLOR_ARRAY)
@@ -112,7 +112,7 @@
     (set! *rd*          (randint 10 *rm*))
     (set! *color-index* (randint 10 15))
     ;; 内トロコイド曲線の座標と色を設定
-    (set! *vnum* (setup-pointers *rc* *rm* *rd* *color-index* *vvec* *cvec* 0))
+    (set! *vnum* (setup-trochoid *rc* *rm* *rd* *color-index* *vvec* *cvec* 0))
     ;; タイトル文字列を更新
     (glut-set-window-title (make-title *rm* *rd*))
     ;; 画面表示
