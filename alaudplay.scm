@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; alaudplay.scm
-;; 2016-9-26 v1.07
+;; 2016-9-28 v1.08
 ;;
 ;; ＜内容＞
 ;;   Gauche-al を使って音楽を演奏するためのモジュールです。
@@ -95,7 +95,7 @@
    ))
 
 ;; wavファイルの読み込み
-(define-method auddata-load-wav-file ((a <auddata>) wav-file)
+(define-method auddata-load-wav-file ((a <auddata>) (wav-file <string>))
   (when (aud-enabled?)
     (set! (~ a 'buf) (al-gen-buffer))
     (al-buffer-data (~ a 'buf) (alut-load-wav-file wav-file))

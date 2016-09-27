@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-25 v1.31
+;; 2016-9-28 v1.32
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -103,7 +103,9 @@
    (minx :init-value 0) ; X座標の最小値
    (maxx :init-value 0) ; X座標の最大値
    ))
-(define-method cloud-init ((c <cloud>) x y vx minx maxx)
+(define-method cloud-init ((c <cloud>)
+                           (x <real>) (y <real>) (vx <real>)
+                           (minx <real>) (maxx <real>))
   (set! (~ c 'x)    x)
   (set! (~ c 'y)    y)
   (set! (~ c 'vx)   vx)

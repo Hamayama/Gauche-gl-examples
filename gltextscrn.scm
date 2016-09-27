@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-27 v1.52
+;; 2016-9-28 v1.53
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -911,7 +911,7 @@
 ;; テクスチャに画像データを設定する(内部処理用)
 ;;   各種パラメータは決め打ち
 ;;   画像サイズは、幅も高さも 2のべき乗 である必要がある
-(define-method imgdata-set-texture ((img <imgdata>) tex)
+(define-method imgdata-set-texture ((img <imgdata>) (tex <integer>))
   (gl-bind-texture  GL_TEXTURE_2D tex)
   (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_WRAP_S GL_REPEAT)
   (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_WRAP_T GL_REPEAT)
@@ -926,7 +926,8 @@
 ;;   ・ビットマップファイルは、24bitカラーで無圧縮のもののみ使用可能
 ;;   ・画像サイズは、幅も高さも 2のべき乗 である必要がある
 ;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
-(define (load-texture-bitmap-file tex file :optional (trans-color #f))
+(define-method load-texture-bitmap-file ((tex <integer>)
+                                         (file <string>) :optional (trans-color #f))
   (imgdata-set-texture (load-bitmap-file file trans-color) tex))
 
 ;; テクスチャ付き長方形の表示
@@ -962,8 +963,9 @@
 (define *char-tex-table* (make-hash-table 'eqv?))
 
 ;; 文字にテクスチャを割り付ける(テクスチャの一括表示用)
-(define (set-char-texture ch tex :optional (xoffset 0) (yoffset 0)
-                          (xcrd 1.0) (ycrd 1.0))
+(define-method set-char-texture ((ch <char>)
+                                 (tex <integer>) :optional (xoffset 0) (yoffset 0)
+                                 (xcrd 1.0) (ycrd 1.0))
   (let1 t (make <tex-info>)
     (set! (~ t 'tex)     tex)
     (set! (~ t 'xoffset) xoffset)

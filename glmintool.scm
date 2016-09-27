@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-9-26 v1.13
+;; 2016-9-28 v1.14
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -128,7 +128,7 @@
    (waitkey  :init-value '()) ; 待ち受けキー(文字のリストで指定)
    (keystate :init-keyword :keystate :init-form (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
    ))
-(define-method keywait ((k <keywaitinfo>) (wk <pair>) (finished-func <procedure>))
+(define-method keywait ((k <keywaitinfo>) (wk <list>) (finished-func <procedure>))
   (case (~ k 'state)
     ((0) (set! (~ k 'waitkey) wk)
          (set! (~ k 'state) 1))
