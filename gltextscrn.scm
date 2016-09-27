@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-25 v1.50
+;; 2016-9-27 v1.51
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -42,8 +42,9 @@
 ;;   ・ウィンドウ上の画面幅 width と画面高さ height の情報を保持して、
 ;;     ウィンドウ上の座標を計算可能とする
 ;;     (OpenGLの座標系とはY軸の方向が逆になる)
-;;   ・glut-reshape-func のコールバックで win-update-size を呼び出して、
-;;     ウィンドウのサイズ変更に追従する必要がある
+;;   ・本クラスは、ウィンドウのサイズ変更に追従する必要がある。
+;;     glut-reshape-func のコールバックで win-update-size を呼び出して、
+;;     ウィンドウのサイズ変更に追従するようにする
 (define-class <wininfo> ()
   ((width  :init-value 0) ; ウィンドウ上の画面幅(px)
    (height :init-value 0) ; ウィンドウ上の画面高さ(px)
@@ -269,11 +270,11 @@
   (gl-ortho-off wn))
 
 ;; 多角形の表示
-;;   ・頂点の座標(f32vector x y)を複数格納したベクタvvecを渡して、多角形の表示を行う
+;;   ・頂点の座標(f32vector x y)を複数格納したシーケンスvvecを渡して、多角形の表示を行う
 ;;     (面は頂点が反時計回りになる方が表になる)
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
 (define-method draw-win-poly ((wn <wininfo>)
-                              (x <real>) (y <real>) (vvec <vector>)
+                              (x <real>) (y <real>) (vvec <sequence>)
                               :optional (z 0))
   (gl-ortho-on wn)
   (let1 y1 (- (win-h wn) y)
@@ -525,9 +526,9 @@
     ))
 
 ;; 文字列の多角形表示処理
-;;   ・point は ((x1 y1) (x2 y2) ...) という頂点座標のリスト
+;;   ・point は ((x1 y1) (x2 y2) ...) という頂点座標のシーケンス
 (define-method textscrn-poly ((ts <textscrn>)
-                              (point <list>) (str <string>)
+                              (point <sequence>) (str <string>)
                               :optional (notclose #f))
   (let* ((pnum    (length point))
          (lnum    (if notclose (- pnum 1) pnum))
@@ -545,10 +546,10 @@
     ))
 
 ;; 文字列の多角形塗りつぶし表示処理
-;;   ・point は ((x1 y1) (x2 y2) ...) という頂点座標のリスト
+;;   ・point は ((x1 y1) (x2 y2) ...) という頂点座標のシーケンス
 (define-class <edgeinfo> () (a ydir y1 y2 x)) ; 辺情報クラス
 (define-method textscrn-fpoly ((ts <textscrn>)
-                               (point <list>) (str <string>))
+                               (point <sequence>) (str <string>))
   (let ((pnum      (length point))
         (x1 0) (y1 0) (x2 0) (y2 0) (miny 0) (maxy 0)
         (e1        #f)  ; 辺情報
@@ -789,7 +790,6 @@
 
 ;; ビットマップファイルを読み込み 画像データを生成して返す(内部処理用)
 ;;   ・ビットマップファイルは、24bitカラーで無圧縮のもののみ使用可能
-;;   ・画像サイズは、幅も高さも 2のべき乗 である必要がある
 ;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
 (define (load-bitmap-file file :optional (trans-color #f))
   (define (err msg . rest)
