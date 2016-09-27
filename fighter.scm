@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-9-25 v1.61
+;; 2016-9-27 v1.62
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -34,9 +34,9 @@
 (define *chw*      100) ; キャラクタの幅
 (define *chh*      100) ; キャラクタの高さ
 (define *gdy*     -300) ; 地面のY座標
-(define *maxx*       (- *wd/2* (quotient *chw* 2))) ; X座標最大値
-(define *minx*       (- *maxx*))                    ; X座標最小値
-(define *miny*       (+ *gdy*  *chh*))              ; Y座標最小値
+(define *maxx*       (- *wd/2* (/. *chw* 2))) ; X座標最大値
+(define *minx*       (- *maxx*))              ; X座標最小値
+(define *miny*       (+ *gdy*  *chh*))        ; Y座標最小値
 (define *waku*      10) ; 当たり判定調整用
 (define *fixtime*   10) ; 硬直時間
 (define *stephigh*  29) ; ステップ高さ
@@ -86,7 +86,7 @@
    (ft       :init-value 0) ; 硬直時間カウント用
    (endstate :init-value 0) ; 終了状態(=0:初期状態,=1:自分の勝ち,=2:敵の勝ち,=3:敵の勝ちで終了)
    ))
-(define-method fighter-init ((f1 <fighter>) (type <integer>) (x <integer>) (y <integer>) (dir <integer>))
+(define-method fighter-init ((f1 <fighter>) (type <integer>) (x <real>) (y <real>) (dir <integer>))
   (set! (~ f1 'type)     type)
   (set! (~ f1 'x)        x)
   (set! (~ f1 'y)        y)
@@ -600,7 +600,7 @@
        (fighter-move *f2* *f1*)
        ;; 衝突判定
        (fighter-check *f1* *f2*)
-       ;; 決着したとき
+       ;; 終了判定
        (if (or (fighter-finished? *f1*) (fighter-finished? *f2*))
          (cond
           ;; デモのとき
