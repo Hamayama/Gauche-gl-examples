@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-27 v1.51
+;; 2016-9-27 v1.52
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -43,31 +43,41 @@
 ;;     ウィンドウ上の座標を計算可能とする
 ;;     (OpenGLの座標系とはY軸の方向が逆になる)
 ;;   ・本クラスは、ウィンドウのサイズ変更に追従する必要がある。
-;;     glut-reshape-func のコールバックで win-update-size を呼び出して、
-;;     ウィンドウのサイズ変更に追従するようにする
+;;     このため、glut-reshape-func のコールバックで win-update-size を呼び出して、
+;;     ウィンドウのサイズ変更に追従するようにすること
 (define-class <wininfo> ()
-  ((width  :init-value 0) ; ウィンドウ上の画面幅(px)
-   (height :init-value 0) ; ウィンドウ上の画面高さ(px)
-   (wd     :init-value 0) ; OpenGL上の画面幅
-   (ht     :init-value 0) ; OpenGL上の画面高さ
+  ((width   :init-value 0) ; ウィンドウ上の画面幅(px)
+   (height  :init-value 0) ; ウィンドウ上の画面高さ(px)
+   (wd      :init-value 0) ; OpenGL上の画面幅
+   (ht      :init-value 0) ; OpenGL上の画面高さ
+   (xoffset :init-value 0) ; OpenGL上の画面左上のX座標
+   (yoffset :init-value 0) ; OpenGL上の画面左上のY座標
    ))
+;; 初期化
 (define-method win-init ((wn <wininfo>)
-                         (width <real>) (height <real>) (wd <real>) (ht <real>))
+                         (width <real>) (height <real>) (wd <real>) (ht <real>)
+                         :optional (xoffset #f) (yoffset #f))
   (set! (~ wn 'width)  width)
   (set! (~ wn 'height) height)
   (set! (~ wn 'wd)     wd)
-  (set! (~ wn 'ht)     ht))
+  (set! (~ wn 'ht)     ht)
+  (if xoffset
+    (set! (~ wn 'xoffset) xoffset)
+    (set! (~ wn 'xoffset) (- (/. wd 2))))
+  (if yoffset
+    (set! (~ wn 'yoffset) yoffset)
+    (set! (~ wn 'yoffset) (/. ht 2)))
+  )
+;; ウィンドウのサイズ変更に追従
 (define-method win-update-size ((wn <wininfo>) (width <real>) (height <real>))
   (set! (~ wn 'width)  width)
   (set! (~ wn 'height) height))
 ;; ウィンドウ上のX座標を計算
 (define-method win-x ((wn <wininfo>) (x <real>))
-  (+ (/. (* x (~ wn 'width)) (~ wn 'wd))
-     (/. (~ wn 'width) 2)))
+  (/. (* (- x (~ wn 'xoffset)) (~ wn 'width)) (~ wn 'wd)))
 ;; ウィンドウ上のY座標を計算
 (define-method win-y ((wn <wininfo>) (y <real>))
-  (+ (/. (* (- y) (~ wn 'height)) (~ wn 'ht))
-     (/. (~ wn 'height) 2)))
+  (/. (* (- (~ wn 'yoffset) y) (~ wn 'height)) (~ wn 'ht)))
 ;; ウィンドウ上の幅を計算
 (define-method win-w ((wn <wininfo>) :optional (w #f))
   (if w (/. (* w (~ wn 'width)) (~ wn 'wd))
@@ -874,12 +884,12 @@
                  (else
                   (let* ((b (read-one-data in))
                          (g (read-one-data in))
-                         (r (read-one-data in)))
+                         (r (read-one-data in))
+                         (a (if (and (= r trans-r) (= g trans-g) (= b trans-b)) 0 255)))
                     (set! (~ data k)       r)
                     (set! (~ data (+ k 1)) g)
                     (set! (~ data (+ k 2)) b)
-                    (set! (~ data (+ k 3))
-                          (if (and (= r trans-r) (= g trans-g) (= b trans-b)) 0 255))
+                    (set! (~ data (+ k 3)) a)
                     (set! j (+ j 3))
                     (set! k (+ k 4))
                     (inc! c)
