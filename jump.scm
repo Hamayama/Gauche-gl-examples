@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-28 v1.32
+;; 2016-9-28 v1.40
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -138,10 +138,9 @@
 ;; 自分の表示
 (define (disp-mychr)
   (let1 tno (if (= *scene* 3) 1 0)
-    (draw-texture-rect *win* (~ *tex* tno)
-                       (win-x *win* (- *x* *chw*)) (win-y *win* *y*)
+    (draw-texture-rect (~ *tex* tno) (win-x *win* (- *x* *chw*)) (win-y *win* *y*)
                        (win-w *win* (* *chw* 2)) (win-h *win* (* *chh* 2))
-                       'left 0 0.75 0.75)
+                       *width* *height* 'left 0 0.75 0.75)
     ))
 
 ;; 自分の移動
@@ -235,9 +234,8 @@
 (define (disp-clouds)
   (for-each
    (lambda (c1)
-     (textscrn-disp-texture *tscrn-cloud* *win*
-                            (win-x *win* (~ c1 'x)) (win-y *win* (~ c1 'y))
-                            (win-w *win* (* *chw* 2)) (win-h *win* *chh*)))
+     (textscrn-disp-texture *tscrn-cloud* (win-x *win* (~ c1 'x)) (win-y *win* (~ c1 'y))
+                            *width* *height* (win-w *win* (* *chw* 2)) (win-h *win* *chh*)))
    *clouds*))
 
 ;; 雲の移動
@@ -255,10 +253,9 @@
 ;; ゴールの表示
 (define (disp-goal)
   (when (< *gt1* *gt3*)
-    (draw-texture-rect *win* (~ *tex* 5)
-                       (win-x *win* *gx*) (win-y *win* *gy*)
+    (draw-texture-rect (~ *tex* 5) (win-x *win* *gx*) (win-y *win* *gy*)
                        (win-w *win* (* *chw* 4)) (win-h *win* (* *chh* 3))
-                       'left 0 0.75 0.5625)
+                       *width* *height* 'left 0 0.75 0.5625)
     ))
 
 ;; ゴールの移動
@@ -307,12 +304,12 @@
    (lambda (e1)
      (when (~ e1 'useflag)
        (let1 tno (if (= (~ e1 'state) 0) 2 3)
-         (draw-texture-rect *win* (~ *tex* tno)
+         (draw-texture-rect (~ *tex* tno)
                             (win-x *win* (- (~ e1 'x) *chw*))
                             (win-y *win* (~ e1 'y))
                             (win-w *win* (* *chw* 2))
                             (win-h *win* (* *chh* 2))
-                            'left 0 0.75 0.75)
+                            *width* *height* 'left 0 0.75 0.75)
          )))
    *enemies*))
 
@@ -422,26 +419,26 @@
     (set! str4 (format "HI-SCORE : ~D" *hs*))
     (set! str5 (format "STAGE : ~D"    *stage*))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text-over *win* str1 (win-w-r *win* 1/2) (win-h-r *win* 38 100)
+    (draw-stroke-text-over str1 (win-w-r *win* 1/2) (win-h-r *win* 38 100) *width* *height*
                            (win-h-r *win* 1/13) 'center 0 #f *backcolor*)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text-over *win* str2
+    (draw-stroke-text-over str2
                            (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100))
-                           (win-h-r *win* y2 100)
+                           (win-h-r *win* y2 100) *width* *height*
                            (win-h-r *win* 1/18) 'center 0 #f *backcolor*)
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text *win* str3 0 0 (win-h-r *win* 1/22))
+    (draw-stroke-text str3 0 0 *width* *height* (win-h-r *win* 1/22))
     (gl-color 1.0 0.0 1.0 1.0)
-    (draw-stroke-text *win* str4 (win-w-r *win* 1/2) 0 (win-h-r *win* 1/22) 'center)
+    (draw-stroke-text str4 (win-w-r *win* 1/2) 0 *width* *height* (win-h-r *win* 1/22) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str5 (win-w *win*) 0 (win-h-r *win* 1/22) 'right)
+    (draw-stroke-text str5 *width* 0 *width* *height* (win-h-r *win* 1/22) 'right)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str6 (win-w-r *win* 1/2) (win-h-r *win* 40/100)
+    (draw-stroke-text str6 (win-w-r *win* 1/2) (win-h-r *win* 40/100) *width* *height*
                       (win-h-r *win* 1/15) 'center)
     )
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
-  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win* *chh*))
+  (draw-win-rect 0 0 *width* (win-h *win* *chh*) *width* *height*)
   ;; 自分の表示
   (disp-mychr)
   ;; 敵の表示
@@ -452,11 +449,10 @@
   (disp-goal)
   ;; 地面の表示
   (gl-color *floorcolor*)
-  (draw-win-rect *win* 0 (win-y *win* (+ (- *ht/2*) *chh*))
-                 (win-w *win*) (win-h *win* *chh*))
+  (draw-win-rect 0 (win-y *win* (+ (- *ht/2*) *chh*)) *width* (win-h *win* *chh*) *width* *height*)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*))
+  (draw-win-rect 0 0 *width* *height* *width* *height*)
   ;(gl-flush)
   (glut-swap-buffers)
   )

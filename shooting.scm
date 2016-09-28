@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-9-25 v1.51
+;; 2016-9-28 v1.60
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -154,7 +154,7 @@
             (set! tscrn *tscrn-mychr1*))
       (else (gl-color 1.0 0.0 0.0 1.0)
             (set! tscrn *tscrn-mychr2*)))
-    (textscrn-disp tscrn *win* (win-x *win* *x*) (win-y *win* *y*)
+    (textscrn-disp tscrn (win-x *win* *x*) (win-y *win* *y*) *width* *height*
                    (win-w *win* *chw*) (win-h *win* *chh*) 'center)
     ))
 
@@ -264,8 +264,8 @@
        (if (= (~ e1 'state) 0)
          (gl-color 1.0 1.0 1.0 1.0)
          (gl-color 1.0 1.0 1.0 0.9))
-       (textscrn-disp (~ e1 'tscrn) *win* (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
-                      (win-w *win* *chw*) (win-h *win* *chh*) 'center)
+       (textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
+                      *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
        ))
    enemies))
 
@@ -317,8 +317,8 @@
   (gl-color 1.0 1.0 0.0 1.0)
   (textscrn-cls  *tscrn-beam1*)
   (textscrn-line *tscrn-beam1* 0 0 0 (- *bc* 1) "c ")
-  (textscrn-disp *tscrn-beam1* *win* (win-x *win* *x*) (win-y *win* (+ *y* (* *chh* *bc*)))
-                 (win-w *win* *chw*) (win-h *win* *chh*) 'center))
+  (textscrn-disp *tscrn-beam1* (win-x *win* *x*) (win-y *win* (+ *y* (* *chh* *bc*)))
+                 *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center))
 
 ;; 自機ビームの当たり判定
 (define (hit-beam?)
@@ -358,9 +358,9 @@
   (for-each
    (lambda (e1)
      (when (and (~ e1 'useflag) (> (~ e1 'state) 0))
-       (draw-win-circle *win* (win-x *win* (~ e1 'x))
+       (draw-win-circle (win-x *win* (~ e1 'x))
                         (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                        (win-w *win* *bs*))
+                        (win-w *win* *bs*) *width* *height*)
        ))
    *enemies*))
 
@@ -489,26 +489,25 @@
     (set! str4 (format "HI-SCORE : ~D" *hs*))
     (set! str5 (format "LEVEL : ~D/~D" *mr* *mmr*))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text-over *win* str1 (win-w-r *win* 1/2) (win-h-r *win* 36 100)
+    (draw-stroke-text-over str1 (win-w-r *win* 1/2) (win-h-r *win* 36 100) *width* *height*
                            (win-h-r *win* 1/13) 'center 0 #f *backcolor*)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text-over *win* str2
-                           (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100))
-                           (win-h-r *win* y2 100)
+    (draw-stroke-text-over str2 (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100))
+                           (win-h-r *win* y2 100) *width* *height*
                            (win-h-r *win* 1/18) 'center 0 #f *backcolor*)
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text *win* str3 0 0 (win-h-r *win* 1/22))
+    (draw-stroke-text str3 0 0 *width* *height* (win-h-r *win* 1/22))
     (gl-color 1.0 0.0 1.0 1.0)
-    (draw-stroke-text *win* str4 (win-w-r *win* 1/2) 0 (win-h-r *win* 1/22) 'center)
+    (draw-stroke-text str4 (win-w-r *win* 1/2) 0 *width* *height* (win-h-r *win* 1/22) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str5 (win-w *win*) 0 (win-h-r *win* 1/22) 'right)
+    (draw-stroke-text str5 *width* 0 *width* *height* (win-h-r *win* 1/22) 'right)
     (gl-color 0.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str6 0 (win-h-r *win*  5/100) (win-h-r *win* 1/22))
-    (draw-stroke-text *win* str7 0 (win-h-r *win* 10/100) (win-h-r *win* 1/22))
+    (draw-stroke-text str6 0 (win-h-r *win*  5/100) *width* *height* (win-h-r *win* 1/22))
+    (draw-stroke-text str7 0 (win-h-r *win* 10/100) *width* *height* (win-h-r *win* 1/22))
     )
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
-  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win* *chh*))
+  (draw-win-rect 0 0 *width* (win-h *win* *chh*) *width* *height*)
   ;; 敵ミサイルの表示
   (disp-enemies *missiles*)
   ;; 敵の表示
@@ -522,7 +521,7 @@
   (disp-blast)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*))
+  (draw-win-rect 0 0 *width* *height* *width* *height*)
   ;(gl-flush)
   (glut-swap-buffers)
   )

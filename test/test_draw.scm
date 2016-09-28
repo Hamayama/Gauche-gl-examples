@@ -1,13 +1,14 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 2D描画のテスト
-;; 2016-9-26
+;; 2016-9-28
 ;;
 (add-load-path ".." :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
 (use math.const)
+(use glmintool)
 (use gltextscrn)
 
 (define *title* "test-draw") ; ウィンドウのタイトル
@@ -45,42 +46,43 @@
   (gl-load-identity)
   ;; 文字表示(ビットマップフォント)(拡大縮小不可)
   (gl-color 1.0 1.0 1.0 1.0)
-  (draw-bitmap-text *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]" 0 0 24)
+  (draw-bitmap-text "AIJMQabcdefghijklmnopqrstuvwxyz[]" 0 0 *width* *height* 24)
   (gl-color 1.0 1.0 1.0 1.0)
-  (draw-bitmap-text-over *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
-                         (win-w-r *win* 1/2) (win-h-r *win* 8/100)
+  (draw-bitmap-text-over "AIJMQabcdefghijklmnopqrstuvwxyz[]"
+                         (win-w-r *win* 1/2) (win-h-r *win* 8/100) *width* *height*
                          18 'center 0 #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2
                          GLUT_BITMAP_HELVETICA_18)
   ;; 文字表示(ストロークフォント)(拡大縮小可能)
   (gl-color 1.0 1.0 1.0 1.0)
-  (draw-stroke-text *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
-                    0 (win-h-r *win* 16/100) (win-h-r *win* 1/18))
+  (draw-stroke-text "AIJMQabcdefghijklmnopqrstuvwxyz[]"
+                    0 (win-h-r *win* 16/100) *width* *height* (win-h-r *win* 1/18))
   (gl-color 1.0 1.0 1.0 1.0)
-  (draw-stroke-text-over *win* "AIJMQabcdefghijklmnopqrstuvwxyz[]"
-                         (win-w-r *win* 1/2) (win-h-r *win* 24/100)
+  (draw-stroke-text-over "AIJMQabcdefghijklmnopqrstuvwxyz[]"
+                         (win-w-r *win* 1/2) (win-h-r *win* 24/100) *width* *height*
                          (win-h-r *win* 1/20) 'center 0
                          #f #f32(0.0 0.0 1.0 1.0) 1.1 1.2
                          GLUT_STROKE_ROMAN)
   ;; 線の表示
   (gl-color 0.0 1.0 1.0 1.0)
-  (draw-win-line *win* 0 0 (win-w *win*) (win-h *win*))
+  (draw-win-line 0 0 *width* *height* *width* *height*)
   ;; 長方形の表示
   (gl-color 1.0 1.0 0.0 1.0)
-  (draw-win-rect *win* (win-w-r *win* 10/100) (win-h-r *win* 40/100)
-                 (win-w-r *win* 30/100) (win-h-r *win* 20/100))
+  (draw-win-rect (win-w-r *win* 10/100) (win-h-r *win* 40/100)
+                 (win-w-r *win* 30/100) (win-h-r *win* 20/100) *width* *height*)
   ;; だ円の表示
   (gl-color 0.0 0.8 0.0 1.0)
-  (draw-win-circle *win* (win-w-r *win* 70/100) (win-h-r *win* 50/100)
-                   (win-w-r *win* 15/100) 1 2)
+  (draw-win-circle (win-w-r *win* 70/100) (win-h-r *win* 50/100)
+                   (win-w-r *win* 15/100) *width* *height* 1 2)
   ;; 多角形の表示
   (gl-color 1.0 0.0 1.0 1.0)
-  (draw-win-poly *win* (win-w-r *win* 10/100) (win-h-r *win* 70/100)
+  (draw-win-poly (win-w-r *win* 10/100) (win-h-r *win* 70/100)
                  (vector (f32vector (win-w-r *win* 10/100) 0)
                          (f32vector 0 (win-h-r *win* 20/100))
-                         (f32vector (win-w-r *win* 30/100) (win-h-r *win* 20/100))))
+                         (f32vector (win-w-r *win* 30/100) (win-h-r *win* 20/100)))
+                 *width* *height*)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*))
+  (draw-win-rect 0 0 *width* *height* *width* *height*)
   ;(gl-flush)
   (glut-swap-buffers)
   )

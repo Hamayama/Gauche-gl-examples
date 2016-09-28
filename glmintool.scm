@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-9-28 v1.14
+;; 2016-9-28 v1.20
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -13,6 +13,7 @@
   (use math.mt-random)
   (export
     randint round-n truncate-n recthit? make-fpath make-vector-of-class
+    <wininfo> win-init win-update-size win-x win-y win-w win-h win-w-r win-h-r
     <keystateinfo> key-on key-off spkey-on spkey-off key-on? spkey-on? mdkey-on?
     <keywaitinfo>  keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
@@ -66,6 +67,62 @@
     (do ((i 0 (+ i 1)))
         ((>= i n) #f)
       (set! (~ v i) (make c)))))
+
+
+;; ウィンドウ情報クラス
+;;   ・ウィンドウ上の画面幅 width と画面高さ height の情報を保持して、
+;;     ウィンドウ上の座標を計算可能とする
+;;     (OpenGLの座標系とはY軸の方向が逆になる)
+;;   ・本クラスは、ウィンドウのサイズ変更に追従する必要がある。
+;;     このため、glut-reshape-func のコールバックで win-update-size を呼び出して、
+;;     ウィンドウのサイズ変更に追従するようにすること
+(define-class <wininfo> ()
+  ((width   :init-value 0) ; ウィンドウ上の画面幅(px)
+   (height  :init-value 0) ; ウィンドウ上の画面高さ(px)
+   (wd      :init-value 0) ; OpenGL上の画面幅
+   (ht      :init-value 0) ; OpenGL上の画面高さ
+   (xoffset :init-value 0) ; OpenGL上の画面左上のX座標
+   (yoffset :init-value 0) ; OpenGL上の画面左上のY座標
+   ))
+;; 初期化
+(define-method win-init ((wn <wininfo>)
+                         (width <real>) (height <real>) (wd <real>) (ht <real>)
+                         :optional (xoffset #f) (yoffset #f))
+  (set! (~ wn 'width)  width)
+  (set! (~ wn 'height) height)
+  (set! (~ wn 'wd)     wd)
+  (set! (~ wn 'ht)     ht)
+  (if xoffset
+    (set! (~ wn 'xoffset) xoffset)
+    (set! (~ wn 'xoffset) (- (/. wd 2))))
+  (if yoffset
+    (set! (~ wn 'yoffset) yoffset)
+    (set! (~ wn 'yoffset) (/. ht 2)))
+  )
+;; ウィンドウのサイズ変更に追従
+(define-method win-update-size ((wn <wininfo>) (width <real>) (height <real>))
+  (set! (~ wn 'width)  width)
+  (set! (~ wn 'height) height))
+;; ウィンドウ上のX座標を計算
+(define-method win-x ((wn <wininfo>) (x <real>))
+  (/. (* (- x (~ wn 'xoffset)) (~ wn 'width)) (~ wn 'wd)))
+;; ウィンドウ上のY座標を計算
+(define-method win-y ((wn <wininfo>) (y <real>))
+  (/. (* (- (~ wn 'yoffset) y) (~ wn 'height)) (~ wn 'ht)))
+;; ウィンドウ上の幅を計算
+(define-method win-w ((wn <wininfo>) (w <real>))
+  (/. (* w (~ wn 'width)) (~ wn 'wd)))
+;; ウィンドウ上の高さを計算
+(define-method win-h ((wn <wininfo>) (h <real>))
+  (/. (* h (~ wn 'height)) (~ wn 'ht)))
+;; ウィンドウ上の幅を、比を指定して計算
+(define-method win-w-r ((wn <wininfo>) (n1 <real>) :optional (n2 #f))
+  (if n2 (/. (* (~ wn 'width) n1) n2)
+      (* (~ wn 'width) (exact n1))))
+;; ウィンドウ上の高さを、比を指定して計算
+(define-method win-h-r ((wn <wininfo>) (n1 <real>) :optional (n2 #f))
+  (if n2 (/. (* (~ wn 'height) n1) n2)
+      (* (~ wn 'height) (exact n1))))
 
 
 ;; キー入力状態管理クラス

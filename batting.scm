@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-9-23 v1.42
+;; 2016-9-28 v1.50
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -114,7 +114,7 @@
 ;; 空(正射影で表示)
 (define (sky)
   (gl-color 0.0 0.0 1.0 1.0)
-  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*) 'left -0.99999)
+  (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
   )
 
 ;; 地面(上面に原点あり)
@@ -184,15 +184,15 @@
                        (truncate-n *vy* 2)
                        (truncate-n *vz* 2)))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text *win* str1 (win-w-r *win* 1/2) (win-h-r *win* 26/100) (win-h-r *win* 1/13) 'center)
+    (draw-stroke-text str1 (win-w-r *win* 1/2) (win-h-r *win* 26/100) *width* *height* (win-h-r *win* 1/13) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str2 (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100)) (win-h-r *win* y2 100)
+    (draw-stroke-text str2 (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100)) (win-h-r *win* y2 100) *width* *height*
                       (win-h-r *win* 1/18) 'center)
     (gl-color 1.0 0.0 1.0 1.0)
-    (draw-stroke-text *win* str3 (win-h-r *win* 1/100) (win-h-r *win*  1/100) (win-h-r *win* 1/19))
+    (draw-stroke-text str3 (win-h-r *win* 1/100) (win-h-r *win*  1/100) *width* *height* (win-h-r *win* 1/19))
     (gl-color 0.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str4 (win-h-r *win* 1/100) (win-h-r *win*  7/100) (win-h-r *win* 1/24))
-    (draw-stroke-text *win* str5 (win-h-r *win* 1/100) (win-h-r *win* 12/100) (win-h-r *win* 1/24))
+    (draw-stroke-text str4 (win-h-r *win* 1/100) (win-h-r *win*  7/100) *width* *height* (win-h-r *win* 1/24))
+    (draw-stroke-text str5 (win-h-r *win* 1/100) (win-h-r *win* 12/100) *width* *height* (win-h-r *win* 1/24))
     )
   ;; ボールを表示
   (gl-push-matrix)

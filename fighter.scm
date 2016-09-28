@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-9-27 v1.62
+;; 2016-9-28 v1.70
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -489,11 +489,11 @@
                          0.0
                          (round-n (/. *wincount* *playcount*) 2))))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text *win* str1 (win-w-r *win* 1/2) (win-h-r *win* 14/100) (win-h-r *win* 1/9) 'center)
+    (draw-stroke-text str1 (win-w-r *win* 1/2) (win-h-r *win* 14/100) *width* *height* (win-h-r *win* 1/9) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str2 (win-w-r *win* 1/2) (win-h-r *win* y2 100) (win-h-r *win* 1/18) 'center)
+    (draw-stroke-text str2 (win-w-r *win* 1/2) (win-h-r *win* y2 100) *width* *height* (win-h-r *win* 1/18) 'center)
     (gl-color 0.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str3 (win-h-r *win* 1/100) (win-h-r *win* 1/100) (win-h-r *win* 1/24))
+    (draw-stroke-text str3 (win-h-r *win* 1/100) (win-h-r *win* 1/100) *width* *height* (win-h-r *win* 1/24))
     )
   ;; 自分を表示
   (fighter-disp *f1*)

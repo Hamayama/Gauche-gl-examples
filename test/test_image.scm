@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 画像表示のテスト
-;; 2016-9-26
+;; 2016-9-28
 ;;
 (add-load-path ".." :relative)
 (use gl)
@@ -71,15 +71,15 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字に割り付けたテクスチャの一括表示
-  (textscrn-disp-texture *tscrn1* *win* 0 0 (win-w *win* 50) (win-h *win* 50))
+  (textscrn-disp-texture *tscrn1* 0 0 *width* *height* (win-w *win* 50) (win-h *win* 50))
   ;; テクスチャ付き長方形の表示
-  (draw-texture-rect *win* (~ *tex* 0) (win-x *win* -50) (win-y *win*  50)
-                     (win-w *win* 200) (win-h *win* 200) 'center)
-  (draw-texture-rect *win* (~ *tex* 1) (win-x *win*  50) (win-y *win* 150)
-                     (win-w *win* 200) (win-h *win* 200) 'center)
+  (draw-texture-rect (~ *tex* 0) (win-x *win* -50) (win-y *win*  50)
+                     (win-w *win* 200) (win-h *win* 200) *width* *height* 'center)
+  (draw-texture-rect (~ *tex* 1) (win-x *win*  50) (win-y *win* 150)
+                     (win-w *win* 200) (win-h *win* 200) *width* *height* 'center)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*))
+  (draw-win-rect 0 0 *width* *height* *width* *height*)
   ;(gl-flush)
   (glut-swap-buffers)
   )

@@ -1,13 +1,14 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; テキスト画面クラスのテスト
-;; 2016-9-26
+;; 2016-9-28
 ;;
 (add-load-path ".." :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
 (use math.const)
+(use glmintool)
 (use gltextscrn)
 
 (define *title* "test-tscrn") ; ウィンドウのタイトル
@@ -73,14 +74,14 @@
   (gl-load-identity)
   ;; テキスト画面の表示
   (gl-color 1.0 1.0 1.0 1.0)
-  (textscrn-disp *tscrn1* *win* 0 0
+  (textscrn-disp *tscrn1* 0 0 *width* *height*
                  (win-w *win* *chw*) (win-h *win* *chh*))
   (gl-color 0.0 1.0 1.0 1.0)
-  (textscrn-disp *tscrn2* *win* (win-x *win* 0) (win-y *win* 0)
+  (textscrn-disp *tscrn2* (win-x *win* 0) (win-y *win* 0) *width* *height*
                  (win-w *win* *chw*) (win-h *win* *chh*) 'right)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*))
+  (draw-win-rect 0 0 *width* *height* *width* *height*)
   ;(gl-flush)
   (glut-swap-buffers)
   )

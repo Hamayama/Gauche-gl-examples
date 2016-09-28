@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-28 v1.53
+;; 2016-9-28 v1.60
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -15,8 +15,6 @@
   (use srfi-13) ; string-fold,string-for-each用
   (use binary.pack)
   (export
-    <wininfo> win-init win-update-size
-    win-x win-y win-w win-h win-w-r win-h-r
     draw-bitmap-text draw-bitmap-text-over
     draw-stroke-text draw-stroke-text-over
     draw-win-line draw-win-rect draw-win-circle draw-win-poly
@@ -37,65 +35,6 @@
 (define *font-bitmap-1* GLUT_BITMAP_TIMES_ROMAN_24)
 (define *font-stroke-1* GLUT_STROKE_ROMAN)
 
-
-;; ウィンドウ情報クラス
-;;   ・ウィンドウ上の画面幅 width と画面高さ height の情報を保持して、
-;;     ウィンドウ上の座標を計算可能とする
-;;     (OpenGLの座標系とはY軸の方向が逆になる)
-;;   ・本クラスは、ウィンドウのサイズ変更に追従する必要がある。
-;;     このため、glut-reshape-func のコールバックで win-update-size を呼び出して、
-;;     ウィンドウのサイズ変更に追従するようにすること
-(define-class <wininfo> ()
-  ((width   :init-value 0) ; ウィンドウ上の画面幅(px)
-   (height  :init-value 0) ; ウィンドウ上の画面高さ(px)
-   (wd      :init-value 0) ; OpenGL上の画面幅
-   (ht      :init-value 0) ; OpenGL上の画面高さ
-   (xoffset :init-value 0) ; OpenGL上の画面左上のX座標
-   (yoffset :init-value 0) ; OpenGL上の画面左上のY座標
-   ))
-;; 初期化
-(define-method win-init ((wn <wininfo>)
-                         (width <real>) (height <real>) (wd <real>) (ht <real>)
-                         :optional (xoffset #f) (yoffset #f))
-  (set! (~ wn 'width)  width)
-  (set! (~ wn 'height) height)
-  (set! (~ wn 'wd)     wd)
-  (set! (~ wn 'ht)     ht)
-  (if xoffset
-    (set! (~ wn 'xoffset) xoffset)
-    (set! (~ wn 'xoffset) (- (/. wd 2))))
-  (if yoffset
-    (set! (~ wn 'yoffset) yoffset)
-    (set! (~ wn 'yoffset) (/. ht 2)))
-  )
-;; ウィンドウのサイズ変更に追従
-(define-method win-update-size ((wn <wininfo>) (width <real>) (height <real>))
-  (set! (~ wn 'width)  width)
-  (set! (~ wn 'height) height))
-;; ウィンドウ上のX座標を計算
-(define-method win-x ((wn <wininfo>) (x <real>))
-  (/. (* (- x (~ wn 'xoffset)) (~ wn 'width)) (~ wn 'wd)))
-;; ウィンドウ上のY座標を計算
-(define-method win-y ((wn <wininfo>) (y <real>))
-  (/. (* (- (~ wn 'yoffset) y) (~ wn 'height)) (~ wn 'ht)))
-;; ウィンドウ上の幅を計算
-(define-method win-w ((wn <wininfo>) :optional (w #f))
-  (if w (/. (* w (~ wn 'width)) (~ wn 'wd))
-      (~ wn 'width)))
-;; ウィンドウ上の高さを計算
-(define-method win-h ((wn <wininfo>) :optional (h #f))
-  (if h (/. (* h (~ wn 'height)) (~ wn 'ht))
-      (~ wn 'height)))
-;; ウィンドウ上の幅を、比を指定して計算
-(define-method win-w-r ((wn <wininfo>) (n1 <real>) :optional (n2 #f))
-  (if n2 (/. (* (~ wn 'width) n1) n2)
-      (* (~ wn 'width) (exact n1))))
-;; ウィンドウ上の高さを、比を指定して計算
-(define-method win-h-r ((wn <wininfo>) (n1 <real>) :optional (n2 #f))
-  (if n2 (/. (* (~ wn 'height) n1) n2)
-      (* (~ wn 'height) (exact n1))))
-
-
 ;; 正射影設定ON/OFF(内部処理用)
 ;;   ・投影方法を正射影に設定し、また、
 ;;     画面の座標系を「左下」を原点として (0,0)-(width,height) の範囲に設定する
@@ -103,16 +42,16 @@
 ;;      個別の表示ルーチンの方で、必要に応じて、height - y として反転するようにする)
 ;;   ・光源は無効に設定する
 ;;   ・ONとOFFは常にセットで使用する
-(define-method gl-ortho-on ((wn <wininfo>))
+(define (gl-ortho-on width height)
   (gl-disable GL_LIGHTING)
   (gl-matrix-mode GL_PROJECTION)
   (gl-push-matrix)
   (gl-load-identity)
-  (gl-ortho 0 (win-w wn) 0 (win-h wn) -1.0 1.0)
+  (gl-ortho 0 width 0 height -1.0 1.0)
   (gl-matrix-mode GL_MODELVIEW)
   (gl-push-matrix)
   (gl-load-identity))
-(define-method gl-ortho-off ((wn <wininfo>))
+(define (gl-ortho-off)
   (gl-pop-matrix)
   (gl-matrix-mode GL_PROJECTION)
   (gl-pop-matrix)
@@ -127,35 +66,33 @@
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
 ;;   ・日本語表示不可
 ;;   ・文字のサイズはフォントにより固定
-(define-method draw-bitmap-text ((wn <wininfo>)
-                                 (str <string>) (x <real>) (y <real>)
-                                 :optional (size 24) (align 'left) (z 0)
-                                 (font *font-bitmap-1*))
+(define (draw-bitmap-text str x y width height
+                          :optional (size 24) (align 'left) (z 0)
+                          (font *font-bitmap-1*))
   (unless (equal? str "")
-    (gl-ortho-on wn)
+    (gl-ortho-on width height)
     (let* ((stw (get-bitmap-text-width str font))
            (x1  (case align
                   ((center) (- x (/. stw 2))) ; 中央寄せ
                   ((right)  (- x stw))        ; 右寄せ
                   (else     x)))
-           (y1  (- (win-h wn) y size)))
+           (y1  (- height y size)))
       (gl-raster-pos x1 y1 z)
       (string-for-each (lambda (ch) (glut-bitmap-character font (char->integer ch))) str)
       )
-    (gl-ortho-off wn)))
+    (gl-ortho-off)))
 
 ;; 文字列の上書き表示(ビットマップフォント)
 ;;   ・背景を塗りつぶしてから draw-bitmap-text を実行する
-(define-method draw-bitmap-text-over ((wn <wininfo>)
-                                      (str <string>) (x <real>) (y <real>)
-                                      :optional (size 24) (align 'left) (z 0)
-                                      (fore-color #f32(1.0 1.0 1.0 1.0))
-                                      (back-color #f32(0.0 0.0 0.0 1.0))
-                                      (back-scalex 1.2) (back-scaley 1.2)
-                                      (font *font-bitmap-1*))
+(define (draw-bitmap-text-over str x y width height
+                               :optional (size 24) (align 'left) (z 0)
+                               (fore-color #f32(1.0 1.0 1.0 1.0))
+                               (back-color #f32(0.0 0.0 0.0 1.0))
+                               (back-scalex 1.2) (back-scaley 1.2)
+                               (font *font-bitmap-1*))
   (unless (equal? str "")
     (if fore-color (gl-color fore-color))
-    (draw-bitmap-text wn str x y size align z font)
+    (draw-bitmap-text str x y width height size align z font)
     (if back-color (gl-color back-color))
     (let* ((stw     (get-bitmap-text-width str font))
            (xoffset (case align
@@ -164,8 +101,9 @@
                       (else    0)))
            (yoffset (+ (- (* size (/. (- back-scaley 1.0) 2)))
                        (* size (/. 33.33 152.38)))))
-      (draw-win-rect wn (+ x xoffset) (+ y yoffset)
-                     (* stw back-scalex) (* size back-scaley) align z)
+      (draw-win-rect (+ x xoffset) (+ y yoffset)
+                     (* stw back-scalex) (* size back-scaley)
+                     width height align z)
       )))
 
 ;; 文字列の幅を取得(ストロークフォント)(内部処理用)
@@ -176,14 +114,13 @@
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
 ;;   ・日本語表示不可
 ;;   ・文字のサイズは指定可能
-(define-method draw-stroke-text ((wn <wininfo>)
-                                 (str <string>) (x <real>) (y <real>)
-                                 :optional (size 24) (align 'left) (z 0)
-                                 (font *font-stroke-1*))
+(define (draw-stroke-text str x y width height
+                          :optional (size 24) (align 'left) (z 0)
+                          (font *font-stroke-1*))
   (unless (equal? str "")
-    (gl-ortho-on wn)
+    (gl-ortho-on width height)
     (let* ((stw     (get-stroke-text-width str font))
-           (y1      (- (win-h wn) y size))
+           (y1      (- height y size))
            (scale   (/. size (+ 152.38 20)))
            (xoffset (case align
                       ((center) (- (/. stw 2))) ; 中央寄せ
@@ -195,20 +132,19 @@
       (gl-translate xoffset yoffset 0)
       (string-for-each (lambda (ch) (glut-stroke-character font (char->integer ch))) str)
       )
-    (gl-ortho-off wn)))
+    (gl-ortho-off)))
 
 ;; 文字列の上書き表示(ストロークフォント)
 ;;   ・背景を塗りつぶしてから draw-stroke-text を実行する
-(define-method draw-stroke-text-over ((wn <wininfo>)
-                                      (str <string>) (x <real>) (y <real>)
-                                      :optional (size 24) (align 'left) (z 0)
-                                      (fore-color #f32(1.0 1.0 1.0 1.0))
-                                      (back-color #f32(0.0 0.0 0.0 1.0))
-                                      (back-scalex 1.2) (back-scaley 1.2)
-                                      (font *font-stroke-1*))
+(define (draw-stroke-text-over str x y width height
+                               :optional (size 24) (align 'left) (z 0)
+                               (fore-color #f32(1.0 1.0 1.0 1.0))
+                               (back-color #f32(0.0 0.0 0.0 1.0))
+                               (back-scalex 1.2) (back-scaley 1.2)
+                               (font *font-stroke-1*))
   (unless (equal? str "")
     (if fore-color (gl-color fore-color))
-    (draw-stroke-text wn str x y size align z font)
+    (draw-stroke-text str x y width height size align z font)
     (if back-color (gl-color back-color))
     (let* ((stw     (get-stroke-text-width str font))
            (w1      (* stw (/. size (+ 152.38 20))))
@@ -217,59 +153,54 @@
                       ((right)    (* w1 (/. (- back-scalex 1.0) 2)))  ; 右寄せ
                       (else    0)))
            (yoffset (- (* size (/. (- back-scaley 1.0) 2)))))
-      (draw-win-rect wn (+ x xoffset) (+ y yoffset)
-                     (* w1 back-scalex) (* size back-scaley) align z)
+      (draw-win-rect (+ x xoffset) (+ y yoffset)
+                     (* w1 back-scalex) (* size back-scaley)
+                     width height align z)
       )))
 
 ;; 線の表示
 ;;   ・線 (x1,y1)-(x2,y2) の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-(define-method draw-win-line ((wn <wininfo>)
-                              (x1 <real>) (y1 <real>) (x2 <real>) (y2 <real>)
-                              :optional (z 0))
-  (gl-ortho-on wn)
-  (let ((y3 (- (win-h wn) y1))
-        (y4 (- (win-h wn) y2)))
+(define (draw-win-line x1 y1 x2 y2 width height :optional (z 0))
+  (gl-ortho-on width height)
+  (let ((y3 (- height y1))
+        (y4 (- height y2)))
     (gl-translate 0 0 z)
     (gl-begin GL_LINES)
     (gl-vertex (f32vector x1 y3))
     (gl-vertex (f32vector x2 y4))
     (gl-end)
     )
-  (gl-ortho-off wn))
+  (gl-ortho-off))
 
 ;; 長方形の表示
-;;   ・長方形 (x,y,w,h) の表示を行う
+;;   ・長方形 (x,y,w,h) の表示を行う (wとhは幅と高さ)
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-(define-method draw-win-rect ((wn <wininfo>)
-                              (x <real>) (y <real>) (w <real>) (h <real>)
-                              :optional (align 'left) (z 0))
-  (gl-ortho-on wn)
+(define (draw-win-rect x y w h width height :optional (align 'left) (z 0))
+  (gl-ortho-on width height)
   (let ((x1 (case align
               ((center) (- x (/. w 2))) ; 中央寄せ
               ((right)  (- x w))        ; 右寄せ
               (else     x)))
-        (y1 (- (win-h wn) y)))
+        (y1 (- height y)))
     (gl-translate x1 y1 z)
     ;; Gauche-gl の gl-rect の不具合対策
     ;; (Gauche-gl の開発最新版では修正済み)
     ;(gl-rect 0 0 w (- h))
     (gl-rect (f32vector 0 0) (f32vector w (- h)))
     )
-  (gl-ortho-off wn))
+  (gl-ortho-off))
 
 ;; 円の表示
 ;;   ・円 (x,y,r,a,b) -> (x*x)/(a*a)+(y*y)/(b*b)=r*r の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-(define-method draw-win-circle ((wn <wininfo>)
-                                (x <real>) (y <real>) (r <real>)
-                                :optional (a 1) (b 1) (align 'center) (z 0))
-  (gl-ortho-on wn)
+(define (draw-win-circle x y r width height :optional (a 1) (b 1) (align 'center) (z 0))
+  (gl-ortho-on width height)
   (let ((x1 (case align
               ((left)  (+ x r)) ; 左寄せ
               ((right) (- x r)) ; 右寄せ
               (else     x)))
-        (y1 (- (win-h wn) y))
+        (y1 (- height y))
         (q  (make <glu-quadric>)))
     (if (= a 0) (set! a 1))
     (if (= b 0) (set! b 1))
@@ -277,24 +208,22 @@
     (gl-scale (/. 1 a) (/. 1 b) 1)
     (glu-disk q 0 r 40 1)
     )
-  (gl-ortho-off wn))
+  (gl-ortho-off))
 
 ;; 多角形の表示
 ;;   ・頂点の座標(f32vector x y)を複数格納したシーケンスvvecを渡して、多角形の表示を行う
 ;;     (面は頂点が反時計回りになる方が表になる)
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-(define-method draw-win-poly ((wn <wininfo>)
-                              (x <real>) (y <real>) (vvec <sequence>)
-                              :optional (z 0))
-  (gl-ortho-on wn)
-  (let1 y1 (- (win-h wn) y)
+(define (draw-win-poly x y vvec width height :optional (z 0))
+  (gl-ortho-on width height)
+  (let1 y1 (- height y)
     (gl-translate x y1 z)
     (gl-scale 1 -1  1)
     (gl-begin GL_POLYGON)
     (for-each gl-vertex vvec)
     (gl-end)
     )
-  (gl-ortho-off wn))
+  (gl-ortho-off))
 
 
 ;; テキスト画面クラス
@@ -367,18 +296,18 @@
 ;;   ・文字のサイズは、幅 chw と高さ chh の指定が必要
 ;;   ・フォントは固定
 (define-method textscrn-disp ((ts <textscrn>)
-                              (wn <wininfo>)
                               (x <real>) (y <real>)
+                              (width <real>) (height <real>)
                               (chw <real>) (chh <real>)
                               :optional (align 'left) (z 0))
-  (gl-ortho-on wn)
+  (gl-ortho-on width height)
   (let* ((w1 (~ ts 'width))
          (x1 (case align
                ((center) (- x (/. (* w1 chw) 2))) ; 中央寄せ
                ((right)  (- x (* w1 chw)))        ; 右寄せ
                (else     x)))
          (x2 x1)
-         (y1 (- (win-h wn) y chh))
+         (y1 (- height y chh))
          (i  0))
     (for-each
      (lambda (c)
@@ -398,7 +327,7 @@
        )
      (~ ts 'data))
     )
-  (gl-ortho-off wn))
+  (gl-ortho-off))
 
 ;; 文字列のクリア処理
 (define-method textscrn-cls ((ts <textscrn>))
@@ -926,26 +855,22 @@
 ;;   ・ビットマップファイルは、24bitカラーで無圧縮のもののみ使用可能
 ;;   ・画像サイズは、幅も高さも 2のべき乗 である必要がある
 ;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
-(define-method load-texture-bitmap-file ((tex <integer>)
-                                         (file <string>) :optional (trans-color #f))
+(define (load-texture-bitmap-file tex file :optional (trans-color #f))
   (imgdata-set-texture (load-bitmap-file file trans-color) tex))
 
 ;; テクスチャ付き長方形の表示
-;;   ・テクスチャ tex を貼り付けた長方形 (x,y,w,h) の表示を行う
+;;   ・テクスチャ tex を貼り付けた長方形 (x,y,w,h) の表示を行う (wとhは幅と高さ)
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-(define-method draw-texture-rect ((wn <wininfo>)
-                                  (tex <integer>)
-                                  (x <real>) (y <real>)
-                                  (w <real>) (h <real>)
-                                  :optional (align 'left) (z 0)
-                                  (xcrd 1.0) (ycrd 1.0))
-  (gl-ortho-on wn)
+(define (draw-texture-rect tex x y w h width height
+                           :optional (align 'left) (z 0)
+                           (xcrd 1.0) (ycrd 1.0))
+  (gl-ortho-on width height)
   (gl-enable GL_TEXTURE_2D)
   (let ((x1 (case align
               ((center) (- x (/. w 2))) ; 中央寄せ
               ((right)  (- x w))        ; 右寄せ
               (else     x)))
-        (y1 (- (win-h wn) y)))
+        (y1 (- height y)))
     (gl-bind-texture GL_TEXTURE_2D tex)
     (gl-translate x1 y1 z)
     (gl-begin GL_QUADS)
@@ -956,16 +881,16 @@
     (gl-tex-coord xcrd 0.0)  (gl-vertex (f32vector w 0     0))
     (gl-end))
   (gl-disable GL_TEXTURE_2D)
-  (gl-ortho-off wn))
+  (gl-ortho-off))
 
 ;; 文字テクスチャ割り付け用テーブル(テクスチャの一括表示用)(内部処理用)
 (define-class <tex-info> () (tex xoffset yoffset xcrd ycrd)) ; テクスチャ情報クラス
 (define *char-tex-table* (make-hash-table 'eqv?))
 
 ;; 文字にテクスチャを割り付ける(テクスチャの一括表示用)
-(define-method set-char-texture ((ch <char>)
-                                 (tex <integer>) :optional (xoffset 0) (yoffset 0)
-                                 (xcrd 1.0) (ycrd 1.0))
+(define (set-char-texture ch tex
+                          :optional (xoffset 0) (yoffset 0)
+                          (xcrd 1.0) (ycrd 1.0))
   (let1 t (make <tex-info>)
     (set! (~ t 'tex)     tex)
     (set! (~ t 'xoffset) xoffset)
@@ -976,14 +901,15 @@
     ))
 
 ;; 文字に割り付けたテクスチャの一括表示
+;;   ・テキスト画面クラスの各文字に対応するテクスチャを一括表示する
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
 ;;   ・1文字あたりの表示サイズは、幅 chw と高さ chh の指定が必要
 (define-method textscrn-disp-texture ((ts <textscrn>)
-                                      (wn <wininfo>)
                                       (x <real>) (y <real>)
+                                      (width <real>) (height <real>)
                                       (chw <real>) (chh <real>)
                                       :optional (align 'left) (z 0))
-  (gl-ortho-on wn)
+  (gl-ortho-on width height)
   (gl-enable GL_TEXTURE_2D)
   (let* ((w1 (~ ts 'width))
          (x1 (case align
@@ -991,7 +917,7 @@
                ((right)  (- x (* w1 chw)))        ; 右寄せ
                (else     x)))
          (x2 x1)
-         (y1 (- (win-h wn) y))
+         (y1 (- height y))
          (i  0))
     (for-each
      (lambda (c)
@@ -1021,6 +947,6 @@
      (~ ts 'data))
     )
   (gl-disable GL_TEXTURE_2D)
-  (gl-ortho-off wn))
+  (gl-ortho-off))
 
 

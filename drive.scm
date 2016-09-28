@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-9-25 v1.22
+;; 2016-9-28 v1.30
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -162,7 +162,8 @@
         (unless rline
           (set! rline #t)
           (gl-color *hlinecolor*)
-          (draw-win-line *win* 0 (win-y *win* scy1) (win-w *win*) (win-y *win* scy1) -0.99999)
+          (draw-win-line 0 (win-y *win* scy1) *width* (win-y *win* scy1)
+                         *width* *height* -0.99999)
           )
         ;; 道路の境界マークの表示
         (gl-material GL_FRONT GL_DIFFUSE
@@ -291,28 +292,28 @@
     (set! str5 (format "STAGE : ~D/~D" *stg* *maxstg*))
     (set! str6 (format "~Dkm/h" (if (= *scene* 0) 0 *spd*)))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text *win* str1 (win-w-r *win* 1/2) (win-h-r *win* y1 100)
+    (draw-stroke-text str1 (win-w-r *win* 1/2) (win-h-r *win* y1 100) *width* *height*
                       (win-h-r *win* 1/13) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str2
+    (draw-stroke-text str2
                       (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100)) (win-h-r *win* y2 100)
-                      (win-h-r *win* 1/18) 'center)
+                      *width* *height* (win-h-r *win* 1/18) 'center)
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text *win* str3 0 0 (win-h-r *win* 1/22))
+    (draw-stroke-text str3 0 0 *width* *height* (win-h-r *win* 1/22))
     (gl-color 1.0 0.0 1.0 1.0)
-    (draw-stroke-text *win* str4 (win-w-r *win* 1/2) 0 (win-h-r *win* 1/22) 'center)
+    (draw-stroke-text str4 (win-w-r *win* 1/2) 0 *width* *height* (win-h-r *win* 1/22) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str5 (win-w *win*) 0 (win-h-r *win* 1/22) 'right)
-    (draw-stroke-text *win* str6 (win-w *win*) (win-h-r *win* 5/100) (win-h-r *win* 1/22) 'right)
+    (draw-stroke-text str5 *width* 0 *width* *height* (win-h-r *win* 1/22) 'right)
+    (draw-stroke-text str6 *width* (win-h-r *win* 5/100) *width* *height* (win-h-r *win* 1/22) 'right)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text *win* str7 (win-w-r *win* 1/2) (win-h-r *win* 27/100)
+    (draw-stroke-text str7 (win-w-r *win* 1/2) (win-h-r *win* 27/100) *width* *height*
                       (win-h-r *win* 1/13) 'center)
     )
   ;; 道路の表示
   (disp-road)
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect *win* 0 0 (win-w *win*) (win-h *win*) 'left -0.99999)
+  (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
   ;(gl-flush)
   (glut-swap-buffers)
   )
