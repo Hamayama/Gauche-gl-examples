@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-9-28 v1.70
+;; 2016-10-1 1.71
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -39,7 +39,7 @@
 (define *miny*       (+ *gdy*  *chh*))        ; Y座標最小値
 (define *waku*      10) ; 当たり判定調整用
 (define *fixtime*   10) ; 硬直時間
-(define *stephigh*  29) ; ステップ高さ
+(define *stephigh*  27) ; ステップ高さ
 (define *demoflg*   #f) ; デモフラグ
 (define *demotime*   0) ; デモ時間調整用(msec)
 (define *starttime*  0) ; スタート後経過時間(msec)
@@ -131,8 +131,8 @@
            (when (key-on? *ksinfo* '(#\x #\X))
              (set! (~ f1 'act) 3) ; キック
              (if (and (< d *chw*) f2atk) (set! (~ f1 'dir) (- (~ f2 'dir))))
-             (set! (~ f1 'vx) (* (~ f1 'dir) 23))
-             (set! (~ f1 'vy) 20))
+             (set! (~ f1 'vx) (* (~ f1 'dir) 24))
+             (set! (~ f1 'vy) 19))
            )
          )
         ;; 「タイプが敵」またはデモのとき
@@ -165,8 +165,8 @@
                 ((<= k k2)
                  (set! (~ f1 'act) 3) ; キック
                  (if (and (< d *chw*) f2atk) (set! (~ f1 'dir) (- (~ f2 'dir))))
-                 (set! (~ f1 'vx) (* (~ f1 'dir) 23))
-                 (set! (~ f1 'vy) 20))
+                 (set! (~ f1 'vx) (* (~ f1 'dir) 24))
+                 (set! (~ f1 'vy) 19))
                 ))
              ))
          ))
