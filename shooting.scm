@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-9-28 v1.60
+;; 2016-10-1 v1.61
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -42,7 +42,7 @@
 (define *maxy*       (- *ht/2* *chh*))           ; 自機のY座標最大値
 (define *miny*       (+ (- *ht/2*) (* *chh* 2))) ; 自機のY座標最小値
 (define *bc*         0) ; 自機ビームカウンタ
-(define *bs*       240) ; 爆風のサイズ
+(define *bs*       300) ; 爆風のサイズ
 (define *waku*       4) ; 当たり判定調整用
 (define *mr*         1) ; 敵の数
 (define *mmr*       10) ; 敵の最大数
@@ -220,11 +220,11 @@
           (set! (~ e1 'useflag) #t)
           (set! (~ e1 'kind)    0)
           (set! (~ e1 'state)   0)
-          (set! (~ e1 'life)    6)
+          (set! (~ e1 'life)    5)
           (set! (~ e1 'x)       (randint (- *wd/2*) *wd/2*))
           (set! (~ e1 'y)       *ht/2*)
           (set! (~ e1 'degree)  (randint -60 -120))
-          (set! (~ e1 'speed)   (min (+ 6 (- *mmr* 10)) 14))
+          (set! (~ e1 'speed)   (* (min (+ 4 (- *mmr* 10)) 10) 1.5))
           (set! (~ e1 'tscrn)   *tscrn-enemy1*)
           (set! (~ e1 'hitstr)  "R")
           (set! (~ e1 'minx)    (- *wd/2*))
@@ -235,7 +235,10 @@
    (else
     ;; 敵ミサイルの生成
     (let1 e1 (~ enemies (randint 0 (max (- *mr* 1) 0)))
-      (if (and (~ e1 'useflag) (= (~ e1 'state) 0) (> (~ e1 'y) 150))
+      (if (and (~ e1 'useflag)
+               (= (~ e1 'state) 0)
+               (> (~ e1 'y) 150)
+               (>= (* *ssc* *wait*) 1500))
         (let1 i (find-index (lambda (m1) (not (~ m1 'useflag))) missiles)
           (if (and i (< i *mr*))
             (let1 m1 (~ missiles i)
@@ -246,7 +249,7 @@
               (set! (~ m1 'x)       (~ e1 'x))
               (set! (~ m1 'y)       (~ e1 'y))
               (set! (~ m1 'degree)  (* (atan (- *y* (~ e1 'y)) (- *x* (~ e1 'x))) 180/pi))
-              (set! (~ m1 'speed)   (min (+ 8 (- *mmr* 10)) 18))
+              (set! (~ m1 'speed)   (* (min (+ 6 (- *mmr* 10)) 14) 1.5))
               (set! (~ m1 'tscrn)   *tscrn-missile1*)
               (set! (~ m1 'hitstr)  "V")
               (set! (~ m1 'minx)    (- *wd/2*))
@@ -358,9 +361,10 @@
   (for-each
    (lambda (e1)
      (when (and (~ e1 'useflag) (> (~ e1 'state) 0))
+       ;; (表示は半分のサイズにする)
        (draw-win-circle (win-x *win* (~ e1 'x))
                         (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                        (win-w *win* *bs*) *width* *height*)
+                        (win-w *win* (/. *bs* 2)) *width* *height*)
        ))
    *enemies*))
 
