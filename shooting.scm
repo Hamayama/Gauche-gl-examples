@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting.scm
-;; 2016-10-1 v1.61
+;; 2016-10-2 v1.62
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -43,7 +43,7 @@
 (define *miny*       (+ (- *ht/2*) (* *chh* 2))) ; 自機のY座標最小値
 (define *bc*         0) ; 自機ビームカウンタ
 (define *bs*       300) ; 爆風のサイズ
-(define *waku*       4) ; 当たり判定調整用
+(define *waku*       5) ; 当たり判定調整用
 (define *mr*         1) ; 敵の数
 (define *mmr*       10) ; 敵の最大数
 (define *mmmr*      30) ; 敵の最大数の最大数
