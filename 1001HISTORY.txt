@@ -287,6 +287,7 @@ gltextscrn.scm
   2016-9-28  v1.53  メソッドの引数の型見直し
   2016-9-28  v1.60  ウィンドウ情報クラスをglmintool.scmに移動
                     I/F多数見直し(過去との互換性なし)
+  2016-10-2  v1.61  textscrn-disp-check-str見直し等
 
 alaudplay.scm
   2016-3-31  v1.00  初版

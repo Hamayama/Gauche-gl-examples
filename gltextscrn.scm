@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-9-28 v1.60
+;; 2016-10-2 v1.61
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -199,7 +199,7 @@
   (let ((x1 (case align
               ((left)  (+ x r)) ; 左寄せ
               ((right) (- x r)) ; 右寄せ
-              (else     x)))
+              (else    x)))
         (y1 (- height y))
         (q  (make <glu-quadric>)))
     (if (= a 0) (set! a 1))
@@ -627,15 +627,15 @@
                                         (x1 <real>) (y1 <real>) (x2 <real>) (y2 <real>)
                                         (chw <real>) (chh <real>)
                                         :optional (xoffset 0) (yoffset 0) (align 'left))
-  (if (memq align '(center right))
-    (let1 w1 (~ ts 'width)
-      (set! xoffset (if (eq? align 'center)
-                      (- xoffset (/. (* w1 chw) 2)) ; 中央寄せ
-                      (- xoffset (* w1 chw))))))    ; 右寄せ
-  (let ((x3 (floor->exact (/. (- x1 xoffset) chw)))
-        (y3 (floor->exact (/. (- y1 yoffset) chh)))
-        (x4 (- (ceiling->exact (/. (- x2 xoffset) chw)) 1))
-        (y4 (- (ceiling->exact (/. (- y2 yoffset) chh)) 1)))
+  (let* ((w1       (~ ts 'width))
+         (xoffset1 (case align
+                     ((center) (- xoffset (/. (* w1 chw) 2))) ; 中央寄せ
+                     ((right)  (- xoffset (* w1 chw)))        ; 右寄せ
+                     (else     xoffset)))
+         (x3       (floor->exact (/. (- x1 xoffset1) chw)))
+         (y3       (floor->exact (/. (- y1 yoffset)  chh)))
+         (x4       (- (ceiling->exact (/. (- x2 xoffset1) chw)) 1))
+         (y4       (- (ceiling->exact (/. (- y2 yoffset)  chh)) 1)))
     (textscrn-check-str ts str x3 y3 x4 y4)
     ))
 
