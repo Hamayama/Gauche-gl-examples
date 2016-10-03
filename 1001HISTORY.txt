@@ -290,6 +290,7 @@ gltextscrn.scm
                     I/F多数変更(過去との互換性なし)
   2016-10-2  v1.61  textscrn-disp-check-str見直し等
   2016-10-3  v1.70  画像表示I/F変更等(過去との互換性なし)
+  2016-10-3  v1.71  GL_TEXTURE_RECTANGLE未定義時の対策
 
 alaudplay.scm
   2016-3-31  v1.00  初版
