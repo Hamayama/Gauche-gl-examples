@@ -26,9 +26,8 @@
 
 (test-start "gltextscrn")
 (use gltextscrn)
-(with-module gltextscrn
-  (define *font-bitmap-1* #f)
-  (define *font-stroke-1* #f))
+(define *font-bitmap-1* #f)
+(define *font-stroke-1* #f)
 (test-module 'gltextscrn)
 (test-end)
 

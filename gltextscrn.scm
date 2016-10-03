@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-10-2 v1.61
+;; 2016-10-3 v1.70
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -15,6 +15,7 @@
   (use srfi-13) ; string-fold,string-for-each用
   (use binary.pack)
   (export
+    *font-bitmap-1* *font-stroke-1* *use-gl-texture-rectangle*
     draw-bitmap-text draw-bitmap-text-over
     draw-stroke-text draw-stroke-text-over
     draw-win-line draw-win-rect draw-win-circle draw-win-poly
@@ -23,7 +24,7 @@
     textscrn-line textscrn-box textscrn-fbox
     textscrn-circle textscrn-fcircle textscrn-poly textscrn-fpoly
     textscrn-check-str textscrn-disp-check-str
-    load-texture-bitmap-file draw-texture-rect
+    <texdata> load-texture-bitmap-file draw-texture-rect
     set-char-texture textscrn-disp-texture
     ))
 (select-module gltextscrn)
@@ -34,6 +35,12 @@
 ;;     (Gauche-gl の開発最新版では修正済み)
 (define *font-bitmap-1* GLUT_BITMAP_TIMES_ROMAN_24)
 (define *font-stroke-1* GLUT_STROKE_ROMAN)
+
+;; OpenGLのテクスチャ系関数のターゲットに GL_TEXTURE_RECTANGLE を使用するか
+;;   ・#t にすると、テクスチャの 幅と高さが 2のべき乗 でなくてもよくなる
+;;     (ただし、テクスチャのリピート指定が効かない、MIPMAPが使用できない等の
+;;      制約もあるもよう)
+(define *use-gl-texture-rectangle* #t)
 
 ;; 正射影設定ON/OFF(内部処理用)
 ;;   ・投影方法を正射影に設定し、また、
@@ -727,7 +734,7 @@
    (data   :init-form (make-u8vector 0)) ; 画像データ(u8vector)(1画素は要素4個(RGBA))
    ))
 
-;; ビットマップファイルを読み込み 画像データを生成して返す(内部処理用)
+;; ビットマップファイルを読み込み、画像データを生成して返す(内部処理用)
 ;;   ・ビットマップファイルは、24bitカラーで無圧縮のもののみ使用可能
 ;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
 (define (load-bitmap-file file :optional (trans-color #f))
@@ -837,67 +844,114 @@
         ))
     ))
 
-;; テクスチャに画像データを設定する(内部処理用)
-;;   各種パラメータは決め打ち
-;;   画像サイズは、幅も高さも 2のべき乗 である必要がある
-(define-method imgdata-set-texture ((img <imgdata>) (tex <integer>))
-  (gl-bind-texture  GL_TEXTURE_2D tex)
-  (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_WRAP_S GL_REPEAT)
-  (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_WRAP_T GL_REPEAT)
-  (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER GL_NEAREST)
-  (gl-tex-parameter GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER GL_NEAREST)
-  (gl-tex-image-2d  GL_TEXTURE_2D 0 GL_RGBA
-                    (~ img 'width) (~ img 'height) 0
-                    GL_RGBA GL_UNSIGNED_BYTE (~ img 'data))
-  )
+;; テクスチャデータクラス
+(define-class <texdata> ()
+  ((tex       :init-value #f)  ; テクスチャ(integer)
+   (width     :init-value 0)   ; テクスチャの幅(px)
+   (height    :init-value 0)   ; テクスチャの高さ(px)
+   ;; 以下はテクスチャの一括表示用
+   (xcrd      :init-value 1.0) ; テクスチャ空間上のX座標指定(テクスチャの幅が1.0に相当)
+   (ycrd      :init-value 1.0) ; テクスチャ空間上のY座標指定(テクスチャの高さが1.0に相当)
+   (width-r   :init-value 1.0) ; テクスチャ表示時のX方向の幅(表示サイズに対する倍率で指定)
+   (height-r  :init-value 1.0) ; テクスチャ表示時のY方向の高さ(表示サイズに対する倍率で指定)
+   (xoffset-r :init-value 0.0) ; テクスチャ表示時のX方向のオフセット(表示サイズに対する倍率で指定)
+   (yoffset-r :init-value 0.0) ; テクスチャ表示時のY方向のオフセット(表示サイズに対する倍率で指定)
+   ))
 
-;; ビットマップファイルを読み込み テクスチャに設定する
+;; 画像データをテクスチャデータに設定する(内部処理用)
+;;   ・各種パラメータは決め打ち
+(define-method imgdata-set-texture ((img <imgdata>) (td <texdata>))
+  (let1 target (if *use-gl-texture-rectangle*
+                 GL_TEXTURE_RECTANGLE
+                 GL_TEXTURE_2D)
+    (gl-bind-texture  target (~ td 'tex))
+    (gl-tex-parameter target GL_TEXTURE_WRAP_S GL_REPEAT)
+    (gl-tex-parameter target GL_TEXTURE_WRAP_T GL_REPEAT)
+    (gl-tex-parameter target GL_TEXTURE_MAG_FILTER GL_NEAREST)
+    (gl-tex-parameter target GL_TEXTURE_MIN_FILTER GL_NEAREST)
+    (gl-tex-image-2d  target 0 GL_RGBA
+                      (~ img 'width) (~ img 'height) 0
+                      GL_RGBA GL_UNSIGNED_BYTE (~ img 'data))
+    ))
+
+;; ビットマップファイルを読み込み、テクスチャデータに設定する
 ;;   ・ビットマップファイルは、24bitカラーで無圧縮のもののみ使用可能
-;;   ・画像サイズは、幅も高さも 2のべき乗 である必要がある
 ;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
-(define (load-texture-bitmap-file tex file :optional (trans-color #f))
-  (imgdata-set-texture (load-bitmap-file file trans-color) tex))
+(define-method load-texture-bitmap-file ((td <texdata>)
+                                         (file <string>)
+                                         :optional (trans-color #f))
+  (let ((tex (gl-gen-textures 1))
+        (img (load-bitmap-file file trans-color)))
+    (set! (~ td 'tex)    (~ tex 0))
+    (set! (~ td 'width)  (~ img 'width))
+    (set! (~ td 'height) (~ img 'height))
+    (imgdata-set-texture img td)
+    ))
 
 ;; テクスチャ付き長方形の表示
-;;   ・テクスチャ tex を貼り付けた長方形 (x,y,w,h) の表示を行う (wとhは幅と高さ)
+;;   ・テクスチャデータ td を貼り付けた長方形 (x,y,w,h) の表示を行う (wとhは幅と高さ)
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-(define (draw-texture-rect tex x y w h width height
-                           :optional (align 'left) (z 0)
-                           (xcrd 1.0) (ycrd 1.0))
+(define-method draw-texture-rect ((td <texdata>)
+                                  (x <real>) (y <real>) (w <real>) (h <real>)
+                                  (width <real>) (height <real>)
+                                  :optional (align 'left) (z 0)
+                                  (xcrd 1.0) (ycrd 1.0)
+                                  (width-r 1.0) (height-r 1.0)
+                                  (xoffset-r 0.0) (yoffset-r 0.0))
   (gl-ortho-on width height)
-  (gl-enable GL_TEXTURE_2D)
-  (let ((x1 (case align
-              ((center) (- x (/. w 2))) ; 中央寄せ
-              ((right)  (- x w))        ; 右寄せ
-              (else     x)))
-        (y1 (- height y)))
-    (gl-bind-texture GL_TEXTURE_2D tex)
-    (gl-translate x1 y1 z)
+  (let* ((target (if *use-gl-texture-rectangle*
+                   GL_TEXTURE_RECTANGLE
+                   GL_TEXTURE_2D))
+         (xcrd1  (if *use-gl-texture-rectangle*
+                   (* xcrd (~ td 'width))
+                   xcrd))
+         (ycrd1  (if *use-gl-texture-rectangle*
+                   (* ycrd (~ td 'height))
+                   ycrd))
+         (x1     (case align
+                   ((center) (- x (/. w 2))) ; 中央寄せ
+                   ((right)  (- x w))        ; 右寄せ
+                   (else     x)))
+         (y1     (- height y))
+         (x2     (+ x1 (* w xoffset-r)))
+         (y2     (- y1 (* h yoffset-r)))
+         (w1     (* w width-r))
+         (h1     (* h height-r)))
+    (gl-enable target)
+    (gl-bind-texture target (~ td 'tex))
+    (gl-translate x2 y2 z)
     (gl-begin GL_QUADS)
     ;; (面は頂点が反時計回りになる方が表になる)
-    (gl-tex-coord 0.0  0.0)  (gl-vertex (f32vector 0 0     0))
-    (gl-tex-coord 0.0  ycrd) (gl-vertex (f32vector 0 (- h) 0))
-    (gl-tex-coord xcrd ycrd) (gl-vertex (f32vector w (- h) 0))
-    (gl-tex-coord xcrd 0.0)  (gl-vertex (f32vector w 0     0))
-    (gl-end))
-  (gl-disable GL_TEXTURE_2D)
+    (gl-tex-coord 0.0   0.0)   (gl-vertex (f32vector 0  0      0))
+    (gl-tex-coord 0.0   ycrd1) (gl-vertex (f32vector 0  (- h1) 0))
+    (gl-tex-coord xcrd1 ycrd1) (gl-vertex (f32vector w1 (- h1) 0))
+    (gl-tex-coord xcrd1 0.0)   (gl-vertex (f32vector w1 0      0))
+    (gl-end)
+    (gl-disable target))
   (gl-ortho-off))
 
-;; 文字テクスチャ割り付け用テーブル(テクスチャの一括表示用)(内部処理用)
-(define-class <tex-info> () (tex xoffset yoffset xcrd ycrd)) ; テクスチャ情報クラス
+;; 文字-テクスチャデータの割り付けテーブル(テクスチャの一括表示用)(内部処理用)
 (define *char-tex-table* (make-hash-table 'eqv?))
 
-;; 文字にテクスチャを割り付ける(テクスチャの一括表示用)
-(define (set-char-texture ch tex
-                          :optional (xoffset 0) (yoffset 0)
-                          (xcrd 1.0) (ycrd 1.0))
-  (let1 t (make <tex-info>)
-    (set! (~ t 'tex)     tex)
-    (set! (~ t 'xoffset) xoffset)
-    (set! (~ t 'yoffset) yoffset)
-    (set! (~ t 'xcrd)    xcrd)
-    (set! (~ t 'ycrd)    ycrd)
-    (hash-table-put! *char-tex-table* (char->integer ch) t)
+;; 文字にテクスチャデータを割り付ける(テクスチャの一括表示用)
+(define-method set-char-texture ((ch <char>)
+                                 (td <texdata>)
+                                 :optional (xcrd 1.0) (ycrd 1.0)
+                                 (width-r 1.0) (height-r 1.0)
+                                 (xoffset-r 0.0) (yoffset-r 0.0))
+  (let* ((c   (char->integer ch))
+         (td1 (or (hash-table-get *char-tex-table* c #f)
+                  (make <texdata>))))
+    (set! (~ td1 'tex)       (~ td 'tex))
+    (set! (~ td1 'width)     (~ td 'width))
+    (set! (~ td1 'height)    (~ td 'height))
+    (set! (~ td1 'xcrd)      xcrd)
+    (set! (~ td1 'ycrd)      ycrd)
+    (set! (~ td1 'width-r)   width-r)
+    (set! (~ td1 'height-r)  height-r)
+    (set! (~ td1 'xoffset-r) xoffset-r)
+    (set! (~ td1 'yoffset-r) yoffset-r)
+    (hash-table-put! *char-tex-table* c td1)
     ))
 
 ;; 文字に割り付けたテクスチャの一括表示
@@ -910,32 +964,40 @@
                                       (chw <real>) (chh <real>)
                                       :optional (align 'left) (z 0))
   (gl-ortho-on width height)
-  (gl-enable GL_TEXTURE_2D)
-  (let* ((w1 (~ ts 'width))
-         (x1 (case align
-               ((center) (- x (/. (* w1 chw) 2))) ; 中央寄せ
-               ((right)  (- x (* w1 chw)))        ; 右寄せ
-               (else     x)))
-         (x2 x1)
-         (y1 (- height y))
-         (i  0))
+  (let* ((target (if *use-gl-texture-rectangle*
+                   GL_TEXTURE_RECTANGLE
+                   GL_TEXTURE_2D))
+         (w1     (~ ts 'width))
+         (x1     (case align
+                   ((center) (- x (/. (* w1 chw) 2))) ; 中央寄せ
+                   ((right)  (- x (* w1 chw)))        ; 右寄せ
+                   (else     x)))
+         (x2     x1)
+         (y1     (- height y))
+         (i      0))
+    (gl-enable target)
     (for-each
      (lambda (c)
-       (if-let1 t (hash-table-get *char-tex-table* c #f)
-         (let ((tex  (~ t 'tex))
-               (x3   (+ x1 (~ t 'xoffset)))
-               (y3   (- y1 (~ t 'yoffset)))
-               (xcrd (~ t 'xcrd))
-               (ycrd (~ t 'ycrd)))
-           (gl-bind-texture GL_TEXTURE_2D tex)
+       (if-let1 td1 (hash-table-get *char-tex-table* c #f)
+         (let ((xcrd1 (if *use-gl-texture-rectangle*
+                        (* (~ td1 'xcrd) (~ td1 'width))
+                        (~ td1 'xcrd)))
+               (ycrd1 (if *use-gl-texture-rectangle*
+                        (* (~ td1 'ycrd) (~ td1 'height))
+                        (~ td1 'ycrd)))
+               (x3    (+ x1 (* chw (~ td1 'xoffset-r))))
+               (y3    (- y1 (* chh (~ td1 'yoffset-r))))
+               (w2    (* chw (~ td1 'width-r)))
+               (h2    (* chh (~ td1 'height-r))))
+           (gl-bind-texture target (~ td1 'tex))
            (gl-load-identity)
            (gl-translate x3 y3 z)
            (gl-begin GL_QUADS)
            ;; (面は頂点が反時計回りになる方が表になる)
-           (gl-tex-coord 0.0  0.0)  (gl-vertex (f32vector 0   0       0))
-           (gl-tex-coord 0.0  ycrd) (gl-vertex (f32vector 0   (- chh) 0))
-           (gl-tex-coord xcrd ycrd) (gl-vertex (f32vector chw (- chh) 0))
-           (gl-tex-coord xcrd 0.0)  (gl-vertex (f32vector chw 0       0))
+           (gl-tex-coord 0.0   0.0)   (gl-vertex (f32vector 0  0      0))
+           (gl-tex-coord 0.0   ycrd1) (gl-vertex (f32vector 0  (- h2) 0))
+           (gl-tex-coord xcrd1 ycrd1) (gl-vertex (f32vector w2 (- h2) 0))
+           (gl-tex-coord xcrd1 0.0)   (gl-vertex (f32vector w2 0      0))
            (gl-end)))
        (set! x1 (+ x1 chw))
        (inc! i)
@@ -945,8 +1007,7 @@
          (set! y1 (- y1 chh)))
        )
      (~ ts 'data))
-    )
-  (gl-disable GL_TEXTURE_2D)
+    (gl-disable target))
   (gl-ortho-off))
 
 

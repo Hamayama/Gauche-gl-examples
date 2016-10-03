@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 画像表示のテスト
-;; 2016-9-28
+;; 2016-10-3
 ;;
 (add-load-path ".." :relative)
 (use gl)
@@ -24,8 +24,8 @@
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
 
-;; テクスチャの配列(u32vector)
-(define *tex* #f)
+;; テクスチャデータクラスのインスタンス生成
+(define *tex* (make-vector-of-class 3 <texdata>))
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -33,9 +33,11 @@
 
 ;; テキスト画面クラスのインスタンス生成
 (define *tscrn1* (make <textscrn>))
-(textscrn-init *tscrn1* 3 2)
-(textscrn-pset *tscrn1* 0 0 "AAA")
-(textscrn-pset *tscrn1* 0 1 "BBB")
+(textscrn-init *tscrn1* 5 4)
+(textscrn-pset *tscrn1* 0 0 "AAAAA")
+(textscrn-pset *tscrn1* 0 1 "BBBBB")
+(textscrn-pset *tscrn1* 0 2 "CCCCC")
+(textscrn-pset *tscrn1* 0 3 "DDDDD")
 
 
 ;; 初期化
@@ -58,11 +60,13 @@
   ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_MODULATE)
   (gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_REPLACE)
   ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_DECAL)
-  (set! *tex* (gl-gen-textures 2))
   (load-texture-bitmap-file (~ *tex* 0) (make-fpath *app-dpath* "../image/char0001.bmp") '(0 0 0))
   (load-texture-bitmap-file (~ *tex* 1) (make-fpath *app-dpath* "../image/char0002.bmp") '(0 0 0))
+  (load-texture-bitmap-file (~ *tex* 2) (make-fpath *app-dpath* "../image/char0003.bmp") '(0 0 0))
   (set-char-texture #\A (~ *tex* 0))
   (set-char-texture #\B (~ *tex* 1))
+  (set-char-texture #\C (~ *tex* 2) 1.0 1.0  0.5 1.0 0.25 0.0)
+  (set-char-texture #\D (~ *tex* 2) 1.0 1.0 -0.5 1.0 0.75 0.0)
   )
 
 ;; 画面表示
@@ -77,6 +81,8 @@
                      (win-w *win* 200) (win-h *win* 200) *width* *height* 'center)
   (draw-texture-rect (~ *tex* 1) (win-x *win*  50) (win-y *win* 150)
                      (win-w *win* 200) (win-h *win* 200) *width* *height* 'center)
+  (draw-texture-rect (~ *tex* 2) (win-x *win* 150) (win-y *win* 250)
+                     (win-w *win* 100) (win-h *win* 200) *width* *height* 'center)
   ;; 背景の表示
   (gl-color *backcolor*)
   (draw-win-rect 0 0 *width* *height* *width* *height*)

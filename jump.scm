@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-9-28 v1.40
+;; 2016-10-3 v1.50
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -69,8 +69,8 @@
 (define *adata-goal*  (make <auddata>))
 (define *adata-end*   (make <auddata>))
 
-;; テクスチャの配列(u32vector)
-(define *tex* #f)
+;; テクスチャデータクラスのインスタンス生成
+(define *tex* (make-vector-of-class 6 <texdata>))
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -373,14 +373,13 @@
   ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_MODULATE)
   (gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_REPLACE)
   ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_DECAL)
-  (set! *tex* (gl-gen-textures 6))
   (load-texture-bitmap-file (~ *tex* 0) (make-fpath *app-dpath* "image/char0101.bmp") '(0 0 0))
   (load-texture-bitmap-file (~ *tex* 1) (make-fpath *app-dpath* "image/char0102.bmp") '(0 0 0))
   (load-texture-bitmap-file (~ *tex* 2) (make-fpath *app-dpath* "image/char0103.bmp") '(0 0 0))
   (load-texture-bitmap-file (~ *tex* 3) (make-fpath *app-dpath* "image/char0104.bmp") '(0 0 0))
   (load-texture-bitmap-file (~ *tex* 4) (make-fpath *app-dpath* "image/char0105.bmp") '(0 0 0))
   (load-texture-bitmap-file (~ *tex* 5) (make-fpath *app-dpath* "image/char0106.bmp") '(0 0 0))
-  (set-char-texture #\@ (~ *tex* 4) 0 0 0.75 0.75)
+  (set-char-texture #\@ (~ *tex* 4) 0.75 0.75)
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.07)
