@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-10-3 v1.71
+;; 2016-10-4 v1.72
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -36,7 +36,7 @@
 (define *font-bitmap-1* GLUT_BITMAP_TIMES_ROMAN_24)
 (define *font-stroke-1* GLUT_STROKE_ROMAN)
 
-;; OpenGLのテクスチャ系関数のターゲットに GL_TEXTURE_RECTANGLE を使用するか
+;; OpenGLのテクスチャ系関数のターゲットに GL_TEXTURE_RECTANGLE を使用する設定
 ;;   ・#t にすると、テクスチャの 幅と高さが 2のべき乗 でなくてもよくなる
 ;;     (ただし、テクスチャのリピート指定が効かない、MIPMAPが使用できない等の
 ;;      制約もあるもよう)
