@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2016-10-4 1.73
+;; 2016-10-5 1.74
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -131,7 +131,7 @@
            (when (key-on? *ksinfo* '(#\x #\X))
              (set! (~ f1 'act) 3) ; キック
              (if (and (< d *chw*) f2atk) (set! (~ f1 'dir) (- (~ f2 'dir))))
-             (set! (~ f1 'vx) (* (~ f1 'dir) 24))
+             (set! (~ f1 'vx) (* (~ f1 'dir) 23))
              (set! (~ f1 'vy) 20))
            )
          )
@@ -165,7 +165,7 @@
                 ((<= k k2)
                  (set! (~ f1 'act) 3) ; キック
                  (if (and (< d *chw*) f2atk) (set! (~ f1 'dir) (- (~ f2 'dir))))
-                 (set! (~ f1 'vx) (* (~ f1 'dir) 24))
+                 (set! (~ f1 'vx) (* (~ f1 'dir) 23))
                  (set! (~ f1 'vy) 20))
                 ))
              ))
