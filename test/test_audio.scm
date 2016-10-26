@@ -1,6 +1,6 @@
 ;; -*- coding: utf-8 -*-
 ;;
-;; ‰¹Šy‰‰‘t‚ÌƒeƒXƒg
+;; éŸ³æ¥½æ¼”å¥ã®ãƒ†ã‚¹ãƒˆ
 ;; 2016-9-26
 ;;
 (add-load-path ".." :relative)
@@ -9,23 +9,23 @@
 (use alaudplay)
 ;(use mmlproc)
 
-;; ƒAƒvƒŠ‚ÌƒfƒBƒŒƒNƒgƒŠ‚ÌƒpƒX–¼
+;; ã‚¢ãƒ—ãƒªã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®ãƒ‘ã‚¹å
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
 
-;; ‰¹Šyƒf[ƒ^ƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX¶¬
+;; éŸ³æ¥½ãƒ‡ãƒ¼ã‚¿ã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ç”Ÿæˆ
 (define *adata1* (make <auddata> :waittime 200))
 
-;; ‰Šú‰»
+;; åˆæœŸåŒ–
 (aud-init)
 ;(aud-init #f)
 
-;; ‰¹Šyƒf[ƒ^‚Ì“Ç‚İ‚İ
+;; éŸ³æ¥½ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿
 (auddata-load-wav-file *adata1* (make-fpath *app-dpath* "../sound/abcde.wav"))
 ;(auddata-load-pcm-raw *adata1* (mml->pcm "@500cdefgab>c"))
 (auddata-set-prop *adata1* AL_GAIN  1.0)
 (auddata-set-prop *adata1* AL_PITCH 1.0)
 
-;; Ä¶
+;; å†ç”Ÿ
 (auddata-play *adata1*)
 (sys-sleep 1)
 (auddata-pause *adata1*)
@@ -41,12 +41,12 @@
 (sys-sleep 1)
 (auddata-stop *adata1*)
 
-;; ó‘Ôæ“¾
+;; çŠ¶æ…‹å–å¾—
 (print "GAIN  = " (auddata-get-prop *adata1* AL_GAIN))
 (print "PITCH = " (auddata-get-prop *adata1* AL_PITCH))
 
-;; I—¹
-(sys-sleep 1) ; ­‚µ‘Ò‚½‚È‚¢‚ÆƒmƒCƒY‚ªo‚é
+;; çµ‚äº†
+(sys-sleep 1) ; å°‘ã—å¾…ãŸãªã„ã¨ãƒã‚¤ã‚ºãŒå‡ºã‚‹
 (auddata-free *adata1*)
 (aud-end)
 
