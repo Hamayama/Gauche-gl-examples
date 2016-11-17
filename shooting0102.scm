@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-11-17 v1.00
+;; 2016-11-17 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -352,7 +352,6 @@
            (set! minbx (~ e1 'x)))
          ))
      *enemies*)
-    (set! *bc* (max (- (floor->exact (/. (- minbx *x*) *chw*)) 1) 1))
     (when e2
       (set! ret #t)
       ;; 敵の外周かコアかをチェックする
@@ -375,6 +374,7 @@
           (textscrn-pset (~ e2 'tscrn) (~ hit-list 0 0) (~ hit-list 0 1) " ")
           (set! minbx (+ minbx (* *chw* (- (~ hit-list 0 0) (* *rsize* 0.5))))))
          )))
+    (set! *bc* (max (- (floor->exact (/. (- minbx *x*) *chw*)) 1) 1))
     ret))
 
 ;; 爆風の表示
