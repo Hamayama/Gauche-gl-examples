@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-10-4 v1.72
+;; 2016-11-17 v1.73
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -23,7 +23,7 @@
     textscrn-cls textscrn-pset textscrn-pget
     textscrn-line textscrn-box textscrn-fbox
     textscrn-circle textscrn-fcircle textscrn-poly textscrn-fpoly
-    textscrn-check-str textscrn-disp-check-str
+    textscrn-check-str textscrn-disp-check-str textscrn-disp-check-str2
     <texdata> load-texture-bitmap-file draw-texture-rect
     set-char-texture textscrn-disp-texture
     ))
@@ -613,6 +613,91 @@
 (define-method textscrn-check-str ((ts <textscrn>)
                                    (str <string>)
                                    (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>))
+  (let ((x3 (min x1 x2))
+        (y3 (min y1 y2))
+        (x4 (max x1 x2))
+        (y4 (max y1 y2)))
+    (textscrn-check-str-sub ts str x3 y3 x4 y4)
+    ))
+
+;; 文字列の画面上の判定処理
+;;   ・画面上の座標範囲 (x1,y1)-(x2,y2) を指定して、textscrn-check-str を実行する
+;;     戻り値は #t か #f になる
+;;   ・1文字の幅 chw と高さ chh も指定が必要
+(define-method textscrn-disp-check-str ((ts <textscrn>)
+                                        (str <string>)
+                                        (x1 <real>) (y1 <real>) (x2 <real>) (y2 <real>)
+                                        (chw <real>) (chh <real>)
+                                        :optional (xoffset 0) (yoffset 0) (align 'left))
+  (let* ((w1       (~ ts 'width))
+         (xoffset1 (case align
+                     ((center) (- xoffset (/. (* w1 chw) 2))) ; 中央寄せ
+                     ((right)  (- xoffset (* w1 chw)))        ; 右寄せ
+                     (else     xoffset)))
+         (x3       (min x1 x2))
+         (y3       (min y1 y2))
+         (x4       (max x1 x2))
+         (y4       (max y1 y2))
+         (x5       (floor->exact (/. (- x3 xoffset1) chw)))
+         (y5       (floor->exact (/. (- y3 yoffset)  chh)))
+         (x6       (- (ceiling->exact (/. (- x4 xoffset1) chw)) 1))
+         (y6       (- (ceiling->exact (/. (- y4 yoffset)  chh)) 1)))
+    (textscrn-check-str-sub ts str x5 y5 x6 y6)
+    ))
+
+;; 文字列の画面上の判定処理2
+;;   ・textscrn-disp-check-str と同様の処理を行うが、ヒットした座標と文字をすべて返す
+;;     戻り値は、((x1 y1 ch1) (x2 y2 ch2) ... ) というリストになる
+;;   ・1文字の幅 chw と高さ chh も指定が必要
+;;   ・sortmode には、複数の座標がヒットした場合のソート方法を、番号で指定する
+;;     0を指定すると、昇順でY座標優先でソートした結果を返す
+;;     1を指定すると、昇順でX座標優先でソートした結果を返す
+;;     2を指定すると、降順でY座標優先でソートした結果を返す
+;;     3を指定すると、降順でX座標優先でソートした結果を返す
+(define-method textscrn-disp-check-str2 ((ts <textscrn>)
+                                         (str <string>)
+                                         (x1 <real>) (y1 <real>) (x2 <real>) (y2 <real>)
+                                         (chw <real>) (chh <real>)
+                                         :optional (xoffset 0) (yoffset 0) (align 'left)
+                                         (sortmode 0))
+  (let* ((ret      '())
+         (w1       (~ ts 'width))
+         (xoffset1 (case align
+                     ((center) (- xoffset (/. (* w1 chw) 2))) ; 中央寄せ
+                     ((right)  (- xoffset (* w1 chw)))        ; 右寄せ
+                     (else     xoffset)))
+         (x3       (min x1 x2))
+         (y3       (min y1 y2))
+         (x4       (max x1 x2))
+         (y4       (max y1 y2))
+         (x5       (floor->exact (/. (- x3 xoffset1) chw)))
+         (y5       (floor->exact (/. (- y3 yoffset)  chh)))
+         (x6       (- (ceiling->exact (/. (- x4 xoffset1) chw)) 1))
+         (y6       (- (ceiling->exact (/. (- y4 yoffset)  chh)) 1)))
+    (set! ret (textscrn-check-str-sub2 ts str x5 y5 x6 y6))
+    (unless (null? ret)
+      (case sortmode
+        ((0) (set! ret (reverse! ret)))
+        ((1) (set! ret (sort! ret (lambda (a b)
+                                    (if (= (~ a 0) (~ b 0))
+                                      (< (~ a 1) (~ b 1))
+                                      (< (~ a 0) (~ b 0)))))))
+        ((2) (set! ret (sort! ret (lambda (a b)
+                                    (if (= (~ a 1) (~ b 1))
+                                      (> (~ a 0) (~ b 0))
+                                      (> (~ a 1) (~ b 1)))))))
+        ((3) (set! ret (sort! ret (lambda (a b)
+                                    (if (= (~ a 0) (~ b 0))
+                                      (> (~ a 1) (~ b 1))
+                                      (> (~ a 0) (~ b 0)))))))
+        ))
+    ret))
+
+;; 文字列の判定処理サブ(内部処理用)
+;;   ・ヒットした場合に #t を返す。そうでなければ #f を返す
+(define-method textscrn-check-str-sub ((ts <textscrn>)
+                                       (str <string>)
+                                       (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>))
   (let ((ret     #f)
         (w1      (~ ts 'width))
         (h1      (~ ts 'height))
@@ -630,25 +715,30 @@
     ;(print ret " " x1 " " y1 " " x2 " " y2)
     ret))
 
-;; 文字列の画面上の判定処理
-;;   ・画面上の座標範囲 (x1,y1)-(x2,y2) を指定して、textscrn-check-str を実行する
-;;   ・1文字の幅 chw と高さ chh も指定が必要
-(define-method textscrn-disp-check-str ((ts <textscrn>)
+;; 文字列の判定処理サブ2(内部処理用)
+;;   ・ヒットした座標と文字をリストにして返す
+(define-method textscrn-check-str-sub2 ((ts <textscrn>)
                                         (str <string>)
-                                        (x1 <real>) (y1 <real>) (x2 <real>) (y2 <real>)
-                                        (chw <real>) (chh <real>)
-                                        :optional (xoffset 0) (yoffset 0) (align 'left))
-  (let* ((w1       (~ ts 'width))
-         (xoffset1 (case align
-                     ((center) (- xoffset (/. (* w1 chw) 2))) ; 中央寄せ
-                     ((right)  (- xoffset (* w1 chw)))        ; 右寄せ
-                     (else     xoffset)))
-         (x3       (floor->exact (/. (- x1 xoffset1) chw)))
-         (y3       (floor->exact (/. (- y1 yoffset)  chh)))
-         (x4       (- (ceiling->exact (/. (- x2 xoffset1) chw)) 1))
-         (y4       (- (ceiling->exact (/. (- y2 yoffset)  chh)) 1)))
-    (textscrn-check-str ts str x3 y3 x4 y4)
-    ))
+                                        (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>))
+  (let ((ret     '())
+        (w1      (~ ts 'width))
+        (h1      (~ ts 'height))
+        (data    (~ ts 'data))
+        (strdata (string->u32vector str)))
+    (let loop ((x3 x1) (y3 y1))
+      (if (and (>= y3 0) (< y3 h1) (>= x3 0) (< x3 w1))
+        (let1 c1 (~ data (+ (* y3 w1) x3))
+          (for-each
+           (lambda (c2) (if (= c1 c2)
+                          (push! ret (list x3 y3 (integer->char c1)))))
+           strdata)))
+      (cond
+       ((< x3 x2) (loop (+ x3 1) y3))
+       ((< y3 y2) (loop x1 (+ y3 1))))
+      )
+    ;(print ret " " x1 " " y1 " " x2 " " y2)
+    ret))
+
 
 ;; 文字列の上書き処理サブ(内部処理用)
 (define-method textscrn-over-sub ((ts <textscrn>) (x <integer>) (y <integer>) (strdata <u32vector>))

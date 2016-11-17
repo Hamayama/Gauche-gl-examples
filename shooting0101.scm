@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
-;; shooting.scm
-;; 2016-10-4 v1.63
+;; shooting0101.scm
+;; 2016-11-17 v1.64
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -24,7 +24,7 @@
 (use alaudplay)
 
 (define *wait*      20) ; ウェイト(msec)
-(define *title* "shooting") ; ウィンドウのタイトル
+(define *title* "shooting0101") ; ウィンドウのタイトル
 (define *width*    480) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
@@ -42,7 +42,7 @@
 (define *maxy*       (- *ht/2* *chh*))           ; 自機のY座標最大値
 (define *miny*       (+ (- *ht/2*) (* *chh* 2))) ; 自機のY座標最小値
 (define *bc*         0) ; 自機ビームカウンタ
-(define *bs*       300) ; 爆風のサイズ
+(define *bsize*    300) ; 爆風のサイズ
 (define *waku*       5) ; 当たり判定調整用
 (define *mr*         1) ; 敵の数
 (define *mmr*       10) ; 敵の最大数
@@ -248,7 +248,7 @@
               (set! (~ m1 'life)    0)
               (set! (~ m1 'x)       (~ e1 'x))
               (set! (~ m1 'y)       (~ e1 'y))
-              (set! (~ m1 'degree)  (* (atan (- *y* (~ e1 'y)) (- *x* (~ e1 'x))) 180/pi))
+              (set! (~ m1 'degree)  (* (atan (- *y* (~ m1 'y)) (- *x* (~ m1 'x))) 180/pi))
               (set! (~ m1 'speed)   (* (min (+ 6 (- *mmr* 10)) 14) 1.5))
               (set! (~ m1 'tscrn)   *tscrn-missile1*)
               (set! (~ m1 'hitstr)  "V")
@@ -364,14 +364,14 @@
        ;; (表示は半分のサイズにする)
        (draw-win-circle (win-x *win* (~ e1 'x))
                         (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                        (win-w *win* (/. *bs* 2)) *width* *height*)
+                        (win-w *win* (/. *bsize* 2)) *width* *height*)
        ))
    *enemies*))
 
 ;; 爆風の当たり判定
 (define (hit-blast?)
   (let ((ret #f)
-        (rr  (* *bs* *bs*)))
+        (rr  (* *bsize* *bsize*)))
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (> (~ e1 'state) 0))
