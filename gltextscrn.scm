@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-11-17 v1.73
+;; 2016-11-18 v1.75
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -1050,10 +1050,9 @@
                                  :optional (xcrd 1.0) (ycrd 1.0)
                                  (width-r 1.0) (height-r 1.0)
                                  (xoffset-r 0.0) (yoffset-r 0.0))
-  (let* ((c   (char->integer ch))
-         (td1 (or (hash-table-get *char-tex-table* c #f)
-                  (make-texdata (~ td 'tex) (~ td 'width) (~ td 'height)
-                                xcrd ycrd width-r height-r xoffset-r yoffset-r))))
+  (let ((c   (char->integer ch))
+        (td1 (make-texdata (~ td 'tex) (~ td 'width) (~ td 'height)
+                           xcrd ycrd width-r height-r xoffset-r yoffset-r)))
     (hash-table-put! *char-tex-table* c td1)
     ))
 
