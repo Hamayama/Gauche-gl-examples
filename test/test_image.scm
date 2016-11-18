@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 画像表示のテスト
-;; 2016-10-3
+;; 2016-11-18
 ;;
 (add-load-path ".." :relative)
 (use gl)
@@ -54,7 +54,7 @@
   ;; 透過設定
   ;(gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   ;(gl-enable GL_BLEND)
-  (gl-alpha-func GL_GREATER 0.5)
+  (gl-alpha-func GL_GREATER 0.1)
   (gl-enable GL_ALPHA_TEST)
   ;; テクスチャ設定
   ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_MODULATE)

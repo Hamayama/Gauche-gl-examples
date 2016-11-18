@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-11-17 v1.01
+;; 2016-11-18 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -33,15 +33,14 @@
 (define *wd/2*     400) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
 (define *chw*       16) ; 文字の幅
-(define *chh*       32) ; 文字の高さ
-(define *chh2*      16) ; 文字の高さ2
+(define *chh*       16) ; 文字の高さ
 (define *x*       -300) ; 自機のX座標
 (define *y*          0) ; 自機のY座標
 (define *v*         10) ; 自機の速度
-(define *maxx*       (- *wd/2* *chw*)) ; 自機のX座標最大値
-(define *minx*       (- *maxx*))       ; 自機のX座標最小値
-(define *maxy*       (- *ht/2* *chh*)) ; 自機のY座標最大値
-(define *miny*       (- *maxy*))       ; 自機のY座標最小値
+(define *maxx*       (- *wd/2* *chw*))       ; 自機のX座標最大値
+(define *minx*       (- *maxx*))             ; 自機のX座標最小値
+(define *maxy*       (- *ht/2* (* *chh* 2))) ; 自機のY座標最大値
+(define *miny*       (- *maxy*))             ; 自機のY座標最小値
 (define *bc*         0) ; 自機ビームカウンタ
 (define *bsize*    300) ; 爆風のサイズ
 (define *waku*       5) ; 当たり判定調整用
@@ -158,7 +157,7 @@
       (else (gl-color 1.0 0.0 0.0 1.0)
             (set! tscrn *tscrn-mychr2*)))
     (textscrn-disp tscrn (win-x *win* *x*) (win-y *win* *y*) *width* *height*
-                   (win-w *win* *chw*) (win-h *win* *chh2*) 'center)
+                   (win-w *win* *chw*) (win-h *win* *chh*) 'center)
     ))
 
 ;; 自機の移動
@@ -173,7 +172,7 @@
            (vy  0))
       (cond
        ;; 一番近い敵/敵ミサイルを避ける
-       ((and e1 (< rr1 (* *chh2* *chh2* (~ *dparam* 'p1) (~ *dparam* 'p1))))
+       ((and e1 (< rr1 (* *chh* *chh* (~ *dparam* 'p1) (~ *dparam* 'p1))))
         (set! vy (if (< *y* (~ e1 'y)) (- *v*) *v*)))
        ;; 中央に戻る
        ((<= (randint 1 100) (~ *dparam* 'p2))
@@ -225,7 +224,7 @@
           (set! (~ e1 'state)   0)
           (set! (~ e1 'life)    6)
           (set! (~ e1 'x)       (+ *wd/2* (* *chw* *rsize* 0.5)))
-          (set! (~ e1 'y)       (+ (randint (- *ht/2*) *ht/2*) (* *chh2* *rsize* 0.5)))
+          (set! (~ e1 'y)       (+ (randint (- *ht/2*) *ht/2*) (* *chh* *rsize* 0.5)))
           (set! (~ e1 'degree)  (randint 150 210))
           (set! (~ e1 'speed)   (* (min (+ 4 (- *mmr* 10)) 10) 1.5 0.65))
           ;(set! (~ e1 'tscrn)   *tscrn-enemy1*)
@@ -233,7 +232,7 @@
           (set! (~ e1 'minx)    (- (+ *wd/2* (* *chw* *rsize* 0.5))))
           (set! (~ e1 'maxx)       (+ *wd/2* (* *chw* *rsize* 0.5)))
           (set! (~ e1 'miny)    (- *ht/2*))
-          (set! (~ e1 'maxy)    (+ *ht/2* (* *chh2* *rsize*)))
+          (set! (~ e1 'maxy)    (+ *ht/2* (* *chh* *rsize*)))
           (textscrn-fcircle (~ e1 'tscrn) 8 8 9 1 1 "+")
           (textscrn-fcircle (~ e1 'tscrn) 8 8 5 1 1 "#")
           ))))
@@ -251,16 +250,16 @@
               (set! (~ m1 'kind)    1000)
               (set! (~ m1 'state)   0)
               (set! (~ m1 'life)    0)
-              (set! (~ m1 'x)       (+ (~ e1 'x) (* *chw*  (randint -3 3))))
-              (set! (~ m1 'y)       (+ (~ e1 'y) (* *chh2* (randint -3 3)) (* *chh2* *rsize* -0.5)))
-              (set! (~ m1 'degree)  (* (atan (- (- *y* *chh2*) (~ m1 'y)) (- *x* (~ m1 'x))) 180/pi))
+              (set! (~ m1 'x)       (+ (~ e1 'x) (* *chw* (randint -3 3))))
+              (set! (~ m1 'y)       (+ (~ e1 'y) (* *chh* (randint -3 3)) (* *chh* *rsize* -0.5)))
+              (set! (~ m1 'degree)  (* (atan (- (- *y* *chh*) (~ m1 'y)) (- *x* (~ m1 'x))) 180/pi))
               (set! (~ m1 'speed)   (* (min (+ 6 (- *mmr* 10)) 14) 1.5 0.7))
               (set! (~ m1 'tscrn)   *tscrn-missile1*)
               (set! (~ m1 'hitstr)  "O")
               (set! (~ m1 'minx)    (- (+ *wd/2* (* *chw* *rsize* 0.5))))
               (set! (~ m1 'maxx)       (+ *wd/2* (* *chw* *rsize* 0.5)))
               (set! (~ m1 'miny)    (- *ht/2*))
-              (set! (~ m1 'maxy)    (+ *ht/2* *chh2*))
+              (set! (~ m1 'maxy)    (+ *ht/2* *chh*))
               ))))))
    ))
 
@@ -273,7 +272,7 @@
          (gl-color 1.0 1.0 1.0 1.0)
          (gl-color 1.0 1.0 1.0 0.9))
        (textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
-                      *width* *height* (win-w *win* *chw*) (win-h *win* *chh2*) 'center)
+                      *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
        ))
    enemies))
 
@@ -304,16 +303,16 @@
 ;; 敵/敵ミサイルの当たり判定
 (define (hit-enemies? enemies)
   (let ((ret #f)
-        (x1  (win-x *win* (+ *x* (* *chw*  -1.0)    *waku* )))
-        (y1  (win-y *win* (+ *y*                 (- *waku*))))
-        (x2  (win-x *win* (+ *x* (* *chw*   1.0) (- *waku*))))
-        (y2  (win-y *win* (+ *y* (* *chh2* -2.0)    *waku* ))))
+        (x1  (win-x *win* (+ *x* (* *chw* -1.0)    *waku* )))
+        (y1  (win-y *win* (+ *y*                (- *waku*))))
+        (x2  (win-x *win* (+ *x* (* *chw*  1.0) (- *waku*))))
+        (y2  (win-y *win* (+ *y* (* *chh* -2.0)    *waku* ))))
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
          (when (textscrn-disp-check-str
                 (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
-                (win-w *win* *chw*) (win-h *win* *chh2*)
+                (win-w *win* *chw*) (win-h *win* *chh*)
                 (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y)) 'center)
            (set! ret #t))))
      enemies)
@@ -327,17 +326,17 @@
   (textscrn-line *tscrn-beam1* 0 0 (- *bc* 1) 0 "> ")
   (textscrn-disp *tscrn-beam1*
                  (win-x *win* (+ *x* *chw*))
-                 (win-y *win* (+ *y* (* *chh2* -1.0)))
-                 *width* *height* (win-w *win* *chw*) (win-h *win* *chh2*) 'left))
+                 (win-y *win* (+ *y* (* *chh* -1.0)))
+                 *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'left))
 
 ;; 自機ビームの当たり判定
 (define (hit-beam?)
   (let ((ret      #f)
         (hit-list '())
-        (x1       (win-x *win* (+ *x* *chw*              *waku* )))
-        (y1       (win-y *win* (+ *y* (* *chh2* -1.0) (- *waku*))))
-        (x2       (win-x *win* (+ *wd/2*              (- *waku*))))
-        (y2       (win-y *win* (+ *y* (* *chh2* -2.0)    *waku* )))
+        (x1       (win-x *win* (+ *x* *chw*             *waku* )))
+        (y1       (win-y *win* (+ *y* (* *chh* -1.0) (- *waku*))))
+        (x2       (win-x *win* (+ *wd/2*             (- *waku*))))
+        (y2       (win-y *win* (+ *y* (* *chh* -2.0)    *waku* )))
         (minbx    (+ *wd/2* (* *chw* *rsize* 0.5)))
         (e2       #f))
     (for-each
@@ -346,7 +345,7 @@
          (when (and (< (~ e1 'x) minbx)
                     (textscrn-disp-check-str
                      (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
-                     (win-w *win* *chw*) (win-h *win* *chh2*)
+                     (win-w *win* *chw*) (win-h *win* *chh*)
                      (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y)) 'center))
            (set! e2 e1)
            (set! minbx (~ e1 'x)))
@@ -357,7 +356,7 @@
       ;; 敵の外周かコアかをチェックする
       (set! hit-list (textscrn-disp-check-str2
                       (~ e2 'tscrn) (~ e2 'hitstr) x1 y1 x2 y2
-                      (win-w *win* *chw*) (win-h *win* *chh2*)
+                      (win-w *win* *chw*) (win-h *win* *chh*)
                       (win-x *win* (~ e2 'x)) (win-y *win* (~ e2 'y)) 'center 1))
       (unless (null? hit-list)
         (cond
@@ -385,7 +384,7 @@
      (when (and (~ e1 'useflag) (> (~ e1 'state) 0))
        ;; (表示は半分のサイズにする)
        (draw-win-circle (win-x *win* (~ e1 'x))
-                        (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh2*) 2)))
+                        (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
                         (win-w *win* (/. *bsize* 2)) *width* *height*)
        ))
    *enemies*))
@@ -441,8 +440,8 @@
 ;; 自機の敵への攻撃チェック(デモ用)
 (define (attack-enemies?)
   (let ((ret #f)
-        (y1  (- *y* (* *chh2* 10)))
-        (y2  (+ *y* (* *chh2* 10))))
+        (y1  (- *y* (* *chh* 10)))
+        (y2  (+ *y* (* *chh* 10))))
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0) (<= y1 (~ e1 'y) y2))
@@ -533,7 +532,7 @@
     )
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
-  (draw-win-rect 0 0 *width* (win-h *win* *chh*) *width* *height*)
+  (draw-win-rect 0 0 *width* (win-h *win* (* *chh* 2)) *width* *height*)
   ;; 敵ミサイルの表示
   (disp-enemies *missiles*)
   ;; 敵の表示

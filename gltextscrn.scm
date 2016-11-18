@@ -12,6 +12,7 @@
   (use gl.glut)
   (use gauche.uvector)
   (use gauche.sequence)
+  (use gauche.record)
   (use srfi-13) ; string-fold,string-for-each用
   (use binary.pack)
   (export
@@ -253,10 +254,18 @@
   ;  (set! (~ ts 'data i) (+ (modulo i (- 128 32)) 32)))
   )
 
+;; 文字情報レコード型(内部処理用)
+;; (高速化のためクラスではなくレコード型(実体はベクタ)とする)
+(define-record-type (charinfo (pseudo-rtd <vector>)) #t #t
+  xscale/fchw ; X方向の倍率/フォント幅
+  yscale/fchh ; Y方向の倍率/フォント幅
+  xoffset     ; X方向のオフセット値
+  yoffset     ; Y方向のオフセット値
+  )
+
 ;; 文字情報テーブル(文字列の一括表示用)(内部処理用)
 ;;   ・文字ごとに倍率とオフセット値を設定して、等幅フォントのように表示可能とする
 ;;   ・フォントは固定
-(define-class <char-info> () (xscale/fchw yscale/fchh xoffset yoffset)) ; 文字情報クラス
 (define *char-info-num*   128)
 (define *char-info-table*
   ;; Gauche-gl を初期化するまでは実行できないので、実行を遅延する
@@ -264,7 +273,7 @@
     (rlet1 tbl (make-vector *char-info-num* #f)
       (do ((i 0 (+ i 1)))
           ((>= i *char-info-num*) #f)
-        (let* ((c1     (make <char-info>))
+        (let* ((c1     #f)
                (fchw-1 (glut-stroke-width *font-stroke-1* i))
                (fchw   (if (<= fchw-1 0) 104.76 fchw-1))
                (fchh   (+ 152.38 20))
@@ -294,11 +303,11 @@
                   ((105) '(1.18 . 10))
                   ;; その他の文字
                   (else  '(1.3  . 10)))))
-          (set! (~ c1 'xscale/fchw) (/. (car xscale&xoffset) fchw))
-          (set! (~ c1 'yscale/fchh) (/. (car yscale&yoffset) fchh))
-          (set! (~ c1 'xoffset) (cdr xscale&xoffset))
-          (set! (~ c1 'yoffset) (cdr yscale&yoffset))
-          (set! (~ tbl i) c1))))))
+          (set! c1 (make-charinfo (/. (car xscale&xoffset) fchw)
+                                  (/. (car yscale&yoffset) fchh)
+                                  (cdr xscale&xoffset)
+                                  (cdr yscale&yoffset)))
+          (vector-set! tbl i c1))))))
 
 ;; 文字列の一括表示
 ;;   ・文字ごとに倍率とオフセット値を適用して、等幅フォントのように表示する
@@ -323,11 +332,11 @@
     (for-each
      (lambda (c)
        (if (and (>= c 0) (< c *char-info-num*))
-         (let1 c1 (~ (force *char-info-table*) c)
+         (let1 c1 (vector-ref (force *char-info-table*) c)
            (gl-load-identity)
            (gl-translate x1 y1 z)
-           (gl-scale (* (~ c1 'xscale/fchw) chw) (* (~ c1 'yscale/fchh) chh) 1)
-           (gl-translate (~ c1 'xoffset) (~ c1 'yoffset) 0)
+           (gl-scale (* (charinfo-xscale/fchw c1) chw) (* (charinfo-yscale/fchh c1) chh) 1)
+           (gl-translate (charinfo-xoffset c1) (charinfo-yoffset c1) 0)
            (glut-stroke-character *font-stroke-1* c)))
        (set! x1 (+ x1 chw))
        (inc! i)
@@ -739,7 +748,6 @@
     ;(print ret " " x1 " " y1 " " x2 " " y2)
     ret))
 
-
 ;; 文字列の上書き処理サブ(内部処理用)
 (define-method textscrn-over-sub ((ts <textscrn>) (x <integer>) (y <integer>) (strdata <u32vector>))
   (let* ((strdatalen (u32vector-length strdata))
@@ -943,13 +951,6 @@
   ((tex       :init-value #f)  ; テクスチャ(integer)
    (width     :init-value 0)   ; テクスチャの幅(px)
    (height    :init-value 0)   ; テクスチャの高さ(px)
-   ;; 以下はテクスチャの一括表示用
-   (xcrd      :init-value 1.0) ; テクスチャ空間上のX座標指定(テクスチャの幅が1.0に相当)
-   (ycrd      :init-value 1.0) ; テクスチャ空間上のY座標指定(テクスチャの高さが1.0に相当)
-   (width-r   :init-value 1.0) ; テクスチャ表示時のX方向の幅(表示サイズに対する倍率で指定)
-   (height-r  :init-value 1.0) ; テクスチャ表示時のY方向の高さ(表示サイズに対する倍率で指定)
-   (xoffset-r :init-value 0.0) ; テクスチャ表示時のX方向のオフセット(表示サイズに対する倍率で指定)
-   (yoffset-r :init-value 0.0) ; テクスチャ表示時のY方向のオフセット(表示サイズに対する倍率で指定)
    ))
 
 ;; 画像データをテクスチャデータに設定する(内部処理用)
@@ -1027,6 +1028,22 @@
 ;; 文字-テクスチャデータの割り付けテーブル(テクスチャの一括表示用)(内部処理用)
 (define *char-tex-table* (make-hash-table 'eqv?))
 
+;; テクスチャデータレコード型(内部処理用)
+;; (高速化のためクラスではなくレコード型(実体はベクタ)とする)
+(define-record-type (texdata (pseudo-rtd <vector>)) #t #t
+  ;; 以下はテクスチャデータクラスの内容保持用(高速化のため)
+  tex       ; テクスチャ(integer)
+  width     ; テクスチャの幅(px)
+  height    ; テクスチャの高さ(px)
+  ;; 以下はテクスチャの一括表示用
+  xcrd      ; テクスチャ空間上のX座標指定(テクスチャの幅が1.0に相当)
+  ycrd      ; テクスチャ空間上のY座標指定(テクスチャの高さが1.0に相当)
+  width-r   ; テクスチャ表示時のX方向の幅(表示サイズに対する倍率で指定)
+  height-r  ; テクスチャ表示時のY方向の高さ(表示サイズに対する倍率で指定)
+  xoffset-r ; テクスチャ表示時のX方向のオフセット(表示サイズに対する倍率で指定)
+  yoffset-r ; テクスチャ表示時のY方向のオフセット(表示サイズに対する倍率で指定)
+  )
+
 ;; 文字にテクスチャデータを割り付ける(テクスチャの一括表示用)
 (define-method set-char-texture ((ch <char>)
                                  (td <texdata>)
@@ -1035,16 +1052,8 @@
                                  (xoffset-r 0.0) (yoffset-r 0.0))
   (let* ((c   (char->integer ch))
          (td1 (or (hash-table-get *char-tex-table* c #f)
-                  (make <texdata>))))
-    (set! (~ td1 'tex)       (~ td 'tex))
-    (set! (~ td1 'width)     (~ td 'width))
-    (set! (~ td1 'height)    (~ td 'height))
-    (set! (~ td1 'xcrd)      xcrd)
-    (set! (~ td1 'ycrd)      ycrd)
-    (set! (~ td1 'width-r)   width-r)
-    (set! (~ td1 'height-r)  height-r)
-    (set! (~ td1 'xoffset-r) xoffset-r)
-    (set! (~ td1 'yoffset-r) yoffset-r)
+                  (make-texdata (~ td 'tex) (~ td 'width) (~ td 'height)
+                                xcrd ycrd width-r height-r xoffset-r yoffset-r))))
     (hash-table-put! *char-tex-table* c td1)
     ))
 
@@ -1074,16 +1083,16 @@
      (lambda (c)
        (if-let1 td1 (hash-table-get *char-tex-table* c #f)
          (let ((xcrd1 (if *use-gl-texture-rectangle*
-                        (* (~ td1 'xcrd) (~ td1 'width))
-                        (~ td1 'xcrd)))
+                        (* (texdata-xcrd td1) (texdata-width  td1))
+                        (texdata-xcrd td1)))
                (ycrd1 (if *use-gl-texture-rectangle*
-                        (* (~ td1 'ycrd) (~ td1 'height))
-                        (~ td1 'ycrd)))
-               (x3    (+ x1 (* chw (~ td1 'xoffset-r))))
-               (y3    (- y1 (* chh (~ td1 'yoffset-r))))
-               (w2    (* chw (~ td1 'width-r)))
-               (h2    (* chh (~ td1 'height-r))))
-           (gl-bind-texture target (~ td1 'tex))
+                        (* (texdata-ycrd td1) (texdata-height td1))
+                        (texdata-ycrd td1)))
+               (x3    (+ x1 (* chw (texdata-xoffset-r td1))))
+               (y3    (- y1 (* chh (texdata-yoffset-r td1))))
+               (w2    (* chw (texdata-width-r  td1)))
+               (h2    (* chh (texdata-height-r td1))))
+           (gl-bind-texture target (texdata-tex td1))
            (gl-load-identity)
            (gl-translate x3 y3 z)
            (gl-begin GL_QUADS)

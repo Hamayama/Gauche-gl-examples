@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-10-3 v1.50
+;; 2016-11-18 v1.51
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -367,7 +367,7 @@
   ;; 透過設定
   ;(gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   ;(gl-enable GL_BLEND)
-  (gl-alpha-func GL_GREATER 0.5)
+  (gl-alpha-func GL_GREATER 0.1)
   (gl-enable GL_ALPHA_TEST)
   ;; テクスチャ設定
   ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_MODULATE)
