@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-11-18 v1.02
+;; 2016-11-18 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -362,7 +362,7 @@
         (cond
          ;; コアのとき(破壊)
          ((eqv? (~ hit-list 0 2) (~ (~ e2 'hitstr) 0))
-          (set! (~ e2 'life) (- (~ e2 'life) 6))
+          (set! (~ e2 'life) 0)
           (when (<= (~ e2 'life) 0)
             (set! (~ e2 'state) 1)
             (when (not *demoflg*)
