@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 2D描画のテスト
-;; 2016-9-28
+;; 2016-11-19
 ;;
 (add-load-path ".." :relative)
 (use gl)
@@ -93,9 +93,7 @@
   (set! *height* (min w h))
   (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
-  (if (< w h)
-    (gl-viewport 0 (quotient (- h w) 2) *width* *height*)
-    (gl-viewport (quotient (- w h) 2) 0 *width* *height*))
+  (gl-viewport (quotient (- w *width*) 2) (quotient (- h *height*) 2) *width* *height*)
   (gl-matrix-mode GL_PROJECTION)
   (gl-load-identity)
   ;; 透視射影する範囲を設定

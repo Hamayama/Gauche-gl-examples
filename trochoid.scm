@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; trochoid.scm
-;; 2016-9-26 v1.13
+;; 2016-11-19 v1.14
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、内トロコイド曲線を描くサンプルです。
@@ -93,9 +93,8 @@
 ;; 画面のリサイズ
 (define (reshape w h)
   ;; 縦横比を変えずにリサイズ
-  (if (< w h)
-    (gl-viewport 0 (quotient (- h w) 2) w w)
-    (gl-viewport (quotient (- w h) 2) 0 h h))
+  (let1 s (min w h)
+    (gl-viewport (quotient (- w s) 2) (quotient (- h s) 2) s s))
   (gl-matrix-mode GL_PROJECTION)
   (gl-load-identity)
   ;; 正射影する座標の範囲を設定

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-11-19 v1.04
+;; 2016-11-19 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -25,16 +25,17 @@
 
 (define *wait*      20) ; ウェイト(msec)
 (define *title* "shooting0102") ; ウィンドウのタイトル
-(define *width*    480) ; ウィンドウ上の画面幅(px)
+(define *width*    600) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
 (define *tanvan*     (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
+(define *aratio*     (/. *width* *height*)) ; アスペクト比(計算用)
 
-(define *wd/2*     400) ; 画面幅/2
+(define *wd/2*     500) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
 (define *chw*       16) ; 文字の幅
 (define *chh*       16) ; 文字の高さ
-(define *x*       -300) ; 自機のX座標
+(define *x*          (- (/. (* *wd/2* 3) 4))) ; 自機のX座標
 (define *y*          0) ; 自機のY座標
 (define *v*         10) ; 自機の速度
 (define *maxx*       (- *wd/2* *chw*))       ; 自機のX座標最大値
@@ -553,13 +554,11 @@
 
 ;; 画面のリサイズ
 (define (reshape w h)
-  (set! *width*  (min w h))
-  (set! *height* (min w h))
+  (set! *width*  (min w (truncate->exact (*  h *aratio*))))
+  (set! *height* (min h (truncate->exact (/. w *aratio*))))
   (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
-  (if (< w h)
-    (gl-viewport 0 (quotient (- h w) 2) *width* *height*)
-    (gl-viewport (quotient (- w h) 2) 0 *width* *height*))
+  (gl-viewport (quotient (- w *width*) 2) (quotient (- h *height*) 2) *width* *height*)
   (gl-matrix-mode GL_PROJECTION)
   (gl-load-identity)
   ;; 透視射影する範囲を設定
@@ -608,7 +607,7 @@
     (case *scene*
       ((0) ; スタート画面
        ;; 初期化
-       (set! *x*  -300)
+       (set! *x*     (- (/. (* *wd/2* 3) 4)))
        (set! *y*     0)
        (set! *bc*    0)
        (set! *mr*    1)

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2016-11-18 v1.51
+;; 2016-11-19 v1.52
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -462,9 +462,7 @@
   (set! *height* (min w h))
   (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
-  (if (< w h)
-    (gl-viewport 0 (quotient (- h w) 2) *width* *height*)
-    (gl-viewport (quotient (- w h) 2) 0 *width* *height*))
+  (gl-viewport (quotient (- w *width*) 2) (quotient (- h *height*) 2) *width* *height*)
   (gl-matrix-mode GL_PROJECTION)
   (gl-load-identity)
   ;; 透視射影する範囲を設定

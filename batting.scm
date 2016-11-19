@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2016-9-28 v1.50
+;; 2016-11-19 v1.51
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -223,9 +223,7 @@
   (set! *height* (min w h))
   (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
-  (if (< w h)
-    (gl-viewport 0 (quotient (- h w) 2) *width* *height*)
-    (gl-viewport 0 0 *width* *height*))
+  (gl-viewport 0 (quotient (- h *height*) 2) *width* *height*)
   (gl-matrix-mode GL_PROJECTION)
   (gl-load-identity)
   ;; 透視射影する範囲を設定
