@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-9-28 v1.30
+;; 2016-11-19 v1.31
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -111,7 +111,7 @@
 
 
 ;; 比例の計算
-;; ( maxx-x:x-minx = maxy-y:y-miny となるような y を求める )
+;; ( maxx-x:x-minx = maxy-y:y-miny となるような y を求める)
 (define (calc-by-ratio x minx maxx miny maxy)
   (/. (+ (* maxy (- x minx)) (* miny (- maxx x)))
       (- maxx minx)))
@@ -144,6 +144,7 @@
         (scy1  0)   ; 投影Y座標1
         (scy2  0)   ; 投影Y座標2
         (rline #f)) ; 地平線表示フラグ
+    ;; Z座標の奥の方から順番に処理していく
     (do ((i 0 (+ i 1))) ((>= i *rnum*) #f)
       ;; 道路の境界マークの座標を計算
       (set! sczr  (/. *scz* (~ *rz* i)))

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2016-11-17 v1.64
+;; 2016-11-19 v1.65
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -299,10 +299,10 @@
 ;; 敵/敵ミサイルの当たり判定
 (define (hit-enemies? enemies)
   (let ((ret #f)
-        (x1  (win-x *win* (+ *x* (* *chw* -1.3)    *waku* )))
+        (x1  (win-x *win* (+ *x* (* *chw* -1.3)    *waku*)))
         (y1  (win-y *win* (+ *y* (* *chh* -1.0) (- *waku*))))
         (x2  (win-x *win* (+ *x* (* *chw*  1.3) (- *waku*))))
-        (y2  (win-y *win* (+ *y* (* *chh* -2.0)    *waku* ))))
+        (y2  (win-y *win* (+ *y* (* *chh* -2.0)    *waku*))))
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
@@ -326,10 +326,10 @@
 ;; 自機ビームの当たり判定
 (define (hit-beam?)
   (let ((ret   #f)
-        (x1    (win-x *win* (+ *x* (* *chw* -0.5)    *waku* )))
+        (x1    (win-x *win* (+ *x* (* *chw* -0.5)    *waku*)))
         (y1    (win-y *win* (+ *ht/2*             (- *waku*))))
         (x2    (win-x *win* (+ *x* (* *chw*  0.5) (- *waku*))))
-        (y2    (win-y *win* (+ *y*                   *waku* )))
+        (y2    (win-y *win* (+ *y*                   *waku*)))
         (minby *ht/2*)
         (e2    #f))
     (for-each
