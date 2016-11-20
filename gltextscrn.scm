@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-11-19 v1.76
+;; 2016-11-20 v1.77
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -273,8 +273,7 @@
     (rlet1 tbl (make-vector *char-info-num* #f)
       (do ((i 0 (+ i 1)))
           ((>= i *char-info-num*) #f)
-        (let* ((c1     #f)
-               (fchw-1 (glut-stroke-width *font-stroke-1* i))
+        (let* ((fchw-1 (glut-stroke-width *font-stroke-1* i))
                (fchw   (if (<= fchw-1 0) 104.76 fchw-1))
                (fchh   (+ 152.38 20))
                (xscale&xoffset
@@ -303,11 +302,11 @@
                   ((105) '(1.18 . 10))
                   ;; その他の文字
                   (else  '(1.3  . 10)))))
-          (set! c1 (make-charinfo (/. (car xscale&xoffset) fchw)
-                                  (/. (car yscale&yoffset) fchh)
-                                  (cdr xscale&xoffset)
-                                  (cdr yscale&yoffset)))
-          (vector-set! tbl i c1))))))
+          (vector-set! tbl i (make-charinfo (/. (car xscale&xoffset) fchw)
+                                            (/. (car yscale&yoffset) fchh)
+                                            (cdr xscale&xoffset)
+                                            (cdr yscale&yoffset)))
+          )))))
 
 ;; 文字列の一括表示
 ;;   ・文字ごとに倍率とオフセット値を適用して、等幅フォントのように表示する
@@ -844,15 +843,11 @@
     (apply errorf (cons (format "bitmap file load error (file=~a)\n~a" file msg)
                         rest)))
   (define (get-one-param header index)
-    (let1 p (~ header index)
-      (if (eof-object? p)
-        (err "file size is too small")
-        p)))
+    (rlet1 p (~ header index)
+      (if (eof-object? p) (err "file size is too small"))))
   (define (read-one-data in)
-    (let1 d (read-byte in)
-      (if (eof-object? d)
-        (err "file size is too small")
-        d)))
+    (rlet1 d (read-byte in)
+      (if (eof-object? d) (err "file size is too small"))))
   (rlet1 img (make <imgdata>)
     (call-with-input-file file
       (lambda (in)
@@ -1050,11 +1045,10 @@
                                  :optional (xcrd 1.0) (ycrd 1.0)
                                  (width-r 1.0) (height-r 1.0)
                                  (xoffset-r 0.0) (yoffset-r 0.0))
-  (let ((c   (char->integer ch))
-        (td1 (make-texdata (~ td 'tex) (~ td 'width) (~ td 'height)
-                           xcrd ycrd width-r height-r xoffset-r yoffset-r)))
-    (hash-table-put! *char-tex-table* c td1)
-    ))
+  (hash-table-put! *char-tex-table*
+                   (char->integer ch)
+                   (make-texdata (~ td 'tex) (~ td 'width) (~ td 'height)
+                                 xcrd ycrd width-r height-r xoffset-r yoffset-r)))
 
 ;; 文字に割り付けたテクスチャの一括表示
 ;;   ・テキスト画面クラスの各文字に対応するテクスチャを一括表示する
