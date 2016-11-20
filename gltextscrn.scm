@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-11-20 v1.77
+;; 2016-11-20 v1.78
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -642,15 +642,11 @@
                      ((center) (- xoffset (/. (* w1 chw) 2))) ; 中央寄せ
                      ((right)  (- xoffset (* w1 chw)))        ; 右寄せ
                      (else     xoffset)))
-         (x3       (min x1 x2))
-         (y3       (min y1 y2))
-         (x4       (max x1 x2))
-         (y4       (max y1 y2))
-         (x5       (floor->exact (/. (- x3 xoffset1) chw)))
-         (y5       (floor->exact (/. (- y3 yoffset)  chh)))
-         (x6       (- (ceiling->exact (/. (- x4 xoffset1) chw)) 1))
-         (y6       (- (ceiling->exact (/. (- y4 yoffset)  chh)) 1)))
-    (textscrn-check-str-sub ts str x5 y5 x6 y6)
+         (x3       (floor->exact (/. (- (min x1 x2) xoffset1) chw)))
+         (y3       (floor->exact (/. (- (min y1 y2) yoffset)  chh)))
+         (x4       (- (ceiling->exact (/. (- (max x1 x2) xoffset1) chw)) 1))
+         (y4       (- (ceiling->exact (/. (- (max y1 y2) yoffset)  chh)) 1)))
+    (textscrn-check-str-sub ts str x3 y3 x4 y4)
     ))
 
 ;; 文字列の画面上の判定処理2
@@ -674,15 +670,11 @@
                      ((center) (- xoffset (/. (* w1 chw) 2))) ; 中央寄せ
                      ((right)  (- xoffset (* w1 chw)))        ; 右寄せ
                      (else     xoffset)))
-         (x3       (min x1 x2))
-         (y3       (min y1 y2))
-         (x4       (max x1 x2))
-         (y4       (max y1 y2))
-         (x5       (floor->exact (/. (- x3 xoffset1) chw)))
-         (y5       (floor->exact (/. (- y3 yoffset)  chh)))
-         (x6       (- (ceiling->exact (/. (- x4 xoffset1) chw)) 1))
-         (y6       (- (ceiling->exact (/. (- y4 yoffset)  chh)) 1)))
-    (set! ret (textscrn-check-str-sub2 ts str x5 y5 x6 y6))
+         (x3       (floor->exact (/. (- (min x1 x2) xoffset1) chw)))
+         (y3       (floor->exact (/. (- (min y1 y2) yoffset)  chh)))
+         (x4       (- (ceiling->exact (/. (- (max x1 x2) xoffset1) chw)) 1))
+         (y4       (- (ceiling->exact (/. (- (max y1 y2) yoffset)  chh)) 1)))
+    (set! ret (textscrn-check-str-sub2 ts str x3 y3 x4 y4))
     (unless (null? ret)
       (case sortmode
         ((0) (set! ret (reverse! ret)))
@@ -690,10 +682,7 @@
                                     (if (= (~ a 0) (~ b 0))
                                       (< (~ a 1) (~ b 1))
                                       (< (~ a 0) (~ b 0)))))))
-        ((2) (set! ret (sort! ret (lambda (a b)
-                                    (if (= (~ a 1) (~ b 1))
-                                      (> (~ a 0) (~ b 0))
-                                      (> (~ a 1) (~ b 1)))))))
+        ;; 2は処理不要
         ((3) (set! ret (sort! ret (lambda (a b)
                                     (if (= (~ a 0) (~ b 0))
                                       (> (~ a 1) (~ b 1))
@@ -943,9 +932,9 @@
 
 ;; テクスチャデータクラス
 (define-class <texdata> ()
-  ((tex       :init-value #f)  ; テクスチャ(integer)
-   (width     :init-value 0)   ; テクスチャの幅(px)
-   (height    :init-value 0)   ; テクスチャの高さ(px)
+  ((tex    :init-value #f) ; テクスチャ(integer)
+   (width  :init-value 0)  ; テクスチャの幅(px)
+   (height :init-value 0)  ; テクスチャの高さ(px)
    ))
 
 ;; 画像データをテクスチャデータに設定する(内部処理用)
