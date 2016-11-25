@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-11-20 v1.78
+;; 2016-11-25 v1.79
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -330,8 +330,8 @@
          (i  0))
     (for-each
      (lambda (c)
-       (if (and (>= c 0) (< c *char-info-num*))
-         (let1 c1 (vector-ref (force *char-info-table*) c)
+       (if-let1 c1 (vector-ref (force *char-info-table*) c #f)
+         (begin
            (gl-load-identity)
            (gl-translate x1 y1 z)
            (gl-scale (* (charinfo-xscale/fchw c1) chw) (* (charinfo-yscale/fchh c1) chh) 1)
