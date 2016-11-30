@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-12-1 v1.06
+;; 2016-12-1 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -269,6 +269,9 @@
   (for-each
    (lambda (e1)
      (when (~ e1 'useflag)
+       ;(gl-color 1.0 1.0 1.0 1.0)
+       ;(textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
+       ;               *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
        (cond
         ((< (~ e1 'kind) 1000)
          ;; 敵の表示
@@ -395,7 +398,7 @@
               (auddata-play *adata-hit*))))
          ;; 外周のとき(削る)
          (else
-          (textscrn-pset (~ e2 'tscrn) (~ hit-list 0 0) (~ hit-list 0 1) "x")
+          (textscrn-pset (~ e2 'tscrn) (~ hit-list 0 0) (~ hit-list 0 1) ".")
           (set! minbx (+ minbx (* *chw* (- (~ hit-list 0 0) (* *rsize* 0.5))))))
          )))
     (set! *bc* (max (- (floor->exact (/. (- minbx *x*) *chw*)) 1) 1))
@@ -490,7 +493,7 @@
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (gl-enable GL_BLEND)
   ;; 文字-描画手続きの割り付け設定
-  (set-char-drawer #\x (lambda (x y width height chw chh z)
+  (set-char-drawer #\. (lambda (x y width height chw chh z)
                          (draw-win-rect x y chw chh width height 'left z)))
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
