@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-11-19 v1.05
+;; 2016-12-1 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -269,11 +269,35 @@
   (for-each
    (lambda (e1)
      (when (~ e1 'useflag)
-       (if (= (~ e1 'state) 0)
-         (gl-color 1.0 1.0 1.0 1.0)
-         (gl-color 1.0 1.0 1.0 0.9))
-       (textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
-                      *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
+       (cond
+        ((< (~ e1 'kind) 1000)
+         ;; 敵の表示
+         ;; (削れた分)
+         (gl-color 0.0 0.0 0.0 0.0)
+         (textscrn-disp-drawer (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
+                               *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
+         ;; (外周)
+         (gl-color 0.7 0.7 0.7 1.0)
+         (draw-win-circle (win-x *win* (~ e1 'x))
+                          (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                          (win-w *win* (/. (* 9 *chh*) 2)) *width* *height*)
+         ;; (コア)
+         (gl-color 0.5 0.5 0.5 1.0)
+         (draw-win-circle (win-x *win* (~ e1 'x))
+                          (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                          (win-w *win* (/. (* 17 *chh*) 2)) *width* *height*)
+         )
+        (else
+         ;; ミサイルの表示
+         (gl-color 0.6 0.6 0.6 1.0)
+         (draw-win-circle (win-x *win* (~ e1 'x))
+                          (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                          (win-w *win* (/. (* 1 *chh*) 4)) *width* *height*)
+         (gl-color 0.9 0.9 0.9 1.0)
+         (draw-win-circle (win-x *win* (~ e1 'x))
+                          (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                          (win-w *win* (/. (* 1 *chh*) 2)) *width* *height*)
+         ))
        ))
    enemies))
 
@@ -371,7 +395,7 @@
               (auddata-play *adata-hit*))))
          ;; 外周のとき(削る)
          (else
-          (textscrn-pset (~ e2 'tscrn) (~ hit-list 0 0) (~ hit-list 0 1) " ")
+          (textscrn-pset (~ e2 'tscrn) (~ hit-list 0 0) (~ hit-list 0 1) "x")
           (set! minbx (+ minbx (* *chw* (- (~ hit-list 0 0) (* *rsize* 0.5))))))
          )))
     (set! *bc* (max (- (floor->exact (/. (- minbx *x*) *chw*)) 1) 1))
@@ -386,7 +410,7 @@
        ;; (表示は半分のサイズにする)
        (draw-win-circle (win-x *win* (~ e1 'x))
                         (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                        (win-w *win* (/. *bsize* 2)) *width* *height*)
+                        (win-w *win* (/. *bsize* 2)) *width* *height* 1 1 'center 0.1)
        ))
    *enemies*))
 
@@ -465,6 +489,9 @@
   ;; 透過設定
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (gl-enable GL_BLEND)
+  ;; 文字-描画手続きの割り付け設定
+  (set-char-drawer #\x (lambda (x y width height chw chh z)
+                         (draw-win-rect x y chw chh width height 'left z)))
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.07)
@@ -531,23 +558,23 @@
     (draw-stroke-text str6 0 (win-h-r *win*  5/100) *width* *height* (win-h-r *win* 1/22))
     (draw-stroke-text str7 0 (win-h-r *win* 10/100) *width* *height* (win-h-r *win* 1/22))
     )
+  ;; 背景の表示
+  (gl-color *backcolor*)
+  (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.1)
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
   (draw-win-rect 0 0 *width* (win-h *win* (* *chh* 2)) *width* *height*)
   ;; 敵ミサイルの表示
   (disp-enemies *missiles*)
-  ;; 敵の表示
-  (disp-enemies *enemies*)
   ;; 自機ビームの表示
   (if (> *bc* 0) (disp-beam))
   ;; 自機の表示
   (if (= *scene* 2) (disp-mychr 1))
   (disp-mychr 0)
+  ;; 敵の表示
+  (disp-enemies *enemies*)
   ;; 爆風の表示
   (disp-blast)
-  ;; 背景の表示
-  (gl-color *backcolor*)
-  (draw-win-rect 0 0 *width* *height* *width* *height*)
   ;(gl-flush)
   (glut-swap-buffers)
   )

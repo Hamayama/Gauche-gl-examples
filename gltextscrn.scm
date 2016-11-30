@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-11-25 v1.79
+;; 2016-12-1 v1.80
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -27,6 +27,7 @@
     textscrn-check-str textscrn-disp-check-str textscrn-disp-check-str2
     <texdata> load-texture-bitmap-file draw-texture-rect
     set-char-texture textscrn-disp-texture
+    set-char-drawer  textscrn-disp-drawer
     ))
 (select-module gltextscrn)
 
@@ -1094,5 +1095,47 @@
      (~ ts 'data))
     (gl-disable target))
   (gl-ortho-off))
+
+
+;; 文字-描画手続きの割り付けテーブル(モデルの一括表示用)(内部処理用)
+(define *char-drawer-table* (make-hash-table 'eqv?))
+
+;; 文字に描画手続きを割り付ける(モデルの一括表示用)
+;;   ・drawer には引数 x y width height chw chh z を取る手続きを渡すこと
+(define-method set-char-drawer ((ch <char>) (drawer <procedure>))
+  (hash-table-put! *char-drawer-table*
+                   (char->integer ch)
+                   drawer))
+
+;; 文字に割り付けた描画手続きによるモデルの一括表示
+;;   ・テキスト画面クラスの各文字に対応するモデルを一括表示する
+;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
+;;   ・1文字あたりの表示サイズは、幅 chw と高さ chh の指定が必要
+(define-method textscrn-disp-drawer ((ts <textscrn>)
+                                     (x <real>) (y <real>)
+                                     (width <real>) (height <real>)
+                                     (chw <real>) (chh <real>)
+                                     :optional (align 'left) (z 0))
+  (let* ((w1 (~ ts 'width))
+         (x1 (case align
+               ((center) (- x (/. (* w1 chw) 2))) ; 中央寄せ
+               ((right)  (- x (* w1 chw)))        ; 右寄せ
+               (else     x)))
+         (x2 x1)
+         (y1 y)
+         (i  0))
+    (for-each
+     (lambda (c)
+       (if-let1 drawer (hash-table-get *char-drawer-table* c #f)
+         (drawer x1 y1 width height chw chh z))
+       (set! x1 (+ x1 chw))
+       (inc! i)
+       (when (>= i w1)
+         (set! i  0)
+         (set! x1 x2)
+         (set! y1 (+ y1 chh)))
+       )
+     (~ ts 'data))
+    ))
 
 
