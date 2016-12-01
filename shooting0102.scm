@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-12-1 v1.09
+;; 2016-12-1 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -267,8 +267,46 @@
               ))))))
    ))
 
-;; 敵/敵ミサイルの表示
-(define (disp-enemies enemies)
+;; 敵の表示(透過あり)
+(define (disp-enemies)
+  (define (disp-one-enemy e1 z)
+    ;; (デバッグ用)
+    ;(gl-color 1.0 1.0 1.0 1.0)
+    ;(textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
+    ;               *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
+    ;; (削れた部分)
+    (when (~ e1 'contact)
+      (gl-color 0.0 0.0 0.0 0.0)
+      (textscrn-disp-drawer (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
+                            *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center z))
+    ;; (コア)
+    (gl-color 0.7 0.7 0.7 1.0)
+    (draw-win-circle (win-x *win* (~ e1 'x))
+                     (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                     (win-w *win* (/. (* 9 *chh*) 2)) *width* *height* 1 1 'center z)
+    ;; (外周)
+    (gl-color 0.5 0.5 0.5 1.0)
+    (draw-win-circle (win-x *win* (~ e1 'x))
+                     (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                     (win-w *win* (/. (* (+ 17 0.9) *chh*) 2)) *width* *height* 1 1 'center z)
+    )
+  ;; 透過のない敵(削れた部分のない敵)を、先に表示する
+  (for-each
+   (lambda (e1)
+     (when (and (~ e1 'useflag) (not (~ e1 'contact)))
+       (disp-one-enemy e1 -0.1)))
+   *enemies*)
+  ;; 透過のある敵(削れた部分のある敵)を、Z座標を加算しながら表示する
+  (let1 z1 -0.1
+    (for-each
+     (lambda (e1)
+       (set! z1 (+ z1 0.0001))
+       (when (and (~ e1 'useflag) (~ e1 'contact))
+         (disp-one-enemy e1 z1)))
+     *enemies*)))
+
+;; ミサイルの表示
+(define (disp-missiles)
   (for-each
    (lambda (e1)
      (when (~ e1 'useflag)
@@ -276,38 +314,16 @@
        ;(gl-color 1.0 1.0 1.0 1.0)
        ;(textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
        ;               *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
-       (cond
-        ((< (~ e1 'kind) 1000)
-         ;; 敵の表示
-         ;; (削れた部分)
-         (when (~ e1 'contact)
-           (gl-color 0.0 0.0 0.0 0.0)
-           (textscrn-disp-drawer (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
-                                 *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center))
-         ;; (コア)
-         (gl-color 0.7 0.7 0.7 1.0)
-         (draw-win-circle (win-x *win* (~ e1 'x))
-                          (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                          (win-w *win* (/. (* 9 *chh*) 2)) *width* *height*)
-         ;; (外周)
-         (gl-color 0.5 0.5 0.5 1.0)
-         (draw-win-circle (win-x *win* (~ e1 'x))
-                          (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                          (win-w *win* (/. (* (+ 17 0.9) *chh*) 2)) *width* *height*)
-         )
-        (else
-         ;; ミサイルの表示
-         (gl-color 0.6 0.6 0.6 1.0)
-         (draw-win-circle (win-x *win* (~ e1 'x))
-                          (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                          (win-w *win* (/. (* 1 *chh*) 4)) *width* *height*)
-         (gl-color 0.9 0.9 0.9 1.0)
-         (draw-win-circle (win-x *win* (~ e1 'x))
-                          (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                          (win-w *win* (/. (* 1 *chh*) 2)) *width* *height*)
-         ))
+       (gl-color 0.6 0.6 0.6 1.0)
+       (draw-win-circle (win-x *win* (~ e1 'x))
+                        (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                        (win-w *win* (/. (* 1 *chh*) 4)) *width* *height*)
+       (gl-color 0.9 0.9 0.9 1.0)
+       (draw-win-circle (win-x *win* (~ e1 'x))
+                        (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                        (win-w *win* (/. (* 1 *chh*) 2)) *width* *height*)
        ))
-   enemies))
+   *missiles*))
 
 ;; 敵/敵ミサイルの移動
 (define (move-enemies enemies)
@@ -414,7 +430,7 @@
     (set! *bc* (max (- (floor->exact (/. (- minbx *x*) *chw*)) 1) 1))
     ret))
 
-;; 爆風の表示
+;; 爆風の表示(透過あり)
 (define (disp-blast)
   (gl-color 1.0 1.0 0.0 0.5)
   (for-each
@@ -591,15 +607,15 @@
   (gl-color *backcolor*)
   (draw-win-rect 0 0 *width* (win-h *win* (* *chh* 2)) *width* *height* 'left 0.2)
   ;; 敵ミサイルの表示
-  (disp-enemies *missiles*)
+  (disp-missiles)
   ;; 自機ビームの表示
   (if (> *bc* 0) (disp-beam))
   ;; 自機の表示
   (if (= *scene* 2) (disp-mychr 1))
   (disp-mychr 0)
-  ;; 敵の表示
-  (disp-enemies *enemies*)
-  ;; 爆風の表示
+  ;; 敵の表示(透過あり)
+  (disp-enemies)
+  ;; 爆風の表示(透過あり)
   (disp-blast)
   ;(gl-flush)
   (glut-swap-buffers)
