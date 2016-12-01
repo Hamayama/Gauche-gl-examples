@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-12-1 v1.10
+;; 2016-12-1 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -269,6 +269,7 @@
 
 ;; 敵の表示(透過あり)
 (define (disp-enemies)
+  ;; 敵1個の表示
   (define (disp-one-enemy e1 z)
     ;; (デバッグ用)
     ;(gl-color 1.0 1.0 1.0 1.0)
@@ -288,15 +289,15 @@
     (gl-color 0.5 0.5 0.5 1.0)
     (draw-win-circle (win-x *win* (~ e1 'x))
                      (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                     (win-w *win* (/. (* (+ 17 0.9) *chh*) 2)) *width* *height* 1 1 'center z)
+                     (win-w *win* (/. (* (+ 17 1) *chh*) 2)) *width* *height* 1 1 'center z)
     )
-  ;; 透過のない敵(削れた部分のない敵)を、先に表示する
+  ;; 透過のない敵 (= 削れた部分のない敵) を、先に表示する
   (for-each
    (lambda (e1)
      (when (and (~ e1 'useflag) (not (~ e1 'contact)))
        (disp-one-enemy e1 -0.1)))
    *enemies*)
-  ;; 透過のある敵(削れた部分のある敵)を、Z座標を加算しながら表示する
+  ;; 透過のある敵 (= 削れた部分のある敵) を、Z座標を加算しながら表示する
   (let1 z1 -0.1
     (for-each
      (lambda (e1)
@@ -314,10 +315,12 @@
        ;(gl-color 1.0 1.0 1.0 1.0)
        ;(textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
        ;               *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
+       ;; (内側)
        (gl-color 0.6 0.6 0.6 1.0)
        (draw-win-circle (win-x *win* (~ e1 'x))
                         (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
                         (win-w *win* (/. (* 1 *chh*) 4)) *width* *height*)
+       ;; (外側)
        (gl-color 0.9 0.9 0.9 1.0)
        (draw-win-circle (win-x *win* (~ e1 'x))
                         (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
@@ -521,18 +524,18 @@
   ;; 文字-描画手続きの割り付け設定
   ;;(削れた部分(中央))
   (set-char-drawer #\. (lambda (x y width height chw chh z)
-                         (draw-win-rect (- x (* chw 0.5)) y
-                                        (* chw 1.5) chh
+                         (draw-win-rect (- x (* chw 0.65)) y
+                                        (* chw 1.65) chh
                                         width height 'left z)))
   ;;(削れた部分(上端))
   (set-char-drawer #\, (lambda (x y width height chw chh z)
-                         (draw-win-rect (- x (* chw 0.5)) (- y (* chh 0.5))
-                                        (* chw 1.5) (* chh 1.5)
+                         (draw-win-rect (- x (* chw 0.65)) (- y (* chh 0.5))
+                                        (* chw 1.65) (* chh 1.5)
                                         width height 'left z)))
   ;;(削れた部分(下端))
   (set-char-drawer #\' (lambda (x y width height chw chh z)
-                         (draw-win-rect (- x (* chw 0.5)) y
-                                        (* chw 1.5) (* chh 1.5)
+                         (draw-win-rect (- x (* chw 0.65)) y
+                                        (* chw 1.65) (* chh 1.5)
                                         width height 'left z)))
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
