@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-12-1 v1.08
+;; 2016-12-1 v1.09
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -126,6 +126,7 @@
    (maxx    :init-value 0)  ; X座標の最大値
    (miny    :init-value 0)  ; Y座標の最小値
    (maxy    :init-value 0)  ; Y座標の最大値
+   (contact :init-value #f) ; 削り有無フラグ
    ))
 ;; 敵クラスのインスタンス生成
 (define *enemies*  (make-vector-of-class *mmmr* <enemy>))
@@ -234,6 +235,7 @@
           (set! (~ e1 'maxx)       (+ *wd/2* (* *chw* *rsize* 0.5)))
           (set! (~ e1 'miny)    (- *ht/2*))
           (set! (~ e1 'maxy)    (+ *ht/2* (* *chh* *rsize*)))
+          (set! (~ e1 'contact) #f)
           (textscrn-fcircle (~ e1 'tscrn) 8 8 9 1 1 "+")
           (textscrn-fcircle (~ e1 'tscrn) 8 8 5 1 1 "#")
           ))))
@@ -261,6 +263,7 @@
               (set! (~ m1 'maxx)       (+ *wd/2* (* *chw* *rsize* 0.5)))
               (set! (~ m1 'miny)    (- *ht/2*))
               (set! (~ m1 'maxy)    (+ *ht/2* *chh*))
+              (set! (~ m1 'contact) #f)
               ))))))
    ))
 
@@ -269,26 +272,28 @@
   (for-each
    (lambda (e1)
      (when (~ e1 'useflag)
+       ;; (デバッグ用)
        ;(gl-color 1.0 1.0 1.0 1.0)
        ;(textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
        ;               *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
        (cond
         ((< (~ e1 'kind) 1000)
          ;; 敵の表示
-         ;; (削れた分)
-         (gl-color 0.0 0.0 0.0 0.0)
-         (textscrn-disp-drawer (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
-                               *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
-         ;; (外周)
+         ;; (削れた部分)
+         (when (~ e1 'contact)
+           (gl-color 0.0 0.0 0.0 0.0)
+           (textscrn-disp-drawer (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
+                                 *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center))
+         ;; (コア)
          (gl-color 0.7 0.7 0.7 1.0)
          (draw-win-circle (win-x *win* (~ e1 'x))
                           (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
                           (win-w *win* (/. (* 9 *chh*) 2)) *width* *height*)
-         ;; (コア)
+         ;; (外周)
          (gl-color 0.5 0.5 0.5 1.0)
          (draw-win-circle (win-x *win* (~ e1 'x))
                           (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                          (win-w *win* (/. (* 17 *chh*) 2)) *width* *height*)
+                          (win-w *win* (/. (* (+ 17 0.9) *chh*) 2)) *width* *height*)
          )
         (else
          ;; ミサイルの表示
@@ -398,7 +403,12 @@
               (auddata-play *adata-hit*))))
          ;; 外周のとき(削る)
          (else
-          (textscrn-pset (~ e2 'tscrn) (~ hit-list 0 0) (~ hit-list 0 1) ".")
+          (set! (~ e2 'contact) #t)
+          (textscrn-pset (~ e2 'tscrn) (~ hit-list 0 0) (~ hit-list 0 1)
+                         (cond
+                          ((= (~ hit-list 0 1) 0)                           ",")
+                          ((= (~ hit-list 0 1) (- (~ e2 'tscrn 'height) 1)) "'")
+                          (else                                             ".")))
           (set! minbx (+ minbx (* *chw* (- (~ hit-list 0 0) (* *rsize* 0.5))))))
          )))
     (set! *bc* (max (- (floor->exact (/. (- minbx *x*) *chw*)) 1) 1))
@@ -493,8 +503,21 @@
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (gl-enable GL_BLEND)
   ;; 文字-描画手続きの割り付け設定
+  ;;(削れた部分(中央))
   (set-char-drawer #\. (lambda (x y width height chw chh z)
-                         (draw-win-rect x y chw chh width height 'left z)))
+                         (draw-win-rect (- x (* chw 0.5)) y
+                                        (* chw 1.5) chh
+                                        width height 'left z)))
+  ;;(削れた部分(上端))
+  (set-char-drawer #\, (lambda (x y width height chw chh z)
+                         (draw-win-rect (- x (* chw 0.5)) (- y (* chh 0.5))
+                                        (* chw 1.5) (* chh 1.5)
+                                        width height 'left z)))
+  ;;(削れた部分(下端))
+  (set-char-drawer #\' (lambda (x y width height chw chh z)
+                         (draw-win-rect (- x (* chw 0.5)) y
+                                        (* chw 1.5) (* chh 1.5)
+                                        width height 'left z)))
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.07)
