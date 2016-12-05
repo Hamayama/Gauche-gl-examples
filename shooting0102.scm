@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-12-1 v1.11
+;; 2016-12-5 v1.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -236,8 +236,19 @@
           (set! (~ e1 'miny)    (- *ht/2*))
           (set! (~ e1 'maxy)    (+ *ht/2* (* *chh* *rsize*)))
           (set! (~ e1 'contact) #f)
+          ;; テキスト画面クラスの上書き(削れた部分の復旧)
           (textscrn-fcircle (~ e1 'tscrn) 8 8 9 1 1 "+")
           (textscrn-fcircle (~ e1 'tscrn) 8 8 5 1 1 "#")
+          ;; (外周のはみ出し分の調整)
+          (let ((x 4) (y 0))
+            (textscrn-pset (~ e1 'tscrn) x        y        " ")
+            (textscrn-pset (~ e1 'tscrn) (- 16 x) y        " ")
+            (textscrn-pset (~ e1 'tscrn) x        (- 16 y) " ")
+            (textscrn-pset (~ e1 'tscrn) (- 16 x) (- 16 y) " ")
+            (textscrn-pset (~ e1 'tscrn) y        x        " ")
+            (textscrn-pset (~ e1 'tscrn) y        (- 16 x) " ")
+            (textscrn-pset (~ e1 'tscrn) (- 16 y) x        " ")
+            (textscrn-pset (~ e1 'tscrn) (- 16 y) (- 16 x) " "))
           ))))
    (else
     ;; 敵ミサイルの生成
@@ -291,7 +302,7 @@
                      (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
                      (win-w *win* (/. (* (+ 17 1) *chh*) 2)) *width* *height* 1 1 'center z)
     )
-  ;; 透過のない敵 (= 削れた部分のない敵) を、先に表示する
+  ;; 透過のない敵 (= 削れた部分のない敵) を、先にすべて表示する
   (for-each
    (lambda (e1)
      (when (and (~ e1 'useflag) (not (~ e1 'contact)))
@@ -312,7 +323,7 @@
    (lambda (e1)
      (when (~ e1 'useflag)
        ;; (デバッグ用)
-       ;(gl-color 1.0 1.0 1.0 1.0)
+       ;(gl-color 1.0 0.0 0.0 1.0)
        ;(textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
        ;               *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
        ;; (内側)
@@ -383,14 +394,14 @@
 
 ;; 自機ビームの当たり判定
 (define (hit-beam?)
-  (let ((ret      #f)
-        (hit-list '())
-        (x1       (win-x *win* (+ *x* *chw*             *waku*)))
-        (y1       (win-y *win* (+ *y* (* *chh* -1.0) (- *waku*))))
-        (x2       (win-x *win* (+ *wd/2*             (- *waku*))))
-        (y2       (win-y *win* (+ *y* (* *chh* -2.0)    *waku*)))
-        (minbx    (+ *wd/2* (* *chw* *rsize* 0.5)))
-        (e2       #f))
+  (let ((ret     #f)
+        (hitlist '())
+        (x1      (win-x *win* (+ *x* *chw*             *waku*)))
+        (y1      (win-y *win* (+ *y* (* *chh* -1.0) (- *waku*))))
+        (x2      (win-x *win* (+ *wd/2*             (- *waku*))))
+        (y2      (win-y *win* (+ *y* (* *chh* -2.0)    *waku*)))
+        (minbx   (+ *wd/2* (* *chw* *rsize* 0.5)))
+        (e2      #f))
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
@@ -406,30 +417,32 @@
     (when e2
       (set! ret #t)
       ;; 敵の外周かコアかをチェックする
-      (set! hit-list (textscrn-disp-check-str2
-                      (~ e2 'tscrn) (~ e2 'hitstr) x1 y1 x2 y2
-                      (win-w *win* *chw*) (win-h *win* *chh*)
-                      (win-x *win* (~ e2 'x)) (win-y *win* (~ e2 'y)) 'center 1))
-      (unless (null? hit-list)
-        (cond
-         ;; コアのとき(破壊)
-         ((eqv? (~ hit-list 0 2) (~ (~ e2 'hitstr) 0))
-          (set! (~ e2 'life) 0)
-          (when (<= (~ e2 'life) 0)
-            (set! (~ e2 'state) 1)
-            (when (not *demoflg*)
-              (set! *sc* (+ *sc* 100))
-              (auddata-play *adata-hit*))))
-         ;; 外周のとき(削る)
-         (else
-          (set! (~ e2 'contact) #t)
-          (textscrn-pset (~ e2 'tscrn) (~ hit-list 0 0) (~ hit-list 0 1)
-                         (cond
-                          ((= (~ hit-list 0 1) 0)                           ",")
-                          ((= (~ hit-list 0 1) (- (~ e2 'tscrn 'height) 1)) "'")
-                          (else                                             ".")))
-          (set! minbx (+ minbx (* *chw* (- (~ hit-list 0 0) (* *rsize* 0.5))))))
-         )))
+      (set! hitlist (textscrn-disp-check-str2
+                     (~ e2 'tscrn) (~ e2 'hitstr) x1 y1 x2 y2
+                     (win-w *win* *chw*) (win-h *win* *chh*)
+                     (win-x *win* (~ e2 'x)) (win-y *win* (~ e2 'y)) 'center 1))
+      (unless (null? hitlist)
+        (receive (hitx hity hitchr) (apply values (car hitlist))
+          (cond
+           ;; コアのとき(破壊)
+           ((eqv? hitchr (~ e2 'hitstr 0))
+            (set! (~ e2 'life) 0)
+            (when (<= (~ e2 'life) 0)
+              (set! (~ e2 'state) 1)
+              (when (not *demoflg*)
+                (set! *sc* (+ *sc* 100))
+                (auddata-play *adata-hit*))))
+           ;; 外周のとき(削る)
+           (else
+            (set! (~ e2 'contact) #t)
+            (textscrn-pset (~ e2 'tscrn) hitx hity
+                           (cond
+                            ((= hity 0)                           ",")
+                            ((= hity (- (~ e2 'tscrn 'height) 1)) "'")
+                            (else                                 ".")))
+            (set! minbx (+ minbx (* *chw* (- hitx (* *rsize* 0.5))))))
+           ))
+        ))
     (set! *bc* (max (- (floor->exact (/. (- minbx *x*) *chw*)) 1) 1))
     ret))
 
@@ -524,18 +537,18 @@
   ;; 文字-描画手続きの割り付け設定
   ;;(削れた部分(中央))
   (set-char-drawer #\. (lambda (x y width height chw chh z)
-                         (draw-win-rect (- x (* chw 0.65)) y
-                                        (* chw 1.65) chh
+                         (draw-win-rect (- x (* chw 1.5)) y
+                                        (* chw 2.5) chh
                                         width height 'left z)))
   ;;(削れた部分(上端))
   (set-char-drawer #\, (lambda (x y width height chw chh z)
-                         (draw-win-rect (- x (* chw 0.65)) (- y (* chh 0.5))
-                                        (* chw 1.65) (* chh 1.5)
+                         (draw-win-rect (- x (* chw 1.5)) (- y (* chh 0.5))
+                                        (* chw 3.5) (* chh 1.5)
                                         width height 'left z)))
   ;;(削れた部分(下端))
   (set-char-drawer #\' (lambda (x y width height chw chh z)
-                         (draw-win-rect (- x (* chw 0.65)) y
-                                        (* chw 1.65) (* chh 1.5)
+                         (draw-win-rect (- x (* chw 1.5)) y
+                                        (* chw 3.5) (* chh 1.5)
                                         width height 'left z)))
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
