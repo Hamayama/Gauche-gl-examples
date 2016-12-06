@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-12-6 v1.13
+;; 2016-12-6 v1.14
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -455,7 +455,7 @@
        ;; (表示は半分のサイズにする)
        (draw-win-circle (win-x *win* (~ e1 'x))
                         (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                        (win-w *win* (/. *bsize* 2)) *width* *height* 1 1 'center)
+                        (win-w *win* (/. *bsize* 2)) *width* *height* 1 1 'center 0.1)
        ))
    *enemies*))
 
