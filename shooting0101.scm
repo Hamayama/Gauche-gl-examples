@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2016-12-6 v1.68
+;; 2016-12-6 v1.69
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -446,7 +446,11 @@
   ;; 文字-描画手続きの割り付け設定
   ;; (敵(外側))
   (set-char-drawer #\= (lambda (x y width height chw chh z)
-                         (gl-color 0.8 0.8 0.8 1.0)
+                         (gl-color 0.6 0.6 0.6 1.0)
+                         (draw-win-rect (+ x (* chw 0.3)) (+ y (* chh 0.4))
+                                        (* chw 0.4) (* chh 0.2)
+                                        width height 'left z)
+                         (gl-color 0.5 0.5 0.5 1.0)
                          (draw-win-rect (+ x (* chw 0.1)) (+ y (* chh 0.3))
                                         (* chw 0.8) (* chh 0.4)
                                         width height 'left z)))
@@ -456,7 +460,7 @@
                          (draw-win-rect (+ x (* chw 0.3)) (+ y (* chh 0.3))
                                         (* chw 0.4) (* chh 0.4)
                                         width height 'left z)
-                         (gl-color 0.8 0.8 0.8 1.0)
+                         (gl-color 0.6 0.6 0.6 1.0)
                          (draw-win-rect (+ x (* chw 0.1)) (+ y (* chh 0.1))
                                         (* chw 0.8) (* chh 0.8)
                                         width height 'left z)))
