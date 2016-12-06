@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-12-6 v1.14
+;; 2016-12-7 v1.15
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -240,15 +240,15 @@
           (textscrn-fcircle (~ e1 'tscrn) 8 8 9 1 1 "+")
           (textscrn-fcircle (~ e1 'tscrn) 8 8 5 1 1 "#")
           ;; (外周のはみ出し分の調整)
-          (let ((x 4) (y 0))
-            (textscrn-pset (~ e1 'tscrn) x        y        " ")
-            (textscrn-pset (~ e1 'tscrn) (- 16 x) y        " ")
-            (textscrn-pset (~ e1 'tscrn) x        (- 16 y) " ")
-            (textscrn-pset (~ e1 'tscrn) (- 16 x) (- 16 y) " ")
-            (textscrn-pset (~ e1 'tscrn) y        x        " ")
-            (textscrn-pset (~ e1 'tscrn) y        (- 16 x) " ")
-            (textscrn-pset (~ e1 'tscrn) (- 16 y) x        " ")
-            (textscrn-pset (~ e1 'tscrn) (- 16 y) (- 16 x) " "))
+          (let ((x1 4) (y1 0))
+            (textscrn-pset (~ e1 'tscrn) x1        y1        " ")
+            (textscrn-pset (~ e1 'tscrn) (- 16 x1) y1        " ")
+            (textscrn-pset (~ e1 'tscrn) x1        (- 16 y1) " ")
+            (textscrn-pset (~ e1 'tscrn) (- 16 x1) (- 16 y1) " ")
+            (textscrn-pset (~ e1 'tscrn) y1        x1        " ")
+            (textscrn-pset (~ e1 'tscrn) y1        (- 16 x1) " ")
+            (textscrn-pset (~ e1 'tscrn) (- 16 y1) x1        " ")
+            (textscrn-pset (~ e1 'tscrn) (- 16 y1) (- 16 x1) " "))
           ))))
    (else
     ;; 敵ミサイルの生成
@@ -538,18 +538,15 @@
   ;;(削れた部分(中央))
   (set-char-drawer #\. (lambda (x y width height chw chh z)
                          (draw-win-rect (- x (* chw 1.5)) y
-                                        (* chw 2.5) chh
-                                        width height 'left z)))
+                                        (* chw 2.5) chh width height 'left z)))
   ;;(削れた部分(上端))
   (set-char-drawer #\, (lambda (x y width height chw chh z)
                          (draw-win-rect (- x (* chw 1.5)) (- y (* chh 0.5))
-                                        (* chw 3.5) (* chh 1.5)
-                                        width height 'left z)))
+                                        (* chw 3.5) (* chh 1.5) width height 'left z)))
   ;;(削れた部分(下端))
   (set-char-drawer #\' (lambda (x y width height chw chh z)
                          (draw-win-rect (- x (* chw 1.5)) y
-                                        (* chw 3.5) (* chh 1.5)
-                                        width height 'left z)))
+                                        (* chw 3.5) (* chh 1.5) width height 'left z)))
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.07)
