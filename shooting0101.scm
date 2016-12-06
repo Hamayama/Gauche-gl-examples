@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2016-11-19 v1.66
+;; 2016-12-6 v1.67
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -264,11 +264,11 @@
   (for-each
    (lambda (e1)
      (when (~ e1 'useflag)
-       (if (= (~ e1 'state) 0)
-         (gl-color 1.0 1.0 1.0 1.0)
-         (gl-color 1.0 1.0 1.0 0.9))
-       (textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
-                      *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
+       ;(gl-color 1.0 0.0 0.0 1.0)
+       ;(textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
+       ;               *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
+       (textscrn-disp-drawer (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
+                             *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center -0.1)
        ))
    enemies))
 
@@ -443,6 +443,42 @@
   ;; 透過設定
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (gl-enable GL_BLEND)
+  ;; 文字-描画手続きの割り付け設定
+  ;; (敵(外側))
+  (set-char-drawer #\= (lambda (x y width height chw chh z)
+                         (gl-color 0.8 0.8 0.8 1.0)
+                         (draw-win-rect (+ x (* chw 0.1)) (+ y (* chh 0.3))
+                                        (* chw 0.8) (* chh 0.4)
+                                        width height 'left z)))
+  ;; (敵(内側))
+  (set-char-drawer #\R (lambda (x y width height chw chh z)
+                         (gl-color 0.0 0.3 1.0 1.0)
+                         (draw-win-rect (+ x (* chw 0.3)) (+ y (* chh 0.3))
+                                        (* chw 0.4) (* chh 0.4)
+                                        width height 'left z)
+                         (gl-color 0.8 0.8 0.8 1.0)
+                         (draw-win-rect (+ x (* chw 0.1)) (+ y (* chh 0.1))
+                                        (* chw 0.8) (* chh 0.8)
+                                        width height 'left z)))
+  ;; (敵ミサイル(上側))
+  (set-char-drawer #\| (lambda (x y width height chw chh z)
+                         (gl-color 0.7 0.7 0.7 1.0)
+                         (gl-line-width 4.0)
+                         (draw-win-line (+ x (* chw 0.5)) (+ y (* chh 0.1))
+                                        (+ x (* chw 0.5)) (+ y (* chh 0.9))
+                                        width height z)
+                         (gl-line-width 1.0)))
+  ;; (敵ミサイル(下側))
+  (set-char-drawer #\V (lambda (x y width height chw chh z)
+                         (gl-color 0.9 0.9 0.9 1.0)
+                         (gl-line-width 4.0)
+                         (draw-win-line (+ x (* chw 0.1)) (+ y (* chh 0.1))
+                                        (+ x (* chw 0.5)) (+ y (* chh 0.9))
+                                        width height z)
+                         (draw-win-line (+ x (* chw 0.9)) (+ y (* chh 0.1))
+                                        (+ x (* chw 0.5)) (+ y (* chh 0.9))
+                                        width height z)
+                         (gl-line-width 1.0)))
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.07)
@@ -461,7 +497,9 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字表示
-  (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (str7 "") (y2 49))
+  (let ((y2 49)
+        (z1 0.51)
+        (str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (str7 ""))
     (cond
      ;; デモのとき
      (*demoflg*
@@ -494,24 +532,27 @@
     (set! str5 (format "LEVEL : ~D/~D" *mr* *mmr*))
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text-over str1 (win-w-r *win* 1/2) (win-h-r *win* 36 100) *width* *height*
-                           (win-h-r *win* 1/13) 'center 0 #f *backcolor*)
+                           (win-h-r *win* 1/13) 'center z1 #f *backcolor*)
     (gl-color 1.0 1.0 0.0 1.0)
     (draw-stroke-text-over str2 (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100))
                            (win-h-r *win* y2 100) *width* *height*
-                           (win-h-r *win* 1/18) 'center 0 #f *backcolor*)
+                           (win-h-r *win* 1/18) 'center z1 #f *backcolor*)
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text str3 0 0 *width* *height* (win-h-r *win* 1/22))
+    (draw-stroke-text str3 0 0 *width* *height* (win-h-r *win* 1/22) 'left z1)
     (gl-color 1.0 0.0 1.0 1.0)
-    (draw-stroke-text str4 (win-w-r *win* 1/2) 0 *width* *height* (win-h-r *win* 1/22) 'center)
+    (draw-stroke-text str4 (win-w-r *win* 1/2) 0 *width* *height* (win-h-r *win* 1/22) 'center z1)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str5 *width* 0 *width* *height* (win-h-r *win* 1/22) 'right)
+    (draw-stroke-text str5 *width* 0 *width* *height* (win-h-r *win* 1/22) 'right z1)
     (gl-color 0.0 1.0 0.0 1.0)
-    (draw-stroke-text str6 0 (win-h-r *win*  5/100) *width* *height* (win-h-r *win* 1/22))
-    (draw-stroke-text str7 0 (win-h-r *win* 10/100) *width* *height* (win-h-r *win* 1/22))
+    (draw-stroke-text str6 0 (win-h-r *win*  5/100) *width* *height* (win-h-r *win* 1/22) 'left z1)
+    (draw-stroke-text str7 0 (win-h-r *win* 10/100) *width* *height* (win-h-r *win* 1/22) 'left z1)
     )
+  ;; 背景の表示
+  (gl-color *backcolor*)
+  (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
-  (draw-win-rect 0 0 *width* (win-h *win* *chh*) *width* *height*)
+  (draw-win-rect 0 0 *width* (win-h *win* *chh*) *width* *height* 'left 0.5)
   ;; 敵ミサイルの表示
   (disp-enemies *missiles*)
   ;; 敵の表示
@@ -521,11 +562,8 @@
   ;; 自機の表示
   (if (= *scene* 2) (disp-mychr 1))
   (disp-mychr 0)
-  ;; 爆風の表示
+  ;; 爆風の表示(透過あり)
   (disp-blast)
-  ;; 背景の表示
-  (gl-color *backcolor*)
-  (draw-win-rect 0 0 *width* *height* *width* *height*)
   ;(gl-flush)
   (glut-swap-buffers)
   )

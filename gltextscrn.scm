@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-12-1 v1.80
+;; 2016-12-6 v1.81
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -54,7 +54,7 @@
 ;;     (ここで「左上」を原点にはしない (モデルもすべて上下反転してしまうため)
 ;;      個別の表示ルーチンの方で、必要に応じて、height - y として反転するようにする)
 ;;   ・光源は無効に設定する
-;;   ・ONとOFFは常にセットで使用する
+;;   ・ONとOFFは常にセットで使用すること
 (define (gl-ortho-on width height)
   (gl-disable GL_LIGHTING)
   (gl-matrix-mode GL_PROJECTION)
@@ -65,11 +65,11 @@
   (gl-push-matrix)
   (gl-load-identity))
 (define (gl-ortho-off)
-  (gl-pop-matrix)
+  (gl-enable GL_LIGHTING)
   (gl-matrix-mode GL_PROJECTION)
   (gl-pop-matrix)
   (gl-matrix-mode GL_MODELVIEW)
-  (gl-enable GL_LIGHTING))
+  (gl-pop-matrix))
 
 ;; 文字列の幅を取得(ビットマップフォント)(内部処理用)
 (define (get-bitmap-text-width str font)

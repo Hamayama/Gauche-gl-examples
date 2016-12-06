@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2016-12-5 v1.12
+;; 2016-12-6 v1.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -312,7 +312,7 @@
   (let1 z1 -0.1
     (for-each
      (lambda (e1)
-       (set! z1 (+ z1 0.0001))
+       (set! z1 (+ z1 0.00001))
        (when (and (~ e1 'useflag) (~ e1 'contact))
          (disp-one-enemy e1 z1)))
      *enemies*)))
@@ -455,7 +455,7 @@
        ;; (表示は半分のサイズにする)
        (draw-win-circle (win-x *win* (~ e1 'x))
                         (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                        (win-w *win* (/. *bsize* 2)) *width* *height* 1 1 'center 0.1)
+                        (win-w *win* (/. *bsize* 2)) *width* *height* 1 1 'center)
        ))
    *enemies*))
 
@@ -568,7 +568,9 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字表示
-  (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (str7 "") (y2 49))
+  (let ((y2 49)
+        (z1 0.51)
+        (str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (str7 ""))
     (cond
      ;; デモのとき
      (*demoflg*
@@ -601,27 +603,27 @@
     (set! str5 (format "LEVEL : ~D/~D" *mr* *mmr*))
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text-over str1 (win-w-r *win* 1/2) (win-h-r *win* 36 100) *width* *height*
-                           (win-h-r *win* 1/13) 'center 0.2 #f *backcolor* 1.1 1.0)
+                           (win-h-r *win* 1/13) 'center z1 #f *backcolor* 1.1 1.0)
     (gl-color 1.0 1.0 0.0 1.0)
     (draw-stroke-text-over str2 (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100))
                            (win-h-r *win* y2 100) *width* *height*
-                           (win-h-r *win* 1/18) 'center 0.2 #f *backcolor*)
+                           (win-h-r *win* 1/18) 'center z1 #f *backcolor*)
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text str3 0 0 *width* *height* (win-h-r *win* 1/22) 'left 0.2)
+    (draw-stroke-text str3 0 0 *width* *height* (win-h-r *win* 1/22) 'left z1)
     (gl-color 1.0 0.0 1.0 1.0)
-    (draw-stroke-text str4 (win-w-r *win* 1/2) 0 *width* *height* (win-h-r *win* 1/22) 'center 0.2)
+    (draw-stroke-text str4 (win-w-r *win* 1/2) 0 *width* *height* (win-h-r *win* 1/22) 'center z1)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str5 *width* 0 *width* *height* (win-h-r *win* 1/22) 'right 0.2)
+    (draw-stroke-text str5 *width* 0 *width* *height* (win-h-r *win* 1/22) 'right z1)
     (gl-color 0.0 1.0 0.0 1.0)
-    (draw-stroke-text str6 0 (win-h-r *win*  5/100) *width* *height* (win-h-r *win* 1/22) 'left 0.2)
-    (draw-stroke-text str7 0 (win-h-r *win* 10/100) *width* *height* (win-h-r *win* 1/22) 'left 0.2)
+    (draw-stroke-text str6 0 (win-h-r *win*  5/100) *width* *height* (win-h-r *win* 1/22) 'left z1)
+    (draw-stroke-text str7 0 (win-h-r *win* 10/100) *width* *height* (win-h-r *win* 1/22) 'left z1)
     )
   ;; 背景の表示
   (gl-color *backcolor*)
-  (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.2)
+  (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)
-  (draw-win-rect 0 0 *width* (win-h *win* (* *chh* 2)) *width* *height* 'left 0.2)
+  (draw-win-rect 0 0 *width* (win-h *win* (* *chh* 2)) *width* *height* 'left 0.5)
   ;; 敵ミサイルの表示
   (disp-missiles)
   ;; 自機ビームの表示
