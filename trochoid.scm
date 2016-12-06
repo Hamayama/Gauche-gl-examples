@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; trochoid.scm
-;; 2016-11-19 v1.14
+;; 2016-12-6 v1.15
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、内トロコイド曲線を描くサンプルです。
@@ -67,11 +67,12 @@
 ;; 初期化
 (define (init)
   (gl-clear-color 0.0 0.0 0.0 0.0)
-  ;; 線の太さとアンチエイリアスの指定
-  (gl-line-width 1.5)
+  ;; 線の太さとアンチエイリアスの設定
   (gl-enable GL_LINE_SMOOTH)
   (gl-enable GL_BLEND)
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
+  (gl-hint GL_LINE_SMOOTH_HINT GL_DONT_CARE)
+  (gl-line-width 1.5)
   ;; ユニフォームベクタの領域を確保する
   (set! *vvec* (make-f32vector (* (+ (* 360 *rc*) 1) 2) 0))
   (set! *cvec* (make-f32vector (* (+ (* 360 *rc*) 1) 3) 0))
