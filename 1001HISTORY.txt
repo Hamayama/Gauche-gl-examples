@@ -275,6 +275,7 @@ glmintool.scm
   2016-9-26  v1.13  書式修正等
   2016-9-28  v1.14  メソッドの引数の型見直し
   2016-9-28  v1.20  ウィンドウ情報クラス追加
+  2016-12-7  v1.21  仮引数名修正のみ
 
 gltextscrn.scm
   2016-2-8   v1.00  初版
@@ -341,6 +342,7 @@ gltextscrn.scm
   2016-11-25 v1.79  textscrn-dispの処理見直し
   2016-12-1  v1.80  set-char-drawer,textscrn-disp-drawer追加
   2016-12-6  v1.81  正射影設定OFFの処理順見直し
+  2016-12-7  v1.82  書式修正のみ
 
 alaudplay.scm
   2016-3-31  v1.00  初版

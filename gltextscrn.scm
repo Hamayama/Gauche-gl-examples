@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-12-6 v1.81
+;; 2016-12-7 v1.82
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -1103,9 +1103,7 @@
 ;; 文字に描画手続きを割り付ける(モデルの一括表示用)
 ;;   ・drawer には引数 x y width height chw chh z を取る手続きを渡すこと
 (define-method set-char-drawer ((ch <char>) (drawer <procedure>))
-  (hash-table-put! *char-drawer-table*
-                   (char->integer ch)
-                   drawer))
+  (hash-table-put! *char-drawer-table* (char->integer ch) drawer))
 
 ;; 文字に割り付けた描画手続きによるモデルの一括表示
 ;;   ・テキスト画面クラスの各文字に対応するモデルを一括表示する
