@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデルビューワー
-;; 2017-2-1
+;; 2017-2-2
 ;;
 ;; ＜使い方＞
 ;;   gosh  model_viewer.scm  model0101.scm
@@ -9,7 +9,6 @@
 ;; ＜注意事項＞
 ;; ・モデルのサイズは一辺が100程度であることを想定しています
 ;;
-(add-load-path "." :relative)
 (add-load-path ".." :relative)
 (use gl)
 (use gl.glut)
@@ -34,6 +33,9 @@
 (define *yrot*       0) ; Y軸を軸とする回転角(度)
 (define *drot*       2) ; 回転角の増分(度)
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
+
+;; アプリのディレクトリのパス名
+(define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -164,7 +166,7 @@
 
 ;; タイマー
 (define (timer val)
-  ;; モデルの方向を操作
+  ;; モデルの回転操作
   (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)
     (set! *yrot* (- *yrot* *drot*)))
   (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT)
@@ -177,14 +179,16 @@
   (viewer-timer)
   ;; 画面表示
   (glut-post-redisplay)
-  ;; ウェイト
+  ;; ウェイト時間調整
   (glut-timer-func (waitcalc *wcinfo*) timer 0))
 
 ;; メイン処理
 (define (main args)
 
   ;; モデルのロード
-  (load (x->string (list-ref args 1 "model0101.scm")))
+  (load (make-fpath
+         *app-dpath*
+         (x->string (list-ref args 1 "model0101.scm"))))
 
   (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
