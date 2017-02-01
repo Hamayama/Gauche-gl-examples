@@ -72,8 +72,7 @@
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; カスタマイズ用
-  (viewer-init)
-  )
+  (viewer-init))
 
 ;; 画面表示
 (define (disp)
@@ -112,8 +111,7 @@
   (gl-color *backcolor*)
   (draw-win-rect 0 0 (win-w-r *win* 1/2) *height* *width* *height* 'left -0.99999)
   ;(gl-flush)
-  (glut-swap-buffers)
-  )
+  (glut-swap-buffers))
 
 ;; 画面のリサイズ
 (define (reshape w h)
@@ -131,8 +129,7 @@
   ;(glu-look-at 0 0 (/. *ht/2* *tanvan*) 0 0 0 0 1 0)
   (glu-look-at 0 0 (+ (/. *ht/2* *tanvan*) *zd/2*) 0 0 0 0 1 0)
   ;; カスタマイズ用
-  (viewer-reshape)
-  )
+  (viewer-reshape))
 
 ;; キー入力ON
 (define (keyboard key x y)

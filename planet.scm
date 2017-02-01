@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; planet.scm
-;; 2016-4-24 v1.10
+;; 2017-2-1 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、星を表示するサンプルです。
@@ -108,8 +108,7 @@
     (gl-pop-matrix)
     )
   ;(gl-flush)
-  (glut-swap-buffers)
-  )
+  (glut-swap-buffers))
 
 ;; 画面のリサイズ
 (define (reshape w h)

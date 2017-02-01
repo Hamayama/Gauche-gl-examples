@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2016-11-19 v1.32
+;; 2017-2-1 v1.33
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -316,8 +316,7 @@
   (gl-color *backcolor*)
   (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.99999)
   ;(gl-flush)
-  (glut-swap-buffers)
-  )
+  (glut-swap-buffers))
 
 ;; 画面のリサイズ
 (define (reshape w h)
@@ -329,10 +328,7 @@
   (gl-matrix-mode GL_PROJECTION)
   (gl-load-identity)
   ;; 透視射影する範囲を設定
-  (glu-perspective *vangle* (/. *width* *height*) 1 20000)
-  ;; 視点の位置と方向を設定
-  (glu-look-at 0 0 0 0 0 -1 0 1 0)
-  )
+  (glu-perspective *vangle* (/. *width* *height*) 1 20000))
 
 ;; キー入力ON
 (define (keyboard key x y)
@@ -435,8 +431,7 @@
   ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整
-  (glut-timer-func (waitcalc *wcinfo*) timer 0)
-  )
+  (glut-timer-func (waitcalc *wcinfo*) timer 0))
 
 ;; 終了
 (define (exit-main-loop code)

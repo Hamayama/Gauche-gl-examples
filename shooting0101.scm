@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2016-12-9 v1.72
+;; 2017-2-1 v1.73
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -558,8 +558,7 @@
   ;; 爆風の表示(透過あり)
   (disp-blast)
   ;(gl-flush)
-  (glut-swap-buffers)
-  )
+  (glut-swap-buffers))
 
 ;; 画面のリサイズ
 (define (reshape w h)
@@ -571,10 +570,7 @@
   (gl-matrix-mode GL_PROJECTION)
   (gl-load-identity)
   ;; 透視射影する範囲を設定
-  (glu-perspective *vangle* (/. *width* *height*) 1 2000)
-  ;; 視点の位置と方向を設定
-  (glu-look-at 0 0 (/. *wd/2* *tanvan*) 0 0 0 0 1 0)
-  )
+  (glu-perspective *vangle* (/. *width* *height*) 1 2000))
 
 ;; キー入力ON
 (define (keyboard key x y)
@@ -743,8 +739,7 @@
   ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整
-  (glut-timer-func (waitcalc *wcinfo*) timer 0)
-  )
+  (glut-timer-func (waitcalc *wcinfo*) timer 0))
 
 ;; 終了
 (define (exit-main-loop code)
