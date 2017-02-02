@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2017-2-1 1.81
+;; 2017-2-2 1.82
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -306,8 +306,7 @@
 ;; 地面(上面に原点あり)
 (define (ground)
   (gl-material GL_FRONT GL_DIFFUSE #f32(1.0 0.0 0.0 1.0))
-  (box *wd/2* *ht/2* 150)
-  )
+  (box *wd/2* *ht/2* 150))
 
 
 ;; 初期化
