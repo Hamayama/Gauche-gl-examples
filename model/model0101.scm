@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 人形モデル0101
-;; 2017-2-1
+;; 2017-2-2
 ;;
 
 ;; 直方体(上面に原点あり)
@@ -133,7 +133,6 @@
 (define *model-name*           "model0101")
 (define *model-text-vec-A*     (make-vector  5 ""))
 (define *model-text-vec-B*     (make-vector  5 ""))
-(define *model-para-vec*       (make-vector 10 0))
 (define *model-para-vec*       (make-vector 10 0))
 (set! (~ *model-text-vec-A* 0) "  type : 0")
 (set! (~ *model-text-vec-A* 1) "  pose : 0 (normal)")
