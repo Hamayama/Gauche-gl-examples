@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; trochoid.scm
-;; 2017-2-2 v1.16
+;; 2017-2-3 v1.17
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、内トロコイド曲線を描くサンプルです。
@@ -14,6 +14,7 @@
 (use math.const)
 (use math.mt-random)
 
+(define *title* "trochoid") ; ウィンドウのタイトル
 (define *rc*  100) ; 外側の円の半径
 (define *rm*   48) ; 内側の円の半径
 (define *rd*   44) ; 内側の円の鉛筆の位置
@@ -32,10 +33,10 @@
 
 ;; 色情報(16色)
 (define *color-table*
-  #(#(0.0 0.0 0.0) #(0.0 0.0 0.5) #(0.0 0.5 0.0) #(0.0 0.5 0.5)
-    #(0.5 0.0 0.0) #(0.5 0.0 0.5) #(0.5 0.5 0.0) #(0.75 0.75 0.75)
-    #(0.5 0.5 0.5) #(0.0 0.0 1.0) #(0.0 1.0 0.0) #(0.0 1.0 1.0)
-    #(1.0 0.0 0.0) #(1.0 0.0 1.0) #(1.0 1.0 0.0) #(1.0 1.0 1.0)))
+  #(#f32(0.0 0.0 0.0 1.0) #f32(0.0 0.0 0.5 1.0) #f32(0.0 0.5 0.0 1.0) #f32(0.0 0.5 0.5 1.0)
+    #f32(0.5 0.0 0.0 1.0) #f32(0.5 0.0 0.5 1.0) #f32(0.5 0.5 0.0 1.0) #f32(0.75 0.75 0.75 1.0)
+    #f32(0.5 0.5 0.5 1.0) #f32(0.0 0.0 1.0 1.0) #f32(0.0 1.0 0.0 1.0) #f32(0.0 1.0 1.0 1.0)
+    #f32(1.0 0.0 0.0 1.0) #f32(1.0 0.0 1.0 1.0) #f32(1.0 1.0 0.0 1.0) #f32(1.0 1.0 1.0 1.0)))
 
 ;; 内トロコイド曲線の座標と色を設定
 (define (setup-trochoid rc rm rd color-index vvec cvec vec-offset)
@@ -115,7 +116,7 @@
     ;; 内トロコイド曲線の座標と色を設定
     (set! *vnum* (setup-trochoid *rc* *rm* *rd* *color-index* *vvec* *cvec* 0))
     ;; タイトル文字列を更新
-    (glut-set-window-title (make-title *rm* *rd*))
+    (glut-set-window-title (format "~a (~d,~d)" *title* *rm* *rd*))
     ;; 画面表示
     ;; (表示に時間がかかる場合は disp を glut-post-redisplay にする)
     (disp))
@@ -124,17 +125,13 @@
     (gc) (print (gc-stat)))
    ))
 
-;; タイトル文字列の生成
-(define (make-title rm rd)
-  (format "trochoid (~d,~d)" rm rd))
-
 ;; メイン処理
 (define (main args)
   (glut-init args)
   (glut-init-display-mode (logior GLUT_SINGLE GLUT_RGB))
   (glut-init-window-size 480 480)
   (glut-init-window-position 100 100)
-  (glut-create-window (make-title *rm* *rd*))
+  (glut-create-window (format "~a (~d,~d)" *title* *rm* *rd*))
   (init)
   (glut-display-func disp)
   (glut-reshape-func reshape)

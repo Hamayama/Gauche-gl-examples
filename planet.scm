@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; planet.scm
-;; 2017-2-1 v1.11
+;; 2017-2-3 v1.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、星を表示するサンプルです。
@@ -14,6 +14,7 @@
 (use math.mt-random)
 
 (define *wait*   20) ; ウェイト(msec)
+(define *title* "planet") ; ウィンドウのタイトル
 (define *snum*  200) ; 星の数
 (define *ssize*   4) ; 星の大きさ
 (define *sspeed*  1) ; 星の速度
@@ -134,7 +135,7 @@
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size 480 480)
   (glut-init-window-position 100 100)
-  (glut-create-window "planet")
+  (glut-create-window *title*)
   (init)
   (glut-display-func disp)
   (glut-reshape-func reshape)
