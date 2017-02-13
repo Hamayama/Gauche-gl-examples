@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-13 v1.03
+;; 2017-2-13 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -56,9 +56,10 @@
 (define *sc*         0) ; スコア
 (define *hs*         0) ; ハイスコア
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:プレイ中,=2:プレイ終了)
-(define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
-(define *floorcolor* #f32(0.7 0.2 0.0 1.0)) ; 地面色
-(define *checkcolor* #f32(1.0 0.6 0.2 1.0)) ; チェックポイント色
+(define *backcolor*   #f32(0.0 0.0 0.3 1.0)) ; 背景色
+(define *floorcolor*  #f32(0.7 0.2 0.0 1.0)) ; 地面色
+(define *checkcolor1* #f32(1.0 0.6 0.2 1.0)) ; チェックポイント色1
+(define *checkcolor2* #f32(0.7 0.4 0.1 1.0)) ; チェックポイント色2
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
@@ -162,7 +163,9 @@
 
 ;; チェックポイントの表示
 (define (disp-check-point)
-  (gl-color *checkcolor*)
+  (if (= *goal* 0)
+    (gl-color *checkcolor1*)
+    (gl-color *checkcolor2*))
   (draw-win-circle (win-x *win* *cx*)
                    (win-y *win* (calc-by-ratio *cy* *miny* *maxy* (- *ht/2*) *ht/2*))
                    (win-w *win* *cr*)
@@ -277,7 +280,7 @@
   (gl-load-identity)
   (let1 z1 (/. *ht/2* *tanvan*)
     ;; 透視射影する範囲を設定
-    (glu-perspective *vangle* (/. *width* *height*) (- z1 20000) (+ z1 20000))
+    (glu-perspective *vangle* (/. *width* *height*) (- z1 10000) (+ z1 10000))
     ;; 視点の位置と方向を設定
     (glu-look-at 0 0 z1 0 0 0 0 1 0)))
 

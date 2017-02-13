@@ -4,7 +4,7 @@
 ;; 2017-2-13
 ;;
 ;; ＜使い方＞
-;;   gosh  model_viewer.scm  model0101.scm
+;;   gosh  model_viewer.scm  [modelXXXX.scm]
 ;;
 ;; ＜注意事項＞
 ;; ・モデルのサイズは一辺が100程度であることを想定しています
