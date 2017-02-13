@@ -280,6 +280,7 @@ jump.scm
 
 flight.scm
   2017-2-13  v1.00  初版
+  2017-2-13  v1.01  コメント修正のみ
 
 
 glmintool.scm
