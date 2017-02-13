@@ -1,13 +1,14 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-13 v1.05
+;; 2017-2-14 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
 ;;   スペースキーを押し続けると加速します。(上昇中はほとんど加速できません)
 ;;   矢印キーの上下で方向を変えます。
 ;;   (矢印キーの上で反時計回り、下で時計回りに角度を変えます)
+;;   画面の左右はつながっています。
 ;;   画面右上のチェックポイント(オレンジ色の円)に触れてから、地面に着陸するとゴールです。
 ;;   着陸の際は、地面への進入角が30度以下である必要があります。
 ;;   (進入角が30度より大きいとバウンドしてしまいます)
@@ -200,8 +201,7 @@
   (auddata-set-prop *adata-point* AL_GAIN  0.4)
   (auddata-set-prop *adata-point* AL_PITCH 1.1)
   (auddata-load-wav-file *adata-end*   (make-fpath *app-dpath* "sound/decide10.wav"))
-  (auddata-set-prop *adata-end*   AL_GAIN  0.4)
-  (auddata-set-prop *adata-end*   AL_PITCH 0.9)
+  (auddata-set-prop *adata-end*   AL_GAIN  0.5)
   )
 
 ;; 画面表示
