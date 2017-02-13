@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-13 v1.01
+;; 2017-2-13 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -233,12 +233,10 @@
     (set! str7 (format "(V=~D VX=~D VY=~D)"
                        (truncate-n *v* 1) (truncate-n *vx* 1) (truncate-n *vy* 1)))
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-stroke-text str1 (win-w-r *win* 1/2) (win-h-r *win* y1 100) *width* *height*
-                      (win-h-r *win* 1/13) 'center)
+    (draw-stroke-text str1 (win-w-r *win* 1/2) (win-h-r *win* y1 100) *width* *height* (win-h-r *win* 1/13) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str2
-                      (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100)) (win-h-r *win* y2 100)
-                      *width* *height* (win-h-r *win* 1/18) 'center)
+    (draw-stroke-text str2 (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100)) (win-h-r *win* y2 100) *width* *height*
+                      (win-h-r *win* 1/18) 'center)
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text str3 0 0 *width* *height* (win-h-r *win* 1/22))
     (gl-color 1.0 0.0 1.0 1.0)

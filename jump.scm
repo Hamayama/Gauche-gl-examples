@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2017-2-13 v1.54
+;; 2017-2-13 v1.55
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -422,9 +422,7 @@
     (draw-stroke-text-over str1 (win-w-r *win* 1/2) (win-h-r *win* 38 100) *width* *height*
                            (win-h-r *win* 1/13) 'center 0 #f *backcolor*)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text-over str2
-                           (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100))
-                           (win-h-r *win* y2 100) *width* *height*
+    (draw-stroke-text-over str2 (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100)) (win-h-r *win* y2 100) *width* *height*
                            (win-h-r *win* 1/18) 'center 0 #f *backcolor*)
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text str3 0 0 *width* *height* (win-h-r *win* 1/22))
@@ -433,8 +431,7 @@
     (gl-color 1.0 1.0 0.0 1.0)
     (draw-stroke-text str5 *width* 0 *width* *height* (win-h-r *win* 1/22) 'right)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str6 (win-w-r *win* 1/2) (win-h-r *win* 40/100) *width* *height*
-                      (win-h-r *win* 1/15) 'center)
+    (draw-stroke-text str6 (win-w-r *win* 1/2) (win-h-r *win* 40/100) *width* *height* (win-h-r *win* 1/15) 'center)
     )
   ;; 画面上部(スコア表示領域)のマスク
   (gl-color *backcolor*)

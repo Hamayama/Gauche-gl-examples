@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2017-2-13 v1.17
+;; 2017-2-13 v1.18
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -603,8 +603,7 @@
     (draw-stroke-text-over str1 (win-w-r *win* 1/2) (win-h-r *win* 36 100) *width* *height*
                            (win-h-r *win* 1/13) 'center z1 #f *backcolor* 1.1 1.0)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text-over str2 (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100))
-                           (win-h-r *win* y2 100) *width* *height*
+    (draw-stroke-text-over str2 (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100)) (win-h-r *win* y2 100) *width* *height*
                            (win-h-r *win* 1/18) 'center z1 #f *backcolor*)
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text str3 0 0 *width* *height* (win-h-r *win* 1/22) 'left z1)
