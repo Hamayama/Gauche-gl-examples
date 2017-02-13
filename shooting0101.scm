@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2017-2-1 v1.73
+;; 2017-2-13 v1.74
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -34,13 +34,13 @@
 (define *ht/2*     400) ; 画面高さ/2
 (define *chw*       16) ; 文字の幅
 (define *chh*       32) ; 文字の高さ
-(define *x*          0) ; 自機のX座標
-(define *y*       -240) ; 自機のY座標
-(define *v*         10) ; 自機の速度
 (define *maxx*       (- *wd/2* (* *chw* 1.5)))   ; 自機のX座標最大値
 (define *minx*       (- *maxx*))                 ; 自機のX座標最小値
 (define *maxy*       (- *ht/2* *chh*))           ; 自機のY座標最大値
 (define *miny*       (+ (- *ht/2*) (* *chh* 2))) ; 自機のY座標最小値
+(define *x*          0) ; 自機のX座標
+(define *y*       -240) ; 自機のY座標
+(define *v*         10) ; 自機の速度
 (define *bc*         0) ; 自機ビームカウンタ
 (define *bsize*    300) ; 爆風のサイズ
 (define *waku*       5) ; 当たり判定調整用
@@ -437,6 +437,7 @@
   (gl-light  GL_LIGHT0 GL_POSITION #f32(1.0 1.0 1.0 0.0))
   (gl-enable GL_LIGHTING)
   (gl-enable GL_LIGHT0)
+  (gl-enable GL_NORMALIZE)
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)

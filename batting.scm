@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2017-2-3 v1.54
+;; 2017-2-13 v1.55
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -131,6 +131,7 @@
   (gl-light  GL_LIGHT0 GL_POSITION #f32(1.0 1.0 1.0 0.0))
   (gl-enable GL_LIGHTING)
   (gl-enable GL_LIGHT0)
+  (gl-enable GL_NORMALIZE)
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 画像表示のテスト
-;; 2016-11-19
+;; 2017-2-13
 ;;
 (add-load-path ".." :relative)
 (use gl)
@@ -48,6 +48,7 @@
   (gl-light  GL_LIGHT0 GL_POSITION #f32(1.0 1.0 1.0 0.0))
   (gl-enable GL_LIGHTING)
   (gl-enable GL_LIGHT0)
+  (gl-enable GL_NORMALIZE)
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2017-2-1 v1.33
+;; 2017-2-13 v1.34
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -110,28 +110,14 @@
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
 
-;; 比例の計算
-;; ( maxx-x:x-minx = maxy-y:y-miny となるような y を求める)
-(define (calc-by-ratio x minx maxx miny maxy)
-  (/. (+ (* maxy (- x minx)) (* miny (- maxx x)))
-      (- maxx minx)))
-
 ;; 曲がり量から差分を計算
-;; (ここではカーブの曲線をz座標の2次関数としている)
+;; (ここではカーブの曲線をZ座標の2次関数としている)
 (define (calc-by-curv c z)
   (* c z z))
 
-;; 時間(msec)を文字列にする
-(define (make-time-text msec)
-  (let* ((msec1   (x->integer msec))
-         (minute  (quotient         msec1 60000))
-         (second  (quotient (modulo msec1 60000) 1000))
-         (msec/10 (quotient (modulo msec1  1000)   10)))
-    (format "~2,'0D'~2,'0D\"~2,'0D" minute second msec/10)))
-
 ;; 道路の表示
 ;; (Z座標はプレイヤーの視点が原点で奥方向をマイナスとする。
-;;  そして、Z=*scz* の位置に 幅 *wd* x 高さ *ht* のスクリーンがあるものとして、
+;;  そして、z=*scz* の位置に 幅 *wd* x 高さ *ht* のスクリーンがあるものとして、
 ;;  投影座標 (scx,scy) を計算する。
 ;;  ただし、OpenGLを使う場合には、ライブラリが投影変換(および表示)を行ってくれるので、
 ;;  投影座標 (scx,scy) を自前で計算する必要はない。
@@ -242,6 +228,7 @@
   (gl-light  GL_LIGHT0 GL_POSITION #f32(1.0 1.0 1.0 0.0))
   (gl-enable GL_LIGHTING)
   (gl-enable GL_LIGHT0)
+  (gl-enable GL_NORMALIZE)
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
@@ -407,8 +394,8 @@
        (when (or (> (+ *rx1* *rdx*) 0)
                  (< (+ *rx2* *rdx*) 0)
                  (>= *goal* 5))
-         (if (= *goal* 0) (auddata-play *adata-end1*))
-         (set! *scene* 2))
+         (set! *scene* 2)
+         (if (= *goal* 0) (auddata-play *adata-end1*)))
        )
       ((2) ; プレイ終了
        ;; ウェイト時間の復旧

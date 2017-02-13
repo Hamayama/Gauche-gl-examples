@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2016-12-7 v1.21
+;; 2017-2-13 v1.22
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -12,7 +12,8 @@
   (use gauche.uvector)
   (use math.mt-random)
   (export
-    randint round-n truncate-n recthit? make-fpath make-vector-of-class
+    randint round-n truncate-n calc-by-ratio recthit?
+    make-fpath make-vector-of-class make-time-text
     <wininfo> win-init win-update-size win-x win-y win-w win-h win-w-r win-h-r
     <keystateinfo> key-on key-off spkey-on spkey-off key-on? spkey-on? mdkey-on?
     <keywaitinfo>  keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
@@ -39,6 +40,12 @@
 (define (truncate-n x n)
   (let1 p (expt 10 n)
     (/. (truncate (* x p)) p)))
+
+;; 比例の計算
+;; ( maxx-x:x-minx = maxy-y:y-miny となるような y を求める)
+(define (calc-by-ratio x minx maxx miny maxy)
+  (/. (+ (* maxy (- x minx)) (* miny (- maxx x)))
+      (- maxx minx)))
 
 ;; 長方形の衝突チェック
 ;;   左上座表が (x1,y1) で 幅 w1 高さ h1 の長方形と、
@@ -67,6 +74,14 @@
     (do ((i 0 (+ i 1)))
         ((>= i n) #f)
       (set! (~ v i) (make c)))))
+
+;; 時間(msec)を文字列にする
+(define (make-time-text msec)
+  (let* ((msec1   (x->integer msec))
+         (minute  (quotient         msec1 60000))
+         (second  (quotient (modulo msec1 60000) 1000))
+         (msec/10 (quotient (modulo msec1  1000)   10)))
+    (format "~2,'0D'~2,'0D\"~2,'0D" minute second msec/10)))
 
 
 ;; ウィンドウ情報クラス

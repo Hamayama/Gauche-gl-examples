@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2017-2-2 1.82
+;; 2017-2-13 1.83
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -296,7 +296,7 @@
 ;; 円柱(上面に原点あり)
 ;; (define (cylinder r h s) ...)
 ;;
-;; 人形モデル0101(頭に原点あり。高さ100に固定)
+;; モデル0101(人形)(頭に原点あり)(高さ100)
 ;;   type  タイプ(=0:自分,=1:敵)
 ;;   pose  ポーズ(=0:通常,=1:前進,=2:後退,=3:やられ,=4:パンチ,=5:キック)
 ;; (define (model0101 type pose) ...)
@@ -317,6 +317,7 @@
   (gl-light  GL_LIGHT0 GL_POSITION #f32(1.0 1.0 1.0 0.0))
   (gl-enable GL_LIGHTING)
   (gl-enable GL_LIGHT0)
+  (gl-enable GL_NORMALIZE)
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
