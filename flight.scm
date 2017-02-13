@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-13 v1.04
+;; 2017-2-13 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -217,10 +217,12 @@
     (case *scene*
       ((0) ; スタート画面
        (set! str1 "== FLIGHT ==")
-       (set! str2 "HIT [SPACE] KEY")
+       (set! str2 "PRESS [SPACE] KEY")
        (set! y2 48))
       ((1) ; プレイ中
-       )
+       (when (<= *sc* 5000)
+         (set! str2 "USE [SPACE] [UP] [DOWN] KEY")
+         (set! y2 48)))
       ((2) ; プレイ終了
        (set! str1 "== GOAL!! ==")
        (set! y1 30)
