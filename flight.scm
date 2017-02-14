@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-14 v1.07
+;; 2017-2-15 v1.08
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -99,10 +99,10 @@
 (define (disp-mychr)
   (gl-push-matrix)
   (gl-translate *x* (calc-by-ratio *y* *miny* *maxy* (- *ht/2*) *ht/2*) 0)
-  (let1 scl (/. *mysize* 80)
-    (gl-scale scl scl scl))
   (gl-rotate (+ *angle* -90) 0 0 1)
   (gl-rotate (+ *angle* -90) 0 1 0)
+  (let1 scl (/. *mysize* 80)
+    (gl-scale scl scl scl))
   (model0301)
   (gl-pop-matrix)
   )
@@ -253,8 +253,7 @@
     (draw-stroke-text str6 (win-h-r *win* 1/100) (win-h-r *win*  6/100) *width* *height* (win-h-r *win* 1/24))
     (draw-stroke-text str7 (win-h-r *win* 1/100) (win-h-r *win* 11/100) *width* *height* (win-h-r *win* 1/24))
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str8 (win-w-r *win* 1/2) (win-h-r *win* 39/100) *width* *height*
-                      (win-h-r *win* 1/13) 'center)
+    (draw-stroke-text str8 (win-w-r *win* 1/2) (win-h-r *win* 39/100) *width* *height* (win-h-r *win* 1/13) 'center)
     )
   ;; 自機の表示
   (disp-mychr)
