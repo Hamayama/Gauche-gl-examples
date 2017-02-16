@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2016-12-7 v1.82
+;; 2017-2-16 v1.83
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -11,7 +11,7 @@
   (use gl)
   (use gl.glut)
   (use gauche.uvector)
-  (use gauche.sequence)
+  (use gauche.collection)
   (use gauche.record)
   (use srfi-13) ; string-fold,string-for-each用
   (use binary.pack)

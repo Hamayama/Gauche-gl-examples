@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2017-2-13 v1.35
+;; 2017-2-16 v1.36
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -16,7 +16,6 @@
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
-(use gauche.sequence)
 (use math.const)
 (use glmintool)
 (use gltextscrn)

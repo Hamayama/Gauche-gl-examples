@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-15 v1.08
+;; 2017-2-16 v1.09
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -19,7 +19,6 @@
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
-(use gauche.sequence)
 (use math.const)
 (use glmintool)
 (use gltextscrn)
