@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2017-2-17 v1.85
+;; 2017-2-18 v1.86
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -479,7 +479,8 @@
         (let1 strdata1 (textscrn-repeat-sub ts strdata (+ (* x2 2) 1))
           ;; 両端を結ぶ水平線を表示
           (textscrn-over-sub ts (- x1 x2) (- y1 y2) strdata1)
-          (textscrn-over-sub ts (- x1 x2) (+ y1 y2) strdata1))
+          (textscrn-over-sub ts (- x1 x2) (+ y1 y2) strdata1)
+          )
         (inc! y2)
         (if (<= y2 r1) (loop 0 y2))
         ))
@@ -562,8 +563,7 @@
            (else
             (inc! (~ e1 'y1))
             (set! (~ e1 'x) (+ (~ e1 'x) (~ e1 'a)))))
-          )
-        ))
+          )))
 
     ;; 描画処理1(ライン表示)
     ;; (ライン表示をしないと、水平線の抜けや飛び飛びの表示が発生するため必要)
