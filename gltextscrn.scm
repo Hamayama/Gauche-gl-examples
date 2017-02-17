@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2017-2-17 v1.84
+;; 2017-2-17 v1.85
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -434,15 +434,16 @@
           (textscrn-pset-sub ts (- x1 x2) (- y1 y2) c)
           (textscrn-pset-sub ts (+ x1 x2) (- y1 y2) c)
           (textscrn-pset-sub ts (- x1 x2) (+ y1 y2) c)
-          (textscrn-pset-sub ts (+ x1 x2) (+ y1 y2) c))
+          (textscrn-pset-sub ts (+ x1 x2) (+ y1 y2) c)
+          )
         (if drawflag
           (let1 strdata1 (textscrn-repeat-sub ts strdata (- xold x2))
             ;; 前回の足りない部分を水平線で追加表示
             (textscrn-over-sub ts (- x1 xold) (- y1 yold) strdata1)
             (textscrn-over-sub ts (+ x1 x2 1) (- y1 yold) strdata1)
             (textscrn-over-sub ts (- x1 xold) (+ y1 yold) strdata1)
-            (textscrn-over-sub ts (+ x1 x2 1) (+ y1 yold) strdata1))
-          )
+            (textscrn-over-sub ts (+ x1 x2 1) (+ y1 yold) strdata1)
+            ))
         (set! drawflag #t)
         (set! xold x2)
         (set! yold y2)
@@ -453,8 +454,8 @@
       (let1 strdata1 (textscrn-repeat-sub ts strdata (+ (* xold 2) 1))
         ;; 上下の最後の部分を水平線で追加表示
         (textscrn-over-sub ts (- x1 xold) (- y1 yold) strdata1)
-        (textscrn-over-sub ts (- x1 xold) (+ y1 yold) strdata1))
-      )
+        (textscrn-over-sub ts (- x1 xold) (+ y1 yold) strdata1)
+        ))
     ))
 
 ;; 文字列の円塗りつぶし表示処理
@@ -698,7 +699,8 @@
     (let loop ((x3 x1) (y3 y1))
       (if (and (>= y3 0) (< y3 h1) (>= x3 0) (< x3 w1))
         (let1 c1 (~ data (+ (* y3 w1) x3))
-          (for-each (lambda (c2) (if (= c1 c2) (set! ret #t))) strdata)))
+          (if (find (lambda (c2) (= c1 c2)) strdata)
+            (set! ret #t))))
       (if (not ret)
         (cond
          ((< x3 x2) (loop (+ x3 1) y3))
@@ -720,9 +722,9 @@
       (if (and (>= y3 0) (< y3 h1) (>= x3 0) (< x3 w1))
         (let1 c1 (~ data (+ (* y3 w1) x3))
           (for-each
-           (lambda (c2) (if (= c1 c2)
-                          (push! ret (list x3 y3 (integer->char c1)))))
-           strdata)))
+           (lambda (c2) (if (= c1 c2) (push! ret (list x3 y3 (integer->char c1)))))
+           strdata)
+          ))
       (cond
        ((< x3 x2) (loop (+ x3 1) y3))
        ((< y3 y2) (loop x1 (+ y3 1))))
