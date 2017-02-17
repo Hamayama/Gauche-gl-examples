@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-16 v1.09
+;; 2017-2-17 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -39,7 +39,7 @@
 (define *minx*       (- *maxx*)) ; 自機のX座標最小値
 (define *maxy*   77000) ; 自機のY座標最大値
 (define *miny*   -3000) ; 自機のY座標最小値
-(define *maxv*     800) ; 自機の速度最大値
+(define *maxv*     850) ; 自機の速度最大値
 (define *x*     -40000) ; 自機のX座標
 (define *y*          0) ; 自機のY座標
 (define *v*          0) ; 自機の速度
@@ -209,9 +209,8 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字表示
-  (let ((y1 36)
-        (y2 49)
-        (str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (str7 "") (str8 ""))
+  (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (str7 "") (str8 "")
+        (y1 36) (y2 49))
     ;; シーン情報で場合分け
     (case *scene*
       ((0) ; スタート画面

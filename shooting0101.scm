@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2017-2-13 v1.75
+;; 2017-2-17 v1.76
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -491,9 +491,8 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; 文字表示
-  (let ((y2 49)
-        (z1 0.51)
-        (str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (str7 ""))
+  (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (str7 "")
+        (y2 49) (z1 0.51))
     (cond
      ;; デモのとき
      (*demoflg*

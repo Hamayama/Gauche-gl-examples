@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2017-2-16 v1.83
+;; 2017-2-17 v1.84
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -486,8 +486,7 @@
 
 ;; 文字列の多角形表示処理
 ;;   ・point は ((x1 y1) (x2 y2) ...) という頂点座標のシーケンス
-(define-method textscrn-poly ((ts <textscrn>)
-                              (point <sequence>) (str <string>)
+(define-method textscrn-poly ((ts <textscrn>) (point <sequence>) (str <string>)
                               :optional (notclose #f))
   (let* ((pnum    (length point))
          (lnum    (if notclose (- pnum 1) pnum))
@@ -507,8 +506,7 @@
 ;; 文字列の多角形塗りつぶし表示処理
 ;;   ・point は ((x1 y1) (x2 y2) ...) という頂点座標のシーケンス
 (define-class <edgeinfo> () (a ydir y1 y2 x)) ; 辺情報クラス
-(define-method textscrn-fpoly ((ts <textscrn>)
-                               (point <sequence>) (str <string>))
+(define-method textscrn-fpoly ((ts <textscrn>) (point <sequence>) (str <string>))
   (let ((pnum      (length point))
         (x1 0) (y1 0) (x2 0) (y2 0) (miny 0) (maxy 0)
         (e1        #f)  ; 辺情報
@@ -619,8 +617,7 @@
 
 ;; 文字列の判定処理
 ;;   ・テキスト画面の指定範囲に文字列 str のいずれかの文字があれば #t を返す
-(define-method textscrn-check-str ((ts <textscrn>)
-                                   (str <string>)
+(define-method textscrn-check-str ((ts <textscrn>) (str <string>)
                                    (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>))
   (let ((x3 (min x1 x2))
         (y3 (min y1 y2))
@@ -633,8 +630,7 @@
 ;;   ・画面上の座標範囲 (x1,y1)-(x2,y2) を指定して、textscrn-check-str を実行する
 ;;     戻り値は #t か #f になる
 ;;   ・1文字の幅 chw と高さ chh も指定が必要
-(define-method textscrn-disp-check-str ((ts <textscrn>)
-                                        (str <string>)
+(define-method textscrn-disp-check-str ((ts <textscrn>) (str <string>)
                                         (x1 <real>) (y1 <real>) (x2 <real>) (y2 <real>)
                                         (chw <real>) (chh <real>)
                                         :optional (xoffset 0) (yoffset 0) (align 'left))
@@ -659,8 +655,7 @@
 ;;     1を指定すると、昇順でX座標優先でソートした結果を返す
 ;;     2を指定すると、降順でY座標優先でソートした結果を返す
 ;;     3を指定すると、降順でX座標優先でソートした結果を返す
-(define-method textscrn-disp-check-str2 ((ts <textscrn>)
-                                         (str <string>)
+(define-method textscrn-disp-check-str2 ((ts <textscrn>) (str <string>)
                                          (x1 <real>) (y1 <real>) (x2 <real>) (y2 <real>)
                                          (chw <real>) (chh <real>)
                                          :optional (xoffset 0) (yoffset 0) (align 'left)
@@ -693,8 +688,7 @@
 
 ;; 文字列の判定処理サブ(内部処理用)
 ;;   ・ヒットした場合に #t を返す。そうでなければ #f を返す
-(define-method textscrn-check-str-sub ((ts <textscrn>)
-                                       (str <string>)
+(define-method textscrn-check-str-sub ((ts <textscrn>) (str <string>)
                                        (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>))
   (let ((ret     #f)
         (w1      (~ ts 'width))
@@ -715,8 +709,7 @@
 
 ;; 文字列の判定処理サブ2(内部処理用)
 ;;   ・ヒットした座標と文字をリストにして返す
-(define-method textscrn-check-str-sub2 ((ts <textscrn>)
-                                        (str <string>)
+(define-method textscrn-check-str-sub2 ((ts <textscrn>) (str <string>)
                                         (x1 <integer>) (y1 <integer>) (x2 <integer>) (y2 <integer>))
   (let ((ret     '())
         (w1      (~ ts 'width))
@@ -957,8 +950,7 @@
 ;; ビットマップファイルを読み込み、テクスチャデータに設定する
 ;;   ・ビットマップファイルは、24bitカラーで無圧縮のもののみ使用可能
 ;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
-(define-method load-texture-bitmap-file ((td <texdata>)
-                                         (file <string>)
+(define-method load-texture-bitmap-file ((td <texdata>) (file <string>)
                                          :optional (trans-color #f))
   (let ((tex (gl-gen-textures 1))
         (img (load-bitmap-file file trans-color)))
@@ -1030,8 +1022,7 @@
   )
 
 ;; 文字にテクスチャデータを割り付ける(テクスチャの一括表示用)
-(define-method set-char-texture ((ch <char>)
-                                 (td <texdata>)
+(define-method set-char-texture ((ch <char>) (td <texdata>)
                                  :optional (xcrd 1.0) (ycrd 1.0)
                                  (width-r 1.0) (height-r 1.0)
                                  (xoffset-r 0.0) (yoffset-r 0.0))
