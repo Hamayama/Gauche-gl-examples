@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2017-2-18 v1.86
+;; 2017-2-18 v1.87
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -44,9 +44,7 @@
 ;;      制約もあるもよう)
 (define *use-gl-texture-rectangle* #t)
 (define GL_TEXTURE_RECTANGLE
-  (if (global-variable-bound? 'gl 'GL_TEXTURE_RECTANGLE)
-    (with-module gl GL_TEXTURE_RECTANGLE)
-    #x84f5))
+  (global-variable-ref 'gl 'GL_TEXTURE_RECTANGLE #x84f5))
 
 ;; 正射影設定ON/OFF(内部処理用)
 ;;   ・投影方法を正射影に設定し、また、
