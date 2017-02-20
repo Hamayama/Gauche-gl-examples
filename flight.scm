@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-17 v1.10
+;; 2017-2-20 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -200,7 +200,7 @@
   (auddata-set-prop *adata-point* AL_GAIN  0.4)
   (auddata-set-prop *adata-point* AL_PITCH 1.1)
   (auddata-load-wav-file *adata-end*   (make-fpath *app-dpath* "sound/decide10.wav"))
-  (auddata-set-prop *adata-end*   AL_GAIN  0.5)
+  (auddata-set-prop *adata-end*   AL_GAIN  0.4)
   )
 
 ;; 画面表示
