@@ -1,5 +1,5 @@
 ;;
-;; testing alaudplay, glmintool and gltextscrn
+;; testing alaudplay, glmintool, gltextscrn and glmodelkit
 ;;
 
 (add-load-path ".." :relative)
@@ -29,6 +29,11 @@
 (define *font-bitmap-1* #f)
 (define *font-stroke-1* #f)
 (test-module 'gltextscrn)
+(test-end)
+
+(test-start "glmodelkit")
+(use glmodelkit)
+(test-module 'glmodelkit)
 (test-end)
 
 (print "HIT ENTER KEY!")
