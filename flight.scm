@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-22 v1.20
+;; 2017-2-22 v1.21
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -207,16 +207,18 @@
   (gl-load-identity)
   ;; 文字表示
   (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (str7 "") (str8 "")
-        (y1 36) (y2 49))
+        (x2 1) (y1 36) (y2 49))
     ;; シーン情報で場合分け
     (case *scene*
       ((0) ; スタート画面
        (set! str1 "== FLIGHT ==")
        (set! str2 "PRESS [SPACE] KEY")
+       (set! x2  0)
        (set! y2 48))
       ((1) ; プレイ中
        (when (<= *sc* 5000)
          (set! str2 "USE [SPACE] [UP] [DOWN] KEY")
+         (set! x2  0)
          (set! y2 48)))
       ((2) ; プレイ終了
        (set! str1 "== GOAL!! ==")
@@ -236,7 +238,7 @@
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text str1 (win-w-r *win* 1/2) (win-h-r *win* y1 100) *width* *height* (win-h-r *win* 1/13) 'center)
     (gl-color 1.0 1.0 0.0 1.0)
-    (draw-stroke-text str2 (+ (win-w-r *win* 1/2) (win-h-r *win* 1/100)) (win-h-r *win* y2 100) *width* *height*
+    (draw-stroke-text str2 (+ (win-w-r *win* 1/2) (win-h-r *win* x2 100)) (win-h-r *win* y2 100) *width* *height*
                       (win-h-r *win* 1/18) 'center)
     (gl-color 1.0 1.0 1.0 1.0)
     (draw-stroke-text str3 0 0 *width* *height* (win-h-r *win* 1/22))
