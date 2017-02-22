@@ -1,10 +1,10 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmodelkit.scm
-;; 2017-2-22 v1.00
+;; 2017-2-22 v1.01
 ;;
 ;; ＜内容＞
-;;   Gauche-gl を使ってモデルの生成を行うためのモジュールです。
+;;   Gauche-gl を使って基本的なモデルの生成を行うためのモジュールです。
 ;;
 (define-module glmodelkit
   (use gl)
@@ -17,6 +17,7 @@
 (select-module glmodelkit)
 
 ;; 直方体(上面に原点あり)
+;; (box という手続きが別に存在していたので名前を box-model に変更)
 ;(define (box x y z)
 (define (box-model x y z)
   (define f32 f32vector)
