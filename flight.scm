@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-22 v1.21
+;; 2017-2-23 v1.22
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -35,9 +35,10 @@
 
 (define *wd/2*   50000) ; 画面幅/2
 (define *ht/2*   40000) ; 画面高さ/2
+(define *zd/2*   10000) ; 画面奥行き/2
 (define *mysize*  5000) ; 自機のサイズ
-(define *maxx*       *wd/2*)     ; 自機のX座標最大値
-(define *minx*       (- *maxx*)) ; 自機のX座標最小値
+(define *maxx*   50000) ; 自機のX座標最大値
+(define *minx*  -50000) ; 自機のX座標最小値
 (define *maxy*   77000) ; 自機のY座標最大値
 (define *miny*   -3000) ; 自機のY座標最小値
 (define *maxv*     850) ; 自機の速度最大値
@@ -94,10 +95,12 @@
 ;; 自機の表示
 (define (disp-mychr)
   (gl-push-matrix)
-  (gl-translate *x* (calc-by-ratio *y* *miny* *maxy* (- *ht/2*) *ht/2*) 0)
+  (gl-translate (calc-by-ratio *x* *minx* *maxx* (- *wd/2*) *wd/2*)
+                (calc-by-ratio *y* *miny* *maxy* (- *ht/2*) *ht/2*)
+                0)
   (gl-rotate (+ *angle* -90) 0 0 1)
   (gl-rotate (+ *angle* -90) 0 1 0)
-  (let1 scl (/. *mysize* 80)
+  (let1 scl (/. (calc-by-ratio *mysize* 0 *maxx* 0 *wd/2*) 80)
     (gl-scale scl scl scl))
   (model0301)
   (gl-pop-matrix)
@@ -163,9 +166,9 @@
   (if (= *goal* 0)
     (gl-color *checkcolor1*)
     (gl-color *checkcolor2*))
-  (draw-win-circle (win-x *win* *cx*)
+  (draw-win-circle (win-x *win* (calc-by-ratio *cx* *minx* *maxx* (- *wd/2*) *wd/2*))
                    (win-y *win* (calc-by-ratio *cy* *miny* *maxy* (- *ht/2*) *ht/2*))
-                   (win-w *win* *cr*)
+                   (win-w *win* (calc-by-ratio *cr* 0 *maxx* 0 *wd/2*))
                    *width* *height* 1 1 'center -0.999999))
 
 ;; チェックポイントの判定
@@ -278,7 +281,7 @@
   (gl-load-identity)
   (let1 z1 (/. *ht/2* *tanvan*)
     ;; 透視射影する範囲を設定
-    (glu-perspective *vangle* (/. *width* *height*) (- z1 10000) (+ z1 10000))
+    (glu-perspective *vangle* (/. *width* *height*) (- z1 *zd/2*) (+ z1 *zd/2*))
     ;; 視点の位置と方向を設定
     (glu-look-at 0 0 z1 0 0 0 0 1 0)))
 
