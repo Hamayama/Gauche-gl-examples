@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデルビューワー
-;; 2017-2-13
+;; 2017-2-22
 ;;
 ;; ＜使い方＞
 ;;   gosh  model_viewer.scm  [modelXXXX.scm]
@@ -17,6 +17,7 @@
 (use math.const)
 (use glmintool)
 (use gltextscrn)
+(use glmodelkit)
 
 (define *wait*      20) ; ウェイト(msec)
 (define *title* "model-viewer") ; ウィンドウのタイトル

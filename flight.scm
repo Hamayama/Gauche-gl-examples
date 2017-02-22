@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-20 v1.11
+;; 2017-2-22 v1.20
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -23,6 +23,7 @@
 (use glmintool)
 (use gltextscrn)
 (use alaudplay)
+(use glmodelkit)
 
 (define *wait*      20) ; ウェイト(msec)
 (define *title* "flight") ; ウィンドウのタイトル
@@ -86,12 +87,8 @@
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
 
-;; 直方体(上面に原点あり)
-;; (define (box x y z) ...)
-;;
 ;; モデル0301(簡易飛行機)(胴体と羽の交点に原点あり)(胴体の長さ80)
 ;; (define (model0301) ...)
-;;
 (load (make-fpath *app-dpath* "model/model0301.scm"))
 
 ;; 自機の表示
