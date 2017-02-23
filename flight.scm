@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-23 v1.22
+;; 2017-2-23 v1.23
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -100,7 +100,8 @@
                 0)
   (gl-rotate (+ *angle* -90) 0 0 1)
   (gl-rotate (+ *angle* -90) 0 1 0)
-  (let1 scl (/. (calc-by-ratio *mysize* 0 *maxx* 0 *wd/2*) 80)
+  (let1 scl (/. (calc-by-ratio *mysize* 0 (- *maxy* *miny*) 0 (* *ht/2* 2))
+                80)
     (gl-scale scl scl scl))
   (model0301)
   (gl-pop-matrix)
@@ -168,7 +169,7 @@
     (gl-color *checkcolor2*))
   (draw-win-circle (win-x *win* (calc-by-ratio *cx* *minx* *maxx* (- *wd/2*) *wd/2*))
                    (win-y *win* (calc-by-ratio *cy* *miny* *maxy* (- *ht/2*) *ht/2*))
-                   (win-w *win* (calc-by-ratio *cr* 0 *maxx* 0 *wd/2*))
+                   (win-h *win* (calc-by-ratio *cr* 0 (- *maxy* *miny*) 0 (* *ht/2* 2)))
                    *width* *height* 1 1 'center -0.999999))
 
 ;; チェックポイントの判定
@@ -262,7 +263,7 @@
   ;; 地面の表示
   (gl-color *floorcolor*)
   (draw-win-rect 0 (win-y *win* (calc-by-ratio 0 *miny* *maxy* (- *ht/2*) *ht/2*))
-                 *width* (win-y *win* (calc-by-ratio *miny* *miny* *maxy* (- *ht/2*) *ht/2*))
+                 *width* (win-h *win* (calc-by-ratio (- *miny*) 0 (- *maxy* *miny*) 0 (* *ht/2* 2)))
                  *width* *height* 'left -0.999999)
   ;; 背景の表示
   (gl-color *backcolor*)
