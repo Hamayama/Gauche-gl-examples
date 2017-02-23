@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2017-2-22 v1.60
+;; 2017-2-23 v1.61
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -77,6 +77,12 @@
 ;; ウェイト時間調整クラスのインスタンス生成
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
+
+;; ボール(中心に原点あり)
+(define (ball r)
+  (gl-material GL_FRONT GL_DIFFUSE #f32(1.0 1.0 1.0 1.0))
+  (gl-material GL_FRONT GL_SHININESS 2.0)
+  (glut-solid-sphere r 20 20))
 
 ;; カーソル(中心に原点あり)
 (define (cursor r)
@@ -174,21 +180,19 @@
     (draw-stroke-text str4 (win-h-r *win* 1/100) (win-h-r *win*  7/100) *width* *height* (win-h-r *win* 1/24))
     (draw-stroke-text str5 (win-h-r *win* 1/100) (win-h-r *win* 12/100) *width* *height* (win-h-r *win* 1/24))
     )
-  ;; ボールを表示
+  ;; ボールの表示
   (gl-push-matrix)
   (gl-translate *x* *y* *z*)
-  (gl-material GL_FRONT GL_DIFFUSE #f32(1.0 1.0 1.0 1.0))
-  (gl-material GL_FRONT GL_SHININESS 2.0)
-  (glut-solid-sphere *r* 20 20)
+  (ball *r*)
   (gl-pop-matrix)
-  ;; カーソルを表示
+  ;; カーソルの表示
   (gl-push-matrix)
   (gl-translate *cx* *cy* *cz*)
   (cursor *r*)
   (gl-pop-matrix)
-  ;; 空を表示
+  ;; 空の表示
   (sky)
-  ;; 地面を表示
+  ;; 地面の表示
   (gl-push-matrix)
   (gl-translate 0 *gdy* 0)
   (ground)

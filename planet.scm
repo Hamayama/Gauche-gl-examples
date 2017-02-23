@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; planet.scm
-;; 2017-2-13 v1.13
+;; 2017-2-23 v1.14
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、星を表示するサンプルです。
@@ -74,7 +74,7 @@
 
 ;; タイマー
 (define (timer val)
-  ;; 星の座標を更新
+  ;; 星の座標の更新
   (do ((i 0 (+ i 1)))
       ((>= i *snum*) #f)
     (let1 x (+ (f32vector-ref *xvec* i) *sspeed*)
@@ -98,7 +98,7 @@
   (gl-clear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
-  ;; 星を表示
+  ;; 星の表示
   (do ((i 0 (+ i 1)))
       ((>= i *snum*) #f)
     (gl-material GL_FRONT GL_DIFFUSE (~ *color-table* (~ *cvec* i)))

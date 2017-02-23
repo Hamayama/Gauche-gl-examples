@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2017-2-22 1.90
+;; 2017-2-23 1.91
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -375,11 +375,11 @@
     (gl-color 0.0 1.0 0.0 1.0)
     (draw-stroke-text str3 (win-h-r *win* 1/100) (win-h-r *win* 1/100) *width* *height* (win-h-r *win* 1/24))
     )
-  ;; 自分を表示
+  ;; 自分の表示
   (fighter-disp *f1*)
-  ;; 敵を表示
+  ;; 敵の表示
   (fighter-disp *f2*)
-  ;; 地面を表示
+  ;; 地面の表示
   (gl-push-matrix)
   (gl-translate 0 *gdy* 0)
   (ground)
