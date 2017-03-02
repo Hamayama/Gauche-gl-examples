@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2017-2-17 v1.19
+;; 2017-3-2 v1.20
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -25,13 +25,13 @@
 
 (define *wait*      20) ; ウェイト(msec)
 (define *title* "shooting0102") ; ウィンドウのタイトル
-(define *width*    600) ; ウィンドウ上の画面幅(px)
+(define *width*    624) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
 (define *tanvan*     (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
 (define *aratio*     (/. *width* *height*)) ; アスペクト比(計算用)
 
-(define *wd/2*     500) ; 画面幅/2
+(define *wd/2*     520) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
 (define *chw*       16) ; 文字の幅
 (define *chh*       16) ; 文字の高さ
@@ -228,7 +228,7 @@
           (set! (~ e1 'x)       (+ *wd/2* (* *chw* *rsize* 0.5)))
           (set! (~ e1 'y)       (+ (randint (- *ht/2*) *ht/2*) (* *chh* *rsize* 0.5)))
           (set! (~ e1 'degree)  (randint 150 210))
-          (set! (~ e1 'speed)   (* (min (+ 4 (- *mmr* 10)) 10) 1.5 0.65))
+          (set! (~ e1 'speed)   (* (min (+ 4 (- *mmr* 10)) 10) 1.5 0.7))
           ;(set! (~ e1 'tscrn)   *tscrn-enemy1*)
           (set! (~ e1 'hitstr)  "#+")
           (set! (~ e1 'minx)    (- (+ *wd/2* (* *chw* *rsize* 0.5))))
@@ -267,7 +267,7 @@
               (set! (~ m1 'x)       (+ (~ e1 'x) (* *chw* (randint -3 3))))
               (set! (~ m1 'y)       (+ (~ e1 'y) (* *chh* (randint -3 3)) (* *chh* *rsize* -0.5)))
               (set! (~ m1 'degree)  (* (atan (- (- *y* *chh*) (~ m1 'y)) (- *x* (~ m1 'x))) 180/pi))
-              (set! (~ m1 'speed)   (* (min (+ 6 (- *mmr* 10)) 14) 1.5 0.7))
+              (set! (~ m1 'speed)   (* (min (+ 6 (- *mmr* 10)) 14) 1.5 0.75))
               (set! (~ m1 'tscrn)   *tscrn-missile1*)
               (set! (~ m1 'hitstr)  "O")
               (set! (~ m1 'minx)    (- (+ *wd/2* (* *chw* *rsize* 0.5))))

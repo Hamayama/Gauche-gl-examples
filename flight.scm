@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-2-23 v1.23
+;; 2017-3-2 v1.24
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -27,18 +27,18 @@
 
 (define *wait*      20) ; ウェイト(msec)
 (define *title* "flight") ; ウィンドウのタイトル
-(define *width*    600) ; ウィンドウ上の画面幅(px)
+(define *width*    624) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)
 (define *tanvan*     (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
 (define *aratio*     (/. *width* *height*)) ; アスペクト比(計算用)
 
-(define *wd/2*   50000) ; 画面幅/2
+(define *wd/2*   52000) ; 画面幅/2
 (define *ht/2*   40000) ; 画面高さ/2
 (define *zd/2*   10000) ; 画面奥行き/2
 (define *mysize*  5000) ; 自機のサイズ
-(define *maxx*   50000) ; 自機のX座標最大値
-(define *minx*  -50000) ; 自機のX座標最小値
+(define *maxx*   52000) ; 自機のX座標最大値
+(define *minx*  -52000) ; 自機のX座標最小値
 (define *maxy*   77000) ; 自機のY座標最大値
 (define *miny*   -3000) ; 自機のY座標最小値
 (define *maxv*     850) ; 自機の速度最大値
@@ -234,7 +234,7 @@
       )
     (set! str3 (format "TIME : ~A" (make-time-text *sc*)))
     (set! str4 (format "1st : ~A"  (make-time-text *hs*)))
-    (set! str5 (if (= *goal* 0) "CHECK POINT" "CHECK OK "))
+    (set! str5 (if (= *goal* 0) "CHECK POINT " "CHECK OK  "))
     (set! str6 (format "(X=~D Y=~D ANGLE=~D)"
                        (truncate->exact *x*) (truncate->exact *y*) (truncate->exact *angle*)))
     (set! str7 (format "(V=~D VX=~D VY=~D)"
