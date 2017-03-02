@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2017-3-2 v1.57
+;; 2017-3-3 v1.58
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -161,16 +161,16 @@
   (cond
    ;; ジャンプ開始
    ((and (key-on? *ksinfo* #\space) (= *jp* 1) (= *jpc* 0))
-    (set! *vy*  24)
-    (set! *jpc*  9)
+    (set! *vy*  23)
+    (set! *jpc* 10)
     (set! *jp*   2))
    ;; ジャンプ延長
    ((and (key-on? *ksinfo* #\space) (= *jp* 2) (> *jpc* 1))
-    (set! *vy*  24)
+    (set! *vy*  23)
     (dec! *jpc*))
    ;; 自由落下
    (else
-    (set! *vy* (max (- *vy* 5) -32))
+    (set! *vy* (max (- *vy* 5) -30))
     (if (not (key-on? *ksinfo* #\space)) (set! *jpc* 0))
     (set! *jp* 0)))
   (set! *x* (+ *x* *vx*))
