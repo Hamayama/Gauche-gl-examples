@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2017-2-13 v1.22
+;; 2017-3-19 v1.30
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -12,7 +12,7 @@
   (use gauche.uvector)
   (use math.mt-random)
   (export
-    randint round-n truncate-n calc-by-ratio recthit?
+    randint round-n truncate-n wrap-range remap-range recthit?
     make-fpath make-vector-of-class make-time-text
     <wininfo> win-init win-update-size win-x win-y win-w win-h win-w-r win-h-r
     <keystateinfo> key-on key-off spkey-on spkey-off key-on? spkey-on? mdkey-on?
@@ -41,11 +41,21 @@
   (let1 p (expt 10 n)
     (/. (truncate (* x p)) p)))
 
-;; 比例の計算
-;; ( maxx-x:x-minx = maxy-y:y-miny となるような y を求める)
-(define (calc-by-ratio x minx maxx miny maxy)
-  (/. (+ (* maxy (- x minx)) (* miny (- maxx x)))
-      (- maxx minx)))
+;; 数値xが指定した範囲(min～max)におさまるように剰余を使って変換する
+;; (片方の境界を越えた場合に、反対側の境界から出てくるような動作を実現できる)
+(define (wrap-range x minx maxx)
+  (if (> minx maxx) (let1 t minx (set! minx maxx) (set! maxx t)))
+  (if (= minx maxx)
+    minx
+    (+ (mod (- x minx) (- maxx minx)) minx)))
+
+;; ある範囲内(minx～maxx)の値xを、別の範囲内(miny～maxy)の値yに変換する
+;; 計算式は y=miny+(x-minx)*(maxy-miny)/(maxx-minx) となる
+;; (これは比例式 maxx-x:x-minx = maxy-y:y-miny が成り立つような値yを返すことになる)
+(define (remap-range x minx maxx miny maxy)
+  (if (= minx maxx)
+    0
+    (+ miny (/. (* (- x minx) (- maxy miny)) (- maxx minx)))))
 
 ;; 長方形の衝突チェック
 ;;   左上座表が (x1,y1) で 幅 w1 高さ h1 の長方形と、

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2017-2-17 v1.37
+;; 2017-3-19 v1.40
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -111,7 +111,7 @@
 
 ;; 曲がり量から差分を計算
 ;; (ここではカーブの曲線をZ座標の2次関数としている)
-(define (calc-by-curv c z)
+(define (calc-curv c z)
   (* c z z))
 
 ;; 道路の表示
@@ -133,13 +133,13 @@
     (do ((i 0 (+ i 1))) ((>= i *rnum*) #f)
       ;; 道路の境界マークの座標を計算
       (set! sczr  (/. *scz* (~ *rz* i)))
-      (set! *rdx* (+ *x* (calc-by-curv *rcx1* (- *rzmax* (~ *rz* i)))))
-      (set! rdy1         (calc-by-curv *rcy1* (- *rzmax* (~ *rz* i))))
+      (set! *rdx* (+ *x* (calc-curv *rcx1* (- *rzmax* (~ *rz* i)))))
+      (set! rdy1         (calc-curv *rcy1* (- *rzmax* (~ *rz* i))))
       (set! scy1  (* (+ *ry* rdy1) sczr))
       ;; 次の境界マークのY座標も取得
       (when (< i (- *rnum* 1))
         (set! sczr (/. *scz* (~ *rz* (+ i 1))))
-        (set! rdy2 (calc-by-curv *rcy1* (- *rzmax* (~ *rz* (+ i 1)))))
+        (set! rdy2 (calc-curv *rcy1* (- *rzmax* (~ *rz* (+ i 1)))))
         (set! scy2 (* (+ *ry* rdy2) sczr))
         )
       ;; Y座標が増加するときは、視点から見えないと判断して非表示にする
@@ -210,10 +210,10 @@
     ;; ハンドル操作による差分を計算(速度に反比例)
     (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! dx1 (+ dx1  1)))
     (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! dx1 (+ dx1 -1)))
-    (set! dx1 (* dx1 (calc-by-ratio *spd* *minspd* *maxspd* 16  8)))
+    (set! dx1 (* dx1 (remap-range *spd* *minspd* *maxspd* 16  8)))
     ;; 道路の曲がり量による差分を計算(速度に正比例)
-    (set! dx2 (calc-by-curv *rcx1* (- *rzmax* *scz*)))
-    (set! dx2 (* dx2 (calc-by-ratio *spd* *minspd* *maxspd*  5 16)))
+    (set! dx2 (calc-curv *rcx1* (- *rzmax* *scz*)))
+    (set! dx2 (* dx2 (remap-range *spd* *minspd* *maxspd*  5 16)))
     ;; 差分を反映
     (set! *x* (+ *x* dx1 dx2))
     ))
@@ -372,7 +372,7 @@
       ((1) ; プレイ中
        ;; ウェイト時間の調整(速度に反比例)
        (set! *wait* (truncate->exact
-                     (calc-by-ratio *spd* *minspd* *maxspd* *maxwait* *minwait*)))
+                     (remap-range *spd* *minspd* *maxspd* *maxwait* *minwait*)))
        (waitcalc-set-wait *wcinfo* *wait*)
        ;; スコアと制御カウンタの処理等
        (cond

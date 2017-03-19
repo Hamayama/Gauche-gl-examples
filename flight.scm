@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-3-2 v1.24
+;; 2017-3-19 v1.30
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -95,12 +95,12 @@
 ;; 自機の表示
 (define (disp-mychr)
   (gl-push-matrix)
-  (gl-translate (calc-by-ratio *x* *minx* *maxx* (- *wd/2*) *wd/2*)
-                (calc-by-ratio *y* *miny* *maxy* (- *ht/2*) *ht/2*)
+  (gl-translate (remap-range *x* *minx* *maxx* (- *wd/2*) *wd/2*)
+                (remap-range *y* *miny* *maxy* (- *ht/2*) *ht/2*)
                 0)
   (gl-rotate (+ *angle* -90) 0 0 1)
   (gl-rotate (+ *angle* -90) 0 1 0)
-  (let1 scl (/. (calc-by-ratio *mysize* 0 (- *maxy* *miny*) 0 (* *ht/2* 2))
+  (let1 scl (/. (remap-range *mysize* 0 (- *maxy* *miny*) 0 (* *ht/2* 2))
                 80)
     (gl-scale scl scl scl))
   (model0301)
@@ -112,8 +112,7 @@
   ;; 方向転換
   (if (spkey-on? *ksinfo* GLUT_KEY_UP)   (set! *angle* (+ *angle* 3)))
   (if (spkey-on? *ksinfo* GLUT_KEY_DOWN) (set! *angle* (- *angle* 3)))
-  (if (<  *angle* 0)   (set! *angle* (+ *angle* 360)))
-  (if (>= *angle* 360) (set! *angle* (- *angle* 360)))
+  (set! *angle* (wrap-range *angle* 0 360))
   ;; 加速
   (if (and (key-on? *ksinfo* #\space)
            (not (and (= *goal* 1) *landing*)))
@@ -128,8 +127,7 @@
   ;; 座標更新
   (set! *x* (+ *x* *vx*))
   (set! *y* (+ *y* *vy*))
-  (if (< *x* *minx*) (set! *x* (+ *x* (- *maxx* *minx*))))
-  (if (> *x* *maxx*) (set! *x* (- *x* (- *maxx* *minx*))))
+  (set! *x* (wrap-range *x* *minx* *maxx*))
   (set! *y* (clamp *y* 0 *maxy*))
   ;; 着陸
   (set! *landing* #f)
@@ -167,9 +165,9 @@
   (if (= *goal* 0)
     (gl-color *checkcolor1*)
     (gl-color *checkcolor2*))
-  (draw-win-circle (win-x *win* (calc-by-ratio *cx* *minx* *maxx* (- *wd/2*) *wd/2*))
-                   (win-y *win* (calc-by-ratio *cy* *miny* *maxy* (- *ht/2*) *ht/2*))
-                   (win-h *win* (calc-by-ratio *cr* 0 (- *maxy* *miny*) 0 (* *ht/2* 2)))
+  (draw-win-circle (win-x *win* (remap-range *cx* *minx* *maxx* (- *wd/2*) *wd/2*))
+                   (win-y *win* (remap-range *cy* *miny* *maxy* (- *ht/2*) *ht/2*))
+                   (win-h *win* (remap-range *cr* 0 (- *maxy* *miny*) 0 (* *ht/2* 2)))
                    *width* *height* 1 1 'center -0.999999))
 
 ;; チェックポイントの判定
@@ -262,8 +260,8 @@
   (disp-check-point)
   ;; 地面の表示
   (gl-color *floorcolor*)
-  (draw-win-rect 0 (win-y *win* (calc-by-ratio 0 *miny* *maxy* (- *ht/2*) *ht/2*))
-                 *width* (win-h *win* (calc-by-ratio (- *miny*) 0 (- *maxy* *miny*) 0 (* *ht/2* 2)))
+  (draw-win-rect 0 (win-y *win* (remap-range 0 *miny* *maxy* (- *ht/2*) *ht/2*))
+                 *width* (win-h *win* (remap-range (- *miny*) 0 (- *maxy* *miny*) 0 (* *ht/2* 2)))
                  *width* *height* 'left -0.999999)
   ;; 背景の表示
   (gl-color *backcolor*)
