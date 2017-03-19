@@ -6,7 +6,7 @@
 |![image](image/image0301.png)|![image](image/image0401.png)|
 |![image](image/image0501.png)|![image](image/image0601.png)|
 |![image](image/image0701.png)|![image](image/image0801.png)|
-|![image](image/image0901.png)||
+|![image](image/image0901.png)|![image](image/image1001.png)|
 
 ## 概要
 - Gauche-gl を使用したサンプルプログラム等です。  
@@ -91,6 +91,15 @@
    [r]キーを押すとリセットします。  
    ESCキーを押すと終了します。
 
+10. 迷路生成 ( maze.scm )  
+   Gauche-gl を使用した、迷路を自動生成して表示するサンプルです。  
+   スタート(水色)からゴール(赤色)までのルートも探索して表示します。  
+   生成される迷路の上下左右はつながっています。  
+   スペースキーを押すと、次の迷路を表示します。  
+   ESCキーを押すと終了します。  
+   参考「古くて新しい自動迷路生成アルゴリズム」  
+   http://d.hatena.ne.jp/yaneurao/20130125
+
 
 ## その他 注意事項等
 1. 一部のサンプルは、以下のモジュールを使用しています。同一フォルダに配置してください。
@@ -146,4 +155,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2017-2-22)
+(2017-3-19)

@@ -317,6 +317,9 @@ flight.scm
   2017-3-2   v1.24  画面サイズ調整
   2017-3-19  v1.30  glmintool.scm v1.30 対応
 
+maze.scm
+  2017-3-19  v1.00  初版
+
 
 glmintool.scm
   2016-2-8   v1.00  初版
