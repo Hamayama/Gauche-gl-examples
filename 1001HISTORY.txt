@@ -319,6 +319,7 @@ flight.scm
 
 maze.scm
   2017-3-19  v1.00  初版
+  2017-3-19  v1.01  迷路生成処理修正等
 
 
 glmintool.scm

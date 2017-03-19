@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; maze.scm
-;; 2017-3-19 v1.00
+;; 2017-3-19 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、迷路を自動生成して表示するサンプルです。
@@ -111,7 +111,7 @@
             (set! draw-counter 0)
             ;; 柱ごとの壁データを、迷路データに変換する
             (convert-maze pdata)
-            ;; 迷路の表示
+            ;; 画面表示
             (disp))
 
           ;; 生成した壁の先の柱に移動し、その柱が未処理であれば、
@@ -129,11 +129,12 @@
               (set! (~ px pind) x3)
               (set! (~ py pind) y3)
               (loop2 x3 y3))
-            )))))
-    ;; 柱の処理中フラグをリセット
-    (do ((i 0 (+ i 1)))
-        ((>= i pnum) #f)
-      (set! (~ pflag (pt (~ px i) (~ py i))) #f))
+            ))))
+      ;; 柱の処理中フラグをリセット
+      (do ((i 0 (+ i 1)))
+          ((>= i pnum) #f)
+        (set! (~ pflag (pt (~ px i) (~ py i))) #f))
+      )
     (cond
      ((< x1 (- *mw* 1)) (loop (+ x1 1) y1))
      ((< y1 (- *mh* 1)) (loop 0 (+ y1 1))))
@@ -269,11 +270,11 @@
   (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; 迷路の生成
   (make-maze)
-  ;; 迷路の表示
+  ;; 画面表示
   (disp)
   ;; 迷路の探索
   (search-maze)
-  ;; 迷路の表示
+  ;; 画面表示
   (disp)
   )
 
@@ -308,11 +309,11 @@
    ((= key (char->integer #\space))
     ;; 迷路の生成
     (make-maze)
-    ;; 迷路の表示
+    ;; 画面表示
     (disp)
     ;; 迷路の探索
     (search-maze)
-    ;; 迷路の表示
+    ;; 画面表示
     (disp))
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
