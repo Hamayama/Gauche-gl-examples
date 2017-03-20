@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; maze.scm
-;; 2017-3-19 v1.01
+;; 2017-3-20 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、迷路を自動生成して表示するサンプルです。
@@ -157,11 +157,11 @@
       (if (logtest (~ pdata (pt (pxadd x1 -1) y1           )) 2) (set! d1 (logior d1 4)))
       (if (logtest (~ pdata (pt x1            y1           )) 1) (set! d1 (logior d1 2)))
       (if (logtest (~ pdata (pt x1            y1           )) 8) (set! d1 (logior d1 4)))
-      (set! (~ *mdata* (pt x1 y1)) d1)
-      (cond
-       ((< x1 (- *mw* 1)) (loop (+ x1 1) y1))
-       ((< y1 (- *mh* 1)) (loop 0 (+ y1 1))))
-      ))
+      (set! (~ *mdata* (pt x1 y1)) d1))
+    (cond
+     ((< x1 (- *mw* 1)) (loop (+ x1 1) y1))
+     ((< y1 (- *mh* 1)) (loop 0 (+ y1 1))))
+    )
   )
 
 ;; 迷路の表示
@@ -177,14 +177,12 @@
           (by1 (+ oy (* y1 ws)))) ; ウィンドウ上の1ブロックの左上点のY座標(px)
       ;; 壁の表示
       (gl-color *wallcolor*)
-      (if (logtest (~ *mdata* (pt x1 y1)) 1)
-        (draw-win-rect bx1 (+ by1 (/. ww -2))    ws ww *width* *height*))
-      (if (logtest (~ *mdata* (pt x1 y1)) 2)
-        (draw-win-rect (+ bx1 ws (/. ww -2)) by1 ww ws *width* *height*))
-      (if (logtest (~ *mdata* (pt x1 y1)) 4)
-        (draw-win-rect bx1 (+ by1 ws (/. ww -2)) ws ww *width* *height*))
-      (if (logtest (~ *mdata* (pt x1 y1)) 8)
-        (draw-win-rect (+ bx1 (/. ww -2)) by1    ww ws *width* *height*))
+      (let1 d1 (~ *mdata* (pt x1 y1))
+        (if (logtest d1 1) (draw-win-rect bx1 (+ by1 (/. ww -2))    ws ww *width* *height*))
+        (if (logtest d1 2) (draw-win-rect (+ bx1 ws (/. ww -2)) by1 ww ws *width* *height*))
+        (if (logtest d1 4) (draw-win-rect bx1 (+ by1 ws (/. ww -2)) ws ww *width* *height*))
+        (if (logtest d1 8) (draw-win-rect (+ bx1 (/. ww -2)) by1    ww ws *width* *height*))
+        )
       ;; 1ブロックの背景の表示
       (gl-color (cond ((logtest (~ *mdata* (pt x1 y1)) 128) *goalcolor*)
                       ((logtest (~ *mdata* (pt x1 y1))  64) *startcolor*)
@@ -206,10 +204,10 @@
   (define snum    0)  ; 探索点の数
   (define sind   -1)  ; 探索点の注目番号
   (define (make-one-spoint x y) ; 探索点1個の生成
-    (set! (~ spoints snum 'x)   x)
-    (set! (~ spoints snum 'y)   y)
-    (set! (~ spoints snum 'pno) sind)
-    (set! (~ sflag (pt x y))  #t)
+    (set! (~ spoints snum 'x)   x)    ; 探索点のX座標
+    (set! (~ spoints snum 'y)   y)    ; 探索点のY座標
+    (set! (~ spoints snum 'pno) sind) ; 探索点の親番号
+    (set! (~ sflag (pt x y)) #t)      ; 探索ずみにする
     (inc! snum))
 
   ;; 最初の探索点を生成
@@ -224,18 +222,16 @@
      ;; ゴールではなかったとき
      (else
       ;; 上下左右を探索して探索点を追加する
-      (unless (or (logtest (~ *mdata* (pt x1 y1)) 1)
-                  (~ sflag (pt x1 (pyadd y1 -1))))
-        (make-one-spoint x1 (pyadd y1 -1)))
-      (unless (or (logtest (~ *mdata* (pt x1 y1)) 2)
-                  (~ sflag (pt (pxadd x1 +1) y1)))
-        (make-one-spoint (pxadd x1 +1) y1))
-      (unless (or (logtest (~ *mdata* (pt x1 y1)) 4)
-                  (~ sflag (pt x1 (pyadd y1 +1))))
-        (make-one-spoint x1 (pyadd y1 +1)))
-      (unless (or (logtest (~ *mdata* (pt x1 y1)) 8)
-                  (~ sflag (pt (pxadd x1 -1) y1)))
-        (make-one-spoint (pxadd x1 -1) y1))
+      (let1 d1 (~ *mdata* (pt x1 y1))
+        (unless (or (logtest d1 1) (~ sflag (pt x1 (pyadd y1 -1))))
+          (make-one-spoint x1 (pyadd y1 -1)))
+        (unless (or (logtest d1 2) (~ sflag (pt (pxadd x1 +1) y1)))
+          (make-one-spoint (pxadd x1 +1) y1))
+        (unless (or (logtest d1 4) (~ sflag (pt x1 (pyadd y1 +1))))
+          (make-one-spoint x1 (pyadd y1 +1)))
+        (unless (or (logtest d1 8) (~ sflag (pt (pxadd x1 -1) y1)))
+          (make-one-spoint (pxadd x1 -1) y1))
+        )
       ;; 次の探索点へ移動
       (inc! sind)
       (if (< sind snum)
@@ -300,7 +296,7 @@
   ;; 透視射影する範囲を設定
   (glu-perspective *vangle* (/. *width* *height*) 1 2000))
 
-;; キー入力ON
+;; キー入力
 (define (keyboard key x y)
   (cond
    ;; ESCキーで終了
