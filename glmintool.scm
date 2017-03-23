@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2017-3-19 v1.30
+;; 2017-3-23 v1.31
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -44,10 +44,10 @@
 ;; 数値xが指定した範囲(min～max)におさまるように剰余を使って変換する
 ;; (片方の境界を越えた場合に、反対側の境界から出てくるような動作を実現できる)
 (define (wrap-range x minx maxx)
-  (if (> minx maxx) (let1 t minx (set! minx maxx) (set! maxx t)))
-  (if (= minx maxx)
-    minx
-    (+ (mod (- x minx) (- maxx minx)) minx)))
+  (cond
+   ((< minx maxx) (+ (mod (- x minx) (- maxx minx)) minx))
+   ((> minx maxx) (+ (mod (- x maxx) (- minx maxx)) maxx))
+   (else          minx)))
 
 ;; ある範囲内(minx～maxx)の値xを、別の範囲内(miny～maxy)の値yに変換する
 ;; 計算式は y=miny+(x-minx)*(maxy-miny)/(maxx-minx) となる
@@ -143,11 +143,11 @@
 ;; ウィンドウ上の幅を、比を指定して計算
 (define-method win-w-r ((wn <wininfo>) (n1 <real>) :optional (n2 #f))
   (if n2 (/. (* (~ wn 'width) n1) n2)
-      (* (~ wn 'width) (exact n1))))
+      (* (~ wn 'width) (inexact n1))))
 ;; ウィンドウ上の高さを、比を指定して計算
 (define-method win-h-r ((wn <wininfo>) (n1 <real>) :optional (n2 #f))
   (if n2 (/. (* (~ wn 'height) n1) n2)
-      (* (~ wn 'height) (exact n1))))
+      (* (~ wn 'height) (inexact n1))))
 
 
 ;; キー入力状態管理クラス
@@ -272,12 +272,10 @@
          (tnowmsec  (+ (* (~ tnow 'second) 1000) (quotient (~ tnow 'nanosecond) 1000000)))
          (tdiffmsec (- tnowmsec (~ w 'waitdata)))
          (wt        (~ w 'waittime))
-         (waitmsec  wt))
-    (cond
-     ((and (>= tdiffmsec (- wt)) (< tdiffmsec wt))
-      (set! waitmsec (- wt tdiffmsec)))
-     ((and (>= tdiffmsec wt) (< tdiffmsec (* wt 50)))
-      (set! waitmsec 1)))
+         (waitmsec  (cond
+                     ((and (>= tdiffmsec (- wt)) (< tdiffmsec wt))    (- wt tdiffmsec))
+                     ((and (>= tdiffmsec wt) (< tdiffmsec (* wt 50))) 1)
+                     (else                                            wt))))
     (set! (~ w 'waitdata) (+ tnowmsec waitmsec))
     ;(print tdiffmsec " " waitmsec)
     waitmsec))

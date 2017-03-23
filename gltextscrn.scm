@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2017-2-18 v1.87
+;; 2017-3-23 v1.88
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -26,8 +26,8 @@
     textscrn-circle textscrn-fcircle textscrn-poly textscrn-fpoly
     textscrn-check-str textscrn-disp-check-str textscrn-disp-check-str2
     <texdata> load-texture-bitmap-file draw-texture-rect
-    set-char-texture textscrn-disp-texture
-    set-char-drawer  textscrn-disp-drawer
+    *char-texture-table* set-char-texture textscrn-disp-texture
+    *char-drawer-table*  set-char-drawer  textscrn-disp-drawer
     ))
 (select-module gltextscrn)
 
@@ -1002,8 +1002,8 @@
     (gl-disable target))
   (gl-ortho-off))
 
-;; 文字-テクスチャデータの割り付けテーブル(テクスチャの一括表示用)(内部処理用)
-(define *char-tex-table* (make-hash-table 'eqv?))
+;; 文字-テクスチャデータの割り付けテーブル(テクスチャの一括表示用)
+(define *char-texture-table* (make-hash-table 'eqv?))
 
 ;; テクスチャデータレコード型(内部処理用)
 ;; (高速化のためクラスではなくレコード型(実体はベクタ)とする)
@@ -1026,7 +1026,7 @@
                                  :optional (xcrd 1.0) (ycrd 1.0)
                                  (width-r 1.0) (height-r 1.0)
                                  (xoffset-r 0.0) (yoffset-r 0.0))
-  (hash-table-put! *char-tex-table*
+  (hash-table-put! *char-texture-table*
                    (char->integer ch)
                    (make-texdata (~ td 'tex) (~ td 'width) (~ td 'height)
                                  xcrd ycrd width-r height-r xoffset-r yoffset-r)))
@@ -1055,7 +1055,7 @@
     (gl-enable target)
     (for-each
      (lambda (c)
-       (if-let1 td1 (hash-table-get *char-tex-table* c #f)
+       (if-let1 td1 (hash-table-get *char-texture-table* c #f)
          (let ((xcrd1 (if *use-gl-texture-rectangle*
                         (* (texdata-xcrd td1) (texdata-width  td1))
                         (texdata-xcrd td1)))
@@ -1088,7 +1088,7 @@
   (gl-ortho-off))
 
 
-;; 文字-描画手続きの割り付けテーブル(モデルの一括表示用)(内部処理用)
+;; 文字-描画手続きの割り付けテーブル(モデルの一括表示用)
 (define *char-drawer-table* (make-hash-table 'eqv?))
 
 ;; 文字に描画手続きを割り付ける(モデルの一括表示用)
