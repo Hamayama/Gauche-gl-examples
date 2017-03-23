@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; maze.scm
-;; 2017-3-20 v1.02
+;; 2017-3-24 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、迷路を自動生成して表示するサンプルです。
@@ -157,7 +157,8 @@
       (if (logtest (~ pdata (pt (pxadd x1 -1) y1           )) 2) (set! d1 (logior d1 4)))
       (if (logtest (~ pdata (pt x1            y1           )) 1) (set! d1 (logior d1 2)))
       (if (logtest (~ pdata (pt x1            y1           )) 8) (set! d1 (logior d1 4)))
-      (set! (~ *mdata* (pt x1 y1)) d1))
+      (set! (~ *mdata* (pt x1 y1)) d1)
+      )
     (cond
      ((< x1 (- *mw* 1)) (loop (+ x1 1) y1))
      ((< y1 (- *mh* 1)) (loop 0 (+ y1 1))))
@@ -173,26 +174,26 @@
 
   ;; ブロックの数だけループする
   (let loop ((x1 0) (y1 0))
-    (let ((bx1 (+ ox (* x1 ws)))  ; ウィンドウ上の1ブロックの左上点のX座標(px)
-          (by1 (+ oy (* y1 ws)))) ; ウィンドウ上の1ブロックの左上点のY座標(px)
+    (let ((bx1 (+ ox (* x1 ws))) ; ウィンドウ上の1ブロックの左上点のX座標(px)
+          (by1 (+ oy (* y1 ws))) ; ウィンドウ上の1ブロックの左上点のY座標(px)
+          (d1  (~ *mdata* (pt x1 y1)))) ; 1ブロックの迷路データ
       ;; 壁の表示
       (gl-color *wallcolor*)
-      (let1 d1 (~ *mdata* (pt x1 y1))
-        (if (logtest d1 1) (draw-win-rect bx1 (+ by1 (/. ww -2))    ws ww *width* *height*))
-        (if (logtest d1 2) (draw-win-rect (+ bx1 ws (/. ww -2)) by1 ww ws *width* *height*))
-        (if (logtest d1 4) (draw-win-rect bx1 (+ by1 ws (/. ww -2)) ws ww *width* *height*))
-        (if (logtest d1 8) (draw-win-rect (+ bx1 (/. ww -2)) by1    ww ws *width* *height*))
-        )
+      (if (logtest d1 1) (draw-win-rect bx1 (+ by1 (/. ww -2))    ws ww *width* *height*))
+      (if (logtest d1 2) (draw-win-rect (+ bx1 ws (/. ww -2)) by1 ww ws *width* *height*))
+      (if (logtest d1 4) (draw-win-rect bx1 (+ by1 ws (/. ww -2)) ws ww *width* *height*))
+      (if (logtest d1 8) (draw-win-rect (+ bx1 (/. ww -2)) by1    ww ws *width* *height*))
       ;; 1ブロックの背景の表示
-      (gl-color (cond ((logtest (~ *mdata* (pt x1 y1)) 128) *goalcolor*)
-                      ((logtest (~ *mdata* (pt x1 y1))  64) *startcolor*)
-                      ((logtest (~ *mdata* (pt x1 y1))  32) *routecolor*)
-                      (else                                 *backcolor*)))
+      (gl-color (cond ((logtest d1 128) *goalcolor*)
+                      ((logtest d1  64) *startcolor*)
+                      ((logtest d1  32) *routecolor*)
+                      (else             *backcolor*)))
       (draw-win-rect bx1 by1 ws ws *width* *height* 'left -0.99999)
-      (cond
-       ((< x1 (- *mw* 1)) (loop (+ x1 1) y1))
-       ((< y1 (- *mh* 1)) (loop 0 (+ y1 1))))
-      ))
+      )
+    (cond
+     ((< x1 (- *mw* 1)) (loop (+ x1 1) y1))
+     ((< y1 (- *mh* 1)) (loop 0 (+ y1 1))))
+    )
   )
 
 ;; 迷路の探索(幅優先探索)
