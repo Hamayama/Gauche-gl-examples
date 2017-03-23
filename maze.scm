@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; maze.scm
-;; 2017-3-24 v1.03
+;; 2017-3-24 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、迷路を自動生成して表示するサンプルです。
@@ -116,12 +116,12 @@
 
           ;; 生成した壁の先の柱に移動し、その柱が未処理であれば、
           ;; その柱を処理中にして、そこからさらに壁を伸ばす
-          (let ((x3 0) (y3 0))
+          (let ((x3 x2) (y3 y2))
             (case (~ rdtbl rd)
-              ((1) (set! x3 x2) (set! y3 (pyadd y2 -1)))
-              ((2) (set! x3 (pxadd x2 +1)) (set! y3 y2))
-              ((4) (set! x3 x2) (set! y3 (pyadd y2 +1)))
-              ((8) (set! x3 (pxadd x2 -1)) (set! y3 y2)))
+              ((1) (set! y3 (pyadd y3 -1)))
+              ((2) (set! x3 (pxadd x3 +1)))
+              ((4) (set! y3 (pyadd y3 +1)))
+              ((8) (set! x3 (pxadd x3 -1))))
             (when (= (~ pdata (pt x3 y3)) 0)
               (set! (~ pflag (pt x3 y3)) #t)
               (inc! pnum)
