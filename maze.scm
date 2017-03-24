@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; maze.scm
-;; 2017-3-24 v1.05
+;; 2017-3-24 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、迷路を自動生成して表示するサンプルです。
@@ -21,12 +21,9 @@
 (use glmintool)
 (use gltextscrn)
 
-(define *wait*      30) ; ウェイト(msec)
 (define *title* "maze") ; ウィンドウのタイトル
 (define *width*    480) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
-(define *vangle*    45) ; 視野角(度)
-(define *tanvan*     (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
 
 (define *wd/2*     400) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
@@ -258,14 +255,6 @@
 (define (init)
   (gl-clear-color 0.0 0.0 0.0 0.0)
   (gl-enable GL_DEPTH_TEST)
-  ;; 光源設定
-  (gl-light  GL_LIGHT0 GL_POSITION #f32(1.0 1.0 1.0 0.0))
-  (gl-enable GL_LIGHTING)
-  (gl-enable GL_LIGHT0)
-  (gl-enable GL_NORMALIZE)
-  ;; 材質設定
-  (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
-  (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; 迷路の生成
   (make-maze)
   ;; 画面表示
@@ -279,12 +268,9 @@
 ;; 画面表示
 (define (disp)
   (gl-clear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-  (gl-matrix-mode GL_MODELVIEW)
-  (gl-load-identity)
   ;; 迷路の表示
   (disp-maze)
-  ;(gl-flush)
-  (glut-swap-buffers))
+  (gl-flush))
 
 ;; 画面のリサイズ
 (define (reshape w h)
@@ -292,11 +278,7 @@
   (set! *height* (min w h))
   (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
-  (gl-viewport 0 (quotient (- h *height*) 2) *width* *height*)
-  (gl-matrix-mode GL_PROJECTION)
-  (gl-load-identity)
-  ;; 透視射影する範囲を設定
-  (glu-perspective *vangle* (/. *width* *height*) 1 2000))
+  (gl-viewport 0 (quotient (- h *height*) 2) *width* *height*))
 
 ;; キー入力
 (define (keyboard key x y)
@@ -321,7 +303,7 @@
 ;; メイン処理
 (define (main args)
   (glut-init args)
-  (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
+  (glut-init-display-mode (logior GLUT_SINGLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
   (glut-init-window-position 100 100)
   (glut-create-window *title*)
