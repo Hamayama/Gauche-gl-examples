@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; maze.scm
-;; 2017-3-24 v1.04
+;; 2017-3-24 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、迷路を自動生成して表示するサンプルです。
@@ -86,7 +86,7 @@
       (set! pind 0)
       (set! (~ px pind) x1)
       (set! (~ py pind) y1)
-      (let loop2 ((x2 (~ px pind)) (y2 (~ py pind)))
+      (let loop2 ((x2 x1) (y2 y1))
         ;; 伸ばす壁の方向を乱数で決定する
         ;; (ただし、処理中の柱がある方向には壁を生成しない(閉ループを作らないため))
         ;; (また、4方向すべてが処理中の柱だった場合には、現在の柱を処理済みにして引き返す)
@@ -197,25 +197,26 @@
   )
 
 ;; 迷路の探索(幅優先探索)
-(define-class <spoint> () (x y pno)) ; 探索点情報クラス
 (define (search-maze)
-  (define goal    #f) ; ゴールフラグ
-  (define sflag   (make-vector *msize* #f)) ; 迷路の探索済みフラグ
-  (define spoints (make-vector-of-class *msize* <spoint>)) ; 探索点情報
-  (define snum    0)  ; 探索点の数
-  (define sind   -1)  ; 探索点の注目番号
+  (define goal   #f) ; ゴールフラグ
+  (define sflag  (make-vector *msize* #f)) ; 迷路の探索済みフラグ
+  (define snum   0)  ; 探索点の数
+  (define sind  -1)  ; 探索点の注目番号
+  (define spx    (make-vector *msize* 0)) ; 探索点のX座標
+  (define spy    (make-vector *msize* 0)) ; 探索点のY座標
+  (define spno   (make-vector *msize* 0)) ; 探索点の親番号
   (define (make-one-spoint x y) ; 探索点1個の生成
-    (set! (~ spoints snum 'x)   x)    ; 探索点のX座標
-    (set! (~ spoints snum 'y)   y)    ; 探索点のY座標
-    (set! (~ spoints snum 'pno) sind) ; 探索点の親番号
-    (set! (~ sflag (pt x y)) #t)      ; 探索ずみにする
+    (set! (~ spx  snum) x)
+    (set! (~ spy  snum) y)
+    (set! (~ spno snum) sind)
+    (set! (~ sflag (pt x y)) #t) ; 探索ずみにする
     (inc! snum))
 
   ;; 最初の探索点を生成
   (make-one-spoint *sx* *sy*)
   (inc! sind)
   ;; 探索点を1個取り出す
-  (let loop ((x1 (~ spoints sind 'x)) (y1 (~ spoints sind 'y)))
+  (let loop ((x1 (~ spx sind)) (y1 (~ spy sind)))
     (cond
      ;; ゴールのときは抜ける
      ((and (= x1 *gx*) (= y1 *gy*))
@@ -236,16 +237,16 @@
       ;; 次の探索点へ移動
       (inc! sind)
       (if (< sind snum)
-        (loop (~ spoints sind 'x) (~ spoints sind 'y)))
+        (loop (~ spx sind) (~ spy sind)))
       )))
   ;; ゴールまでの探索ルートを迷路データに反映
   ;; (ゴールから逆にたどっていく)
   (when goal
-    (let loop ((x1 (~ spoints sind 'x)) (y1 (~ spoints sind 'y)))
+    (let loop ((x1 (~ spx sind)) (y1 (~ spy sind)))
       (set! (~ *mdata* (pt x1 y1)) (logior (~ *mdata* (pt x1 y1)) 32))
-      (set! sind (~ spoints sind 'pno))
+      (set! sind (~ spno sind))
       (if (>= sind 0)
-        (loop (~ spoints sind 'x) (~ spoints sind 'y)))
+        (loop (~ spx sind) (~ spy sind)))
       ))
   ;; スタートとゴールを迷路データに反映
   (set! (~ *mdata* (pt *sx* *sy*)) (logior (~ *mdata* (pt *sx* *sy*)) 64))
