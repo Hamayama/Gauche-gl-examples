@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデルビューワー
-;; 2017-2-22
+;; 2017-3-24
 ;;
 ;; ＜使い方＞
 ;;   gosh  model_viewer.scm  [modelXXXX.scm]
@@ -27,8 +27,8 @@
 (define *tanvan*     (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
 (define *aratio*     (/. *width* *height*)) ; アスペクト比(計算用)
 
-(define *wd/2*      90) ; 画面幅/2
-(define *ht/2*      90) ; 画面高さ/2
+(define *wd/2*      80) ; 画面幅/2
+(define *ht/2*      80) ; 画面高さ/2
 (define *zd/2*     110) ; 奥行き/2
 (define *xrot*       0) ; X軸を軸とする回転角(度)
 (define *yrot*       0) ; Y軸を軸とする回転角(度)
@@ -126,12 +126,14 @@
   (gl-viewport (quotient (- w *width*) 2) (quotient (- h *height*) 2) *width* *height*)
   (gl-matrix-mode GL_PROJECTION)
   (gl-load-identity)
-  ;; 透視射影する範囲を設定
-  ;(glu-perspective *vangle* (/. *width* *height*) 1 2000)
-  (gl-frustum (- *wd/2*) (* *wd/2* 3) (- *ht/2*) *ht/2* (/. *ht/2* *tanvan*) 2000)
-  ;; 視点の位置と方向を設定
-  ;(glu-look-at 0 0 (/. *ht/2* *tanvan*) 0 0 0 0 1 0)
-  (glu-look-at 0 0 (+ (/. *ht/2* *tanvan*) *zd/2*) 0 0 0 0 1 0)
+  (let1 z1 (/. *ht/2* *tanvan*)
+    ;; 透視射影する範囲を設定
+    ;(glu-perspective *vangle* (/. *width* *height*) (- z1 *zd/2*) (+ z1 *zd/2*))
+    (gl-frustum (- *wd/2*) (* *wd/2* 3) (- *ht/2*) *ht/2* z1 (+ z1 (* *zd/2* 2)))
+    ;; 視点の位置と方向を設定
+    ;(glu-look-at 0 0 z1 0 0 0 0 1 0)
+    (glu-look-at 0 0 (+ z1 *zd/2*) 0 0 0 0 1 0)
+    )
   ;; カスタマイズ用
   (viewer-reshape))
 

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2017-2-23 1.91
+;; 2017-2-23 1.92
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -32,6 +32,7 @@
 
 (define *wd/2*     400) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
+(define *zd/2*     200) ; 画面奥行き/2
 (define *chw*      100) ; キャラクタの幅
 (define *chh*      100) ; キャラクタの高さ
 (define *gdy*     -300) ; 地面のY座標
@@ -396,10 +397,11 @@
   (gl-viewport 0 (quotient (- h *height*) 2) *width* *height*)
   (gl-matrix-mode GL_PROJECTION)
   (gl-load-identity)
-  ;; 透視射影する範囲を設定
-  (glu-perspective *vangle* (/. *width* *height*) 1 2000)
-  ;; 視点の位置と方向を設定
-  (glu-look-at 0 0 (/. *ht/2* *tanvan*) 0 0 0 0 1 0))
+  (let1 z1 (/. *ht/2* *tanvan*)
+    ;; 透視射影する範囲を設定
+    (glu-perspective *vangle* (/. *width* *height*) (- z1 *zd/2*) (+ z1 *zd/2*))
+    ;; 視点の位置と方向を設定
+    (glu-look-at 0 0 z1 0 0 0 0 1 0)))
 
 ;; キー入力ON
 (define (keyboard key x y)

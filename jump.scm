@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2017-3-3 v1.58
+;; 2017-3-24 v1.59
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -27,8 +27,6 @@
 (define *title* "jump") ; ウィンドウのタイトル
 (define *width*    480) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
-(define *vangle*    45) ; 視野角(度)
-(define *tanvan*     (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
 
 (define *wd/2*     400) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
@@ -358,14 +356,6 @@
 (define (init)
   (gl-clear-color 0.0 0.0 0.0 0.0)
   (gl-enable GL_DEPTH_TEST)
-  ;; 光源設定
-  (gl-light  GL_LIGHT0 GL_POSITION #f32(1.0 1.0 1.0 0.0))
-  (gl-enable GL_LIGHTING)
-  (gl-enable GL_LIGHT0)
-  (gl-enable GL_NORMALIZE)
-  ;; 材質設定
-  (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
-  (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; 透過設定
   ;(gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   ;(gl-enable GL_BLEND)
@@ -397,8 +387,6 @@
 ;; 画面表示
 (define (disp)
   (gl-clear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-  (gl-matrix-mode GL_MODELVIEW)
-  (gl-load-identity)
   ;; 文字表示
   (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (y2 53))
     ;; シーン情報で場合分け
@@ -460,11 +448,7 @@
   (set! *height* (min w h))
   (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
-  (gl-viewport (quotient (- w *width*) 2) (quotient (- h *height*) 2) *width* *height*)
-  (gl-matrix-mode GL_PROJECTION)
-  (gl-load-identity)
-  ;; 透視射影する範囲を設定
-  (glu-perspective *vangle* (/. *width* *height*) 1 2000))
+  (gl-viewport (quotient (- w *width*) 2) (quotient (- h *height*) 2) *width* *height*))
 
 ;; キー入力ON
 (define (keyboard key x y)
