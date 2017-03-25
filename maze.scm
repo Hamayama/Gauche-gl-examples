@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; maze.scm
-;; 2017-3-24 v1.06
+;; 2017-3-25 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、迷路を自動生成して表示するサンプルです。
@@ -270,7 +270,8 @@
   (gl-clear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
   ;; 迷路の表示
   (disp-maze)
-  (gl-flush))
+  ;(gl-flush)
+  (glut-swap-buffers))
 
 ;; 画面のリサイズ
 (define (reshape w h)
@@ -303,7 +304,7 @@
 ;; メイン処理
 (define (main args)
   (glut-init args)
-  (glut-init-display-mode (logior GLUT_SINGLE GLUT_RGB GLUT_DEPTH))
+  (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
   (glut-init-window-position 100 100)
   (glut-create-window *title*)
