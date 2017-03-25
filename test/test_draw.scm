@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 2D描画のテスト
-;; 2017-3-24
+;; 2017-3-25
 ;;
 (add-load-path ".." :relative)
 (use gl)
@@ -87,15 +87,11 @@
 (define (keyboard key x y)
   (cond
    ;; ESCキーで終了
-   ((= key (char->integer #\escape)) (exit-main-loop 0))
+   ((= key (char->integer #\escape)) (exit 0))
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
     (gc) (print (gc-stat)))
    ))
-
-;; 終了
-(define (exit-main-loop code)
-  (exit code))
 
 ;; メイン処理
 (define (main args)
@@ -109,7 +105,7 @@
   (glut-reshape-func reshape)
   (glut-keyboard-func keyboard)
   ;; コールバック内エラー対策
-  (guard (ex (else (report-error ex) (exit-main-loop 1)))
+  (guard (ex (else (report-error ex) (exit 0)))
     (glut-main-loop))
   0)
 
