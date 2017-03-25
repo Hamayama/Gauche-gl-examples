@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-3-19 v1.30
+;; 2017-3-26 v1.31
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -51,6 +51,7 @@
 (define *vy*         0) ; Y方向速度
 (define *angle*      0) ; 角度(度)
 (define *landing*    0) ; 着陸フラグ
+(define *smoke*      0) ; 煙状態(=0:OFF,=1:ON)
 (define *cx*     40000) ; チェックポイントのX座標
 (define *cy*     69000) ; チェックポイントのY座標
 (define *cr*      5000) ; チェックポイントの半径
@@ -89,7 +90,8 @@
 
 
 ;; モデル0301(簡易飛行機)(胴体と羽の交点に原点あり)(胴体の長さ80)
-;; (define (model0301) ...)
+;;   smoke  煙状態(=0:OFF,=1:ON)
+;; (define (model0301 smoke) ...)
 (load (make-fpath *app-dpath* "model/model0301.scm"))
 
 ;; 自機の表示
@@ -103,7 +105,8 @@
   (let1 scl (/. (remap-range *mysize* 0 (- *maxy* *miny*) 0 (* *ht/2* 2))
                 80)
     (gl-scale scl scl scl))
-  (model0301)
+  (set! *smoke* (- 1 *smoke*))
+  (model0301 (if (> *a* 0) *smoke* 0))
   (gl-pop-matrix)
   )
 
@@ -329,6 +332,7 @@
        (set! *vy*      0)
        (set! *angle*   0)
        (set! *landing* 0)
+       (set! *smoke*   0)
        (set! *goal*    0)
        (set! *sc*      0)
        ;; キー入力待ち
