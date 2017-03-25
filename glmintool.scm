@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2017-3-23 v1.31
+;; 2017-3-25 v1.40
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -299,13 +299,13 @@
 ;; 疑似乱数の範囲を指定して取得
 (define-method xrand-randint ((xr <xrand>) (minx <integer>) (maxx <integer>))
   (if (> minx maxx) (let1 t minx (set! minx maxx) (set! maxx t)))
-  ;; 別件との互換性のため、符号を変換
+  ;; 別件との互換性のため、符号を変換して処理
   ;(+ (modulo (%xorshift32 xr) (+ (- maxx minx) 1)) minx)
   (let* ((v  (%xorshift32 xr))
-         (v2 (if (= (logand v #x80000000) 0)
-               v
-               (- (+ (logand (lognot v) #xFFFFFFFF) 1)))))
-    (+ (modulo (abs v2) (+ (- maxx minx) 1)) minx)
+         (v2 (if (logtest v #x80000000)
+               (- (+ (logand (lognot v) #xFFFFFFFF) 1))
+               v)))
+    (+ (mod v2 (+ (- maxx minx) 1)) minx)
     ))
 ;; 疑似乱数の内部計算処理(xorshift 32bit)
 (define-method %xorshift32 ((xr <xrand>))
@@ -319,17 +319,17 @@
 ;; 疑似乱数のテスト(デバッグ用)
 (define (xrand-test)
   (let ((xr     (make <xrand>))
-        (result (make-vector 10 0))
+        (result (make-vector 20 0))
         (count  (make-vector 10 0)))
     (xrand-init xr 1)
-    (do ((i 0 (+ i 1))) ((>= i 10) #f)
+    (do ((i 0 (+ i 1))) ((>= i 20) #f)
       (set! (~ result i) (xrand-randint xr 0 9)))
     (print "xrand-randint(0,9)=" result " -> "
-           (if (equal? result #(7 2 4 5 0 5 0 9 5 6)) "OK" "NG"))
+           (if (equal? result #(7 8 6 5 0 5 0 9 5 6 5 9 4 1 7 8 2 5 1 5)) "OK" "NG"))
     (do ((i 0 (+ i 1))) ((>= i 10000) #f)
       (inc! (~ count (xrand-randint xr 0 9))))
     (print "count[0-9]=" count " -> "
-           (if (equal? count #(998 981 997 1010 1006 1052 1008 997 995 956)) "OK" "NG"))
+           (if (equal? count #(1000 967 1024 975 977 1050 1039 1032 967 969)) "OK" "NG"))
     ))
 
 
