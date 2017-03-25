@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2017-3-25 v1.50
+;; 2017-3-26 v1.51
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -56,7 +56,7 @@
 (define *rdx*        0) ; 道路のX方向の差分
 (define *scz*     -400) ; スクリーンのZ座標
 (define *stg*        1) ; ステージ
-(define *goal*       0) ; ゴール情報(=0:未ゴール,=1-4:ウィニングラン,=5:ゴール終了)
+(define *goal*       0) ; ゴール情報(=0:未ゴール,=1-3:ウィニングラン,=4:ゴール終了)
 (define *sc*         0) ; スコア
 (define *hs*         0) ; ハイスコア
 (define *ssc*        0) ; 制御カウンタ
@@ -259,8 +259,7 @@
        (set! str2 "HIT [S] KEY")
        (set! y2 37))
       ((1) ; プレイ中
-       (if (<= *sc* 4000)
-         (set! str2 "MOVE : [<-] [->]  BRAKE : [SPACE]")))
+       (if (<= *sc* 4000) (set! str2 "MOVE : [<-] [->]  BRAKE : [SPACE]")))
       ((2) ; プレイ終了
        (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
       )
@@ -390,7 +389,7 @@
        ;; 終了判定
        (when (or (> (+ *rx1* *rdx*) 0)
                  (< (+ *rx2* *rdx*) 0)
-                 (>= *goal* 5))
+                 (>= *goal* 4))
          (set! *scene* 2)
          (if (= *goal* 0) (auddata-play *adata-end1*)))
        )
@@ -400,7 +399,7 @@
        (waitcalc-set-wait *wcinfo* *wait*)
        ;; 時間待ち
        ;(timewait *twinfo* 1500
-       (timewait *twinfo* (if (>= *goal* 5) 500 1500)
+       (timewait *twinfo* (if (> *goal* 0) 1000 1500)
                  (lambda ()
                    ;; キー入力待ち
                    (keywait *kwinfo* '(#\d #\D)
