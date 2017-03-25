@@ -105,7 +105,7 @@
   (glut-reshape-func reshape)
   (glut-keyboard-func keyboard)
   ;; コールバック内エラー対策
-  (guard (ex (else (report-error ex) (exit 0)))
+  (guard (ex (else (report-error ex) (exit 1)))
     (glut-main-loop))
   0)
 

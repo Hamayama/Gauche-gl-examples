@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデルビューワー
-;; 2017-3-24
+;; 2017-3-25
 ;;
 ;; ＜使い方＞
 ;;   gosh  model_viewer.scm  [modelXXXX.scm]
@@ -208,7 +208,7 @@
   (glut-special-up-func specialkeyup)
   (glut-timer-func *wait* timer 0)
   ;; コールバック内エラー対策
-  (guard (ex (else (report-error ex) (exit 0)))
+  (guard (ex (else (report-error ex) (exit 1)))
     (glut-main-loop))
   0)
 

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; planet.scm
-;; 2017-2-23 v1.14
+;; 2017-3-25 v1.15
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、星を表示するサンプルです。
@@ -143,7 +143,7 @@
   (glut-keyboard-func keyboard)
   (glut-timer-func *wait* timer 0)
   ;; コールバック内エラー対策
-  (guard (ex (else (report-error ex) (exit 0)))
+  (guard (ex (else (report-error ex) (exit 1)))
     (glut-main-loop))
   0)
 

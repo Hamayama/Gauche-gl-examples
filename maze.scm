@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; maze.scm
-;; 2017-3-25 v1.07
+;; 2017-3-25 v1.08
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、迷路を自動生成して表示するサンプルです。
@@ -313,7 +313,7 @@
   (glut-reshape-func reshape)
   (glut-keyboard-func keyboard)
   ;; コールバック内エラー対策
-  (guard (ex (else (report-error ex) (exit 0)))
+  (guard (ex (else (report-error ex) (exit 1)))
     (glut-main-loop))
   0)
 
