@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0101(人形)
-;; 2017-2-22
+;; 2017-3-27
 ;;
 ;(add-load-path ".." :relative)
 ;(use glmodelkit) ; box-model,cylinder用
@@ -105,15 +105,13 @@
     (inc! (~ *model-para-vec* 1))
     (if (> (~ *model-para-vec* 1) 5) (set! (~ *model-para-vec* 1) 0))
     (set! (~ *model-text-vec-A* 1)
-          (string-append
-           "  pose : "
-           (case (~ *model-para-vec* 1)
-             ((0) "0 (normal)")
-             ((1) "1 (foreward)")
-             ((2) "2 (backword)")
-             ((3) "3 (down)")
-             ((4) "4 (punch)")
-             ((5) "5 (kick)"))))
+          (format "  pose : ~a" (case (~ *model-para-vec* 1)
+                                  ((0) "0 (normal)")
+                                  ((1) "1 (foreward)")
+                                  ((2) "2 (backword)")
+                                  ((3) "3 (down)")
+                                  ((4) "4 (punch)")
+                                  ((5) "5 (kick)"))))
     )
   )
 
