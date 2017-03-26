@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデルビューワー
-;; 2017-3-25
+;; 2017-3-27
 ;;
 ;; ＜使い方＞
 ;;   gosh  model_viewer.scm  [modelXXXX.scm]
@@ -179,6 +179,8 @@
     (set! *xrot* (- *xrot* *drot*)))
   (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)
     (set! *xrot* (+ *xrot* *drot*)))
+  (set! *xrot* (wrap-range *xrot* 0 360))
+  (set! *yrot* (wrap-range *yrot* 0 360))
   ;; カスタマイズ用
   (viewer-timer)
   ;; 画面表示
@@ -190,9 +192,7 @@
 (define (main args)
 
   ;; モデルのロード
-  (load (make-fpath
-         *app-dpath*
-         (x->string (list-ref args 1 "model0101.scm"))))
+  (load (make-fpath *app-dpath* (x->string (list-ref args 1 "model0101.scm"))))
 
   (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
