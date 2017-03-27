@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2017-3-25 v1.40
+;; 2017-3-28 v1.41
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -32,17 +32,20 @@
       (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
 
 ;; 数値xを偶数丸めして小数第n位までの数値にする
+;;   (誤差が発生するケースあり 例. (round-n 5.015 2) → 5.01 等)
 (define (round-n x n)
   (let1 p (expt 10 n)
     (/. (round (* x p)) p)))
 
 ;; 数値xを0方向に切り捨てて小数第n位までの数値にする
+;;   (誤差が発生するケースあり 例. (truncate-n 2.07 2) → 2.06 等)
 (define (truncate-n x n)
   (let1 p (expt 10 n)
     (/. (truncate (* x p)) p)))
 
 ;; 数値xが指定した範囲(min～max)におさまるように剰余を使って変換する
-;; (片方の境界を越えた場合に、反対側の境界から出てくるような動作を実現できる)
+;;   (片方の境界を越えた場合に、反対側の境界から出てくるような動作を実現できる)
+;;   (注意点として、min<max であれば、戻り値は常にmaxより小さくなる)
 (define (wrap-range x minx maxx)
   (cond
    ((< minx maxx) (+ (mod (- x minx) (- maxx minx)) minx))
@@ -50,8 +53,8 @@
    (else          minx)))
 
 ;; ある範囲内(minx～maxx)の値xを、別の範囲内(miny～maxy)の値yに変換する
-;; 計算式は y=miny+(x-minx)*(maxy-miny)/(maxx-minx) となる
-;; (これは比例式 maxx-x:x-minx = maxy-y:y-miny が成り立つような値yを返すことになる)
+;;   (計算式は y=miny+(x-minx)*(maxy-miny)/(maxx-minx) となる)
+;;   (これは比例式 maxx-x:x-minx = maxy-y:y-miny が成り立つような値yを返すことになる)
 (define (remap-range x minx maxx miny maxy)
   (if (= minx maxx)
     0
