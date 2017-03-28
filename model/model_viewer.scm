@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデルビューワー
-;; 2017-3-27
+;; 2017-3-28
 ;;
 ;; ＜使い方＞
 ;;   gosh  model_viewer.scm  [modelXXXX.scm]
@@ -86,21 +86,23 @@
   ;; 文字表示
   (let ((x1 (+ (win-w-r *win* 1/2) 8))
         (y1 0))
+    (define (next-line) (set! y1 (+ y1 30)))
+
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-bitmap-text *model-name* x1 y1 *width* *height* 24)
-    (set! y1 (+ y1 30))
+    (draw-bitmap-text *model-name* x1 y1 *width* *height*)
+    (next-line)
     (for-each (lambda (str)
-                (draw-bitmap-text str x1 y1 *width* *height* 24)
-                (set! y1 (+ y1 30)))
+                (draw-bitmap-text str x1 y1 *width* *height*)
+                (next-line))
               *model-text-vec-A*)
-    (set! y1 (+ y1 30))
-    (draw-bitmap-text "[esc] : exit" x1 y1 *width* *height* 24)
-    (set! y1 (+ y1 30))
-    (draw-bitmap-text "[arrow keys] : rotate" x1 y1 *width* *height* 24)
-    (set! y1 (+ y1 30))
+    (next-line)
+    (draw-bitmap-text "[esc] : exit" x1 y1 *width* *height*)
+    (next-line)
+    (draw-bitmap-text "[arrow keys] : rotate" x1 y1 *width* *height*)
+    (next-line)
     (for-each (lambda (str)
-                (draw-bitmap-text str x1 y1 *width* *height* 24)
-                (set! y1 (+ y1 30)))
+                (draw-bitmap-text str x1 y1 *width* *height*)
+                (next-line))
               *model-text-vec-B*)
     )
   ;; モデルの表示
@@ -171,14 +173,10 @@
 ;; タイマー
 (define (timer val)
   ;; モデルの回転操作
-  (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)
-    (set! *yrot* (- *yrot* *drot*)))
-  (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT)
-    (set! *yrot* (+ *yrot* *drot*)))
-  (if (spkey-on? *ksinfo* GLUT_KEY_UP)
-    (set! *xrot* (- *xrot* *drot*)))
-  (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)
-    (set! *xrot* (+ *xrot* *drot*)))
+  (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! *yrot* (- *yrot* *drot*)))
+  (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! *yrot* (+ *yrot* *drot*)))
+  (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! *xrot* (- *xrot* *drot*)))
+  (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! *xrot* (+ *xrot* *drot*)))
   (set! *xrot* (wrap-range *xrot* 0 360))
   (set! *yrot* (wrap-range *yrot* 0 360))
   ;; カスタマイズ用
