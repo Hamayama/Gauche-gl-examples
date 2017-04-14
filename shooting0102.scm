@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2017-3-24 v1.21
+;; 2017-4-15 v1.30
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -528,16 +528,16 @@
   ;; 文字-描画手続きの割り付け設定
   ;;(削れた部分(中央))
   (set-char-drawer #\. (lambda (x y width height chw chh z)
-                         (draw-win-rect (- x (* chw 1.5)) y
-                                        (* chw 2.5) chh width height 'left z)))
+                         (%draw-win-rect (- x (* chw 1.5)) y
+                                         (* chw 2.5) chh width height 'left z)))
   ;;(削れた部分(上端))
   (set-char-drawer #\, (lambda (x y width height chw chh z)
-                         (draw-win-rect (- x (* chw 1.5)) (- y (* chh 0.5))
-                                        (* chw 3.5) (* chh 1.5) width height 'left z)))
+                         (%draw-win-rect (- x (* chw 1.5)) (- y (* chh 0.5))
+                                         (* chw 3.5) (* chh 1.5) width height 'left z)))
   ;;(削れた部分(下端))
   (set-char-drawer #\' (lambda (x y width height chw chh z)
-                         (draw-win-rect (- x (* chw 1.5)) y
-                                        (* chw 3.5) (* chh 1.5) width height 'left z)))
+                         (%draw-win-rect (- x (* chw 1.5)) y
+                                         (* chw 3.5) (* chh 1.5) width height 'left z)))
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.07)

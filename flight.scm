@@ -1,10 +1,11 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-3-26 v1.31
+;; 2017-4-15 v1.40
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
+;;   画面左下の小さい黄色が自機です。(画面の左上には自機の姿勢が表示されています)
 ;;   スペースキーを押し続けると加速します。(上昇中はほとんど加速できません)
 ;;   矢印キーの上下で方向を変えます。
 ;;   (矢印キーの上で反時計回り、下で時計回りに角度を変えます)
@@ -36,7 +37,7 @@
 (define *wd/2*   52000) ; 画面幅/2
 (define *ht/2*   40000) ; 画面高さ/2
 (define *zd/2*   10000) ; 画面奥行き/2
-(define *mysize*  5000) ; 自機のサイズ
+(define *mysize*  2300) ; 自機のサイズ
 (define *maxx*   52000) ; 自機のX座標最大値
 (define *minx*  -52000) ; 自機のX座標最小値
 (define *maxy*   77000) ; 自機のY座標最大値
@@ -61,6 +62,7 @@
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:プレイ中,=2:プレイ終了)
 (define *backcolor*   #f32(0.0 0.0 0.3 1.0)) ; 背景色
 (define *floorcolor*  #f32(0.7 0.2 0.0 1.0)) ; 地面色
+(define *mycolor*     #f32(1.0 1.0 0.0 0.7)) ; 自機姿勢表示色
 (define *checkcolor1* #f32(1.0 0.6 0.2 1.0)) ; チェックポイント色1
 (define *checkcolor2* #f32(0.7 0.4 0.1 1.0)) ; チェックポイント色2
 
@@ -108,6 +110,17 @@
   (set! *smoke* (- 1 *smoke*))
   (model0301 (if (> *a* 0) *smoke* 0))
   (gl-pop-matrix)
+  ;; 画面の左上に姿勢を表示
+  (let ((x2    48)
+        (y2   120)
+        (wing   (clamp (abs (* 29 (cos (* (+ *angle* -90) pi/180)))) 2 100)))
+    (gl-color *mycolor*)
+    (%win-ortho-on *width* *height*)
+    (%win-translate x2 y2 *width* *height*)
+    (%win-rotate *angle* 0 0 *width* *height*)
+    (%draw-win-rect -40 -8       64 16         *width* *height* 'left -0.999999)
+    (%draw-win-rect -8  (- wing) 16 (* wing 2) *width* *height* 'left -0.999999)
+    (%win-ortho-off))
   )
 
 ;; 自機の移動
@@ -194,6 +207,9 @@
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
+  ;; 透過設定
+  (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
+  (gl-enable GL_BLEND)
   ;; 音楽データの初期化
   (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
   (auddata-set-prop *adata-start* AL_GAIN  0.07)
