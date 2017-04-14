@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-4-15 v1.40
+;; 2017-4-15 v1.41
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -111,15 +111,16 @@
   (model0301 (if (> *a* 0) *smoke* 0))
   (gl-pop-matrix)
   ;; 画面の左上に姿勢を表示
-  (let ((x2    48)
-        (y2   120)
-        (wing   (clamp (abs (* 29 (cos (* (+ *angle* -90) pi/180)))) 2 100)))
+  (let* ((x1   (win-w-r *win*  9/100))
+         (y1   (win-h-r *win* 25/100))
+         (w1   (win-h-r *win*  2/100))
+         (wing (clamp (abs (* w1 3.6 (cos (* (+ *angle* -90) pi/180)))) 2 100000)))
     (gl-color *mycolor*)
     (%win-ortho-on *width* *height*)
-    (%win-translate x2 y2 *width* *height*)
+    (%win-translate x1 y1 *width* *height*)
     (%win-rotate *angle* 0 0 *width* *height*)
-    (%draw-win-rect -40 -8       64 16         *width* *height* 'left -0.999999)
-    (%draw-win-rect -8  (- wing) 16 (* wing 2) *width* *height* 'left -0.999999)
+    (%draw-win-rect (* w1 -5) (* w1   -1) (* w1 8) (* w1   2) *width* *height* 'left -0.999999)
+    (%draw-win-rect (* w1 -1) (* wing -1) (* w1 2) (* wing 2) *width* *height* 'left -0.999999)
     (%win-ortho-off))
   )
 
