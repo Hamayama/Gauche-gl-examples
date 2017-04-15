@@ -331,6 +331,7 @@ flight.scm
   2017-4-15  v1.40  gltextscrn v1.90 対応
                     自機姿勢表示追加
   2017-4-15  v1.41  自機姿勢表示修正
+  2017-4-15  v1.42  自機姿勢表示修正
 
 maze.scm
   2017-3-19  v1.00  初版
@@ -445,6 +446,7 @@ gltextscrn.scm
   2017-2-18  v1.87  GL_TEXTURE_RECTANGLE設定見直し
   2017-3-23  v1.88  *char-texture-table*,*char-drawer-table*を公開
   2017-4-15  v1.90  正射影設定ON/OFFをしない手続きを追加
+  2017-4-15  v1.91  内部処理見直し等(imgdata-set-texture → set-texture-imgdata)
 
 alaudplay.scm
   2016-3-31  v1.00  初版

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2017-4-15 v1.90
+;; 2017-4-15 v1.91
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -21,7 +21,8 @@
     %win-ortho-on %win-ortho-off
     ;; 拡大縮小/回転/平行移動設定
     %win-scale %win-rotate %win-translate
-    ;; %付きの手続きは正射影設定ON/OFFをしない(=呼び出し側でON/OFFを行う必要がある)
+    ;; 「%」付きの手続きは、内部で 正射影設定ON/OFF をしない
+    ;; (このため、呼び出し側で 正射影設定ON/OFF を行う必要がある)
     %draw-bitmap-text       draw-bitmap-text
     %draw-bitmap-text-over  draw-bitmap-text-over
     %draw-stroke-text       draw-stroke-text
@@ -44,7 +45,7 @@
     *char-texture-table* set-char-texture
     %textscrn-disp-texture  textscrn-disp-texture
     ;; 文字-描画手続きの割り付けテーブル
-    *char-drawer-table*  set-char-drawer
+    *char-drawer-table* set-char-drawer
     %textscrn-disp-drawer   textscrn-disp-drawer
     ))
 (select-module gltextscrn)
@@ -63,6 +64,7 @@
 (define *use-gl-texture-rectangle* #t)
 (define GL_TEXTURE_RECTANGLE
   (global-variable-ref 'gl 'GL_TEXTURE_RECTANGLE #x84f5))
+
 
 ;; 正射影設定ON/OFF(内部処理用)
 ;;   ・投影方法を正射影に設定し、また、
@@ -86,6 +88,7 @@
   (gl-pop-matrix)
   (gl-matrix-mode GL_MODELVIEW)
   (gl-pop-matrix))
+
 
 ;; 拡大縮小設定
 ;;   ・X,Y方向の倍率 (sx,sy) と中心座標 (ox,oy) を指定して拡大縮小を行う
@@ -112,6 +115,7 @@
 ;;   ・移動量 (dx,dy) は、左上を原点として (0,0)-(width,height) の範囲で指定する
 (define (%win-translate dx dy width height)
   (gl-translate dx (- dy) 0))
+
 
 ;; 文字列の幅を取得(ビットマップフォント)(内部処理用)
 (define (get-bitmap-text-width str font)
@@ -1029,9 +1033,9 @@
    (height :init-value 0)  ; テクスチャの高さ(px)
    ))
 
-;; 画像データをテクスチャデータに設定する(内部処理用)
+;; テクスチャデータに画像データを設定する(内部処理用)
 ;;   ・各種パラメータは決め打ち
-(define-method imgdata-set-texture ((img <imgdata>) (td <texdata>))
+(define-method set-texture-imgdata ((td <texdata>) (img <imgdata>))
   (let1 target (if *use-gl-texture-rectangle*
                  GL_TEXTURE_RECTANGLE
                  GL_TEXTURE_2D)
@@ -1055,7 +1059,7 @@
     (set! (~ td 'tex)    (~ tex 0))
     (set! (~ td 'width)  (~ img 'width))
     (set! (~ td 'height) (~ img 'height))
-    (imgdata-set-texture img td)
+    (set-texture-imgdata td img)
     ))
 
 ;; テクスチャ付き長方形の表示
@@ -1111,6 +1115,7 @@
   (%draw-texture-rect td x y w h width height align z
                       xcrd ycrd width-r height-r xoffset-r yoffset-r)
   (%win-ortho-off))
+
 
 ;; 文字-テクスチャデータの割り付けテーブル(テクスチャの一括表示用)
 (define *char-texture-table* (make-hash-table 'eqv?))
