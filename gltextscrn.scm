@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2017-4-15 v1.91
+;; 2017-5-4 v1.92
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -13,6 +13,7 @@
   (use gauche.uvector)
   (use gauche.collection)
   (use gauche.record)
+  (use math.const)
   (use srfi-13) ; string-fold,string-for-each用
   (use binary.pack)
   (export
@@ -31,6 +32,9 @@
     %draw-win-rect          draw-win-rect
     %draw-win-circle        draw-win-circle
     %draw-win-poly          draw-win-poly
+    %draw-win-rect-line     draw-win-rect-line
+    %draw-win-circle-line   draw-win-circle-line
+    %draw-win-poly-line     draw-win-poly-line
     ;; テキスト画面クラス
     <textscrn> textscrn-init
     %textscrn-disp          textscrn-disp
@@ -247,6 +251,7 @@
                           fore-color back-color back-scalex back-scaley font)
   (%win-ortho-off))
 
+
 ;; 線の表示
 ;;   ・線 (x1,y1)-(x2,y2) の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
@@ -289,7 +294,7 @@
   (%win-ortho-off))
 
 ;; 円の表示
-;;   ・円 (x,y,r,a,b) -> (x*x)/(a*a)+(y*y)/(b*b)=r*r の表示を行う
+;;   ・円 (x,y,r,a,b) -> (x'-x)*(x'-x)*(a*a)+(y'-y)*(y'-y)*(b*b)=r*r の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
 (define (%draw-win-circle x y r width height :optional (a 1) (b 1) (align 'center) (z 0))
   (let ((x1 (case align
@@ -328,6 +333,76 @@
 (define (draw-win-poly x y vvec width height :optional (z 0))
   (%win-ortho-on width height)
   (%draw-win-poly x y vvec width height z)
+  (%win-ortho-off))
+
+
+;; 長方形の輪郭表示
+;;   ・長方形 (x,y,w,h) の輪郭表示を行う (wとhは幅と高さ)
+;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
+(define (%draw-win-rect-line x y w h width height :optional (align 'left) (z 0))
+  (let ((x1 (case align
+              ((center) (- x (/. w 2))) ; 中央寄せ
+              ((right)  (- x w))        ; 右寄せ
+              (else     x)))
+        (y1 (- height y)))
+    (gl-push-matrix)
+    (gl-translate x1 y1 z)
+    (gl-begin GL_LINE_LOOP)
+    (gl-vertex (f32vector 0 0))
+    (gl-vertex (f32vector 0 (- h)))
+    (gl-vertex (f32vector w (- h)))
+    (gl-vertex (f32vector w 0))
+    (gl-end)
+    (gl-pop-matrix)
+    ))
+(define (draw-win-rect-line x y w h width height :optional (align 'left) (z 0))
+  (%win-ortho-on width height)
+  (%draw-win-rect-line x y w h width height align z)
+  (%win-ortho-off))
+
+;; 円の輪郭表示
+;;   ・円 (x,y,r,a,b) -> (x'-x)*(x'-x)*(a*a)+(y'-y)*(y'-y)*(b*b)=r*r の輪郭表示を行う
+;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
+(define (%draw-win-circle-line x y r width height :optional (a 1) (b 1) (align 'center) (z 0))
+  (let ((x1   (case align
+                ((left)  (+ x r)) ; 左寄せ
+                ((right) (- x r)) ; 右寄せ
+                (else    x)))
+        (y1   (- height y))
+        (r1   (if (= a 0) r (/. r a)))
+        (r2   (if (= b 0) r (/. r b))))
+    (gl-push-matrix)
+    (gl-translate x1 y1 z)
+    (gl-begin GL_LINE_LOOP)
+    (do ((i   0 (+ i 1))
+         (rad 0 (+ rad (/. |2pi| 100))))
+        ((>= i 100) #f)
+      (gl-vertex (f32vector (* r1 (cos rad)) (* r2 (sin rad)))))
+    (gl-end)
+    (gl-pop-matrix)
+    ))
+(define (draw-win-circle-line x y r width height :optional (a 1) (b 1) (align 'center) (z 0))
+  (%win-ortho-on width height)
+  (%draw-win-circle-line x y r width height a b align z)
+  (%win-ortho-off))
+
+;; 多角形の輪郭表示
+;;   ・頂点の座標(f32vector x y)を複数格納したシーケンスvvecを渡して、多角形の輪郭表示を行う
+;;     (面は頂点が反時計回りになる方が表になる)
+;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
+(define (%draw-win-poly-line x y vvec width height :optional (z 0))
+  (let1 y1 (- height y)
+    (gl-push-matrix)
+    (gl-translate x y1 z)
+    (gl-scale 1 -1  1)
+    (gl-begin GL_LINE_LOOP)
+    (for-each gl-vertex vvec)
+    (gl-end)
+    (gl-pop-matrix)
+    ))
+(define (draw-win-poly-line x y vvec width height :optional (z 0))
+  (%win-ortho-on width height)
+  (%draw-win-poly-line x y vvec width height z)
   (%win-ortho-off))
 
 

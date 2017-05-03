@@ -344,6 +344,9 @@ maze.scm
   2017-3-25  v1.07  ダブルバッファリングに戻した
   2017-3-25  v1.08  終了コード変更
 
+clock.scm
+  2017-5-4   v1.00  初版
+
 
 glmintool.scm
   2016-2-8   v1.00  初版
@@ -447,6 +450,7 @@ gltextscrn.scm
   2017-3-23  v1.88  *char-texture-table*,*char-drawer-table*を公開
   2017-4-15  v1.90  正射影設定ON/OFFをしない手続きを追加
   2017-4-15  v1.91  内部処理見直し等(imgdata-set-texture → set-texture-imgdata)
+  2017-5-4   v1.92  draw-win-rect-line,draw-win-circle-line,draw-win-poly-line追加
 
 alaudplay.scm
   2016-3-31  v1.00  初版
@@ -465,4 +469,4 @@ glmodelkit.scm
   2017-2-22  v1.01  コメント修正のみ
 
 
-(2017-4-15)
+(2017-5-4)
