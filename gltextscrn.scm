@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2017-5-4 v1.92
+;; 2017-5-4 v1.93
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -20,10 +20,11 @@
     *font-bitmap-1* *font-stroke-1* *use-gl-texture-rectangle*
     ;; 正射影設定ON/OFF
     %win-ortho-on %win-ortho-off
-    ;; 拡大縮小/回転/平行移動設定
+    ;; 拡大縮小、回転、平行移動
     %win-scale %win-rotate %win-translate
-    ;; 「%」付きの手続きは、内部で 正射影設定ON/OFF をしない
-    ;; (このため、呼び出し側で 正射影設定ON/OFF を行う必要がある)
+    ;; 各種描画
+    ;; (「%」付きの手続きは、内部で 正射影設定ON/OFF をしない
+    ;;  (このため、呼び出し側で 正射影設定ON/OFF を行う必要がある))
     %draw-bitmap-text       draw-bitmap-text
     %draw-bitmap-text-over  draw-bitmap-text-over
     %draw-stroke-text       draw-stroke-text
@@ -336,8 +337,8 @@
   (%win-ortho-off))
 
 
-;; 長方形の輪郭表示
-;;   ・長方形 (x,y,w,h) の輪郭表示を行う (wとhは幅と高さ)
+;; 長方形の輪郭の表示
+;;   ・長方形 (x,y,w,h) の輪郭の表示を行う (wとhは幅と高さ)
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
 (define (%draw-win-rect-line x y w h width height :optional (align 'left) (z 0))
   (let ((x1 (case align
@@ -360,8 +361,8 @@
   (%draw-win-rect-line x y w h width height align z)
   (%win-ortho-off))
 
-;; 円の輪郭表示
-;;   ・円 (x,y,r,a,b) -> (x'-x)*(x'-x)*(a*a)+(y'-y)*(y'-y)*(b*b)=r*r の輪郭表示を行う
+;; 円の輪郭の表示
+;;   ・円 (x,y,r,a,b) -> (x'-x)*(x'-x)*(a*a)+(y'-y)*(y'-y)*(b*b)=r*r の輪郭の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
 (define (%draw-win-circle-line x y r width height :optional (a 1) (b 1) (align 'center) (z 0))
   (let ((x1   (case align
@@ -386,8 +387,8 @@
   (%draw-win-circle-line x y r width height a b align z)
   (%win-ortho-off))
 
-;; 多角形の輪郭表示
-;;   ・頂点の座標(f32vector x y)を複数格納したシーケンスvvecを渡して、多角形の輪郭表示を行う
+;; 多角形の輪郭の表示
+;;   ・頂点の座標(f32vector x y)を複数格納したシーケンスvvecを渡して、多角形の輪郭の表示を行う
 ;;     (面は頂点が反時計回りになる方が表になる)
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
 (define (%draw-win-poly-line x y vvec width height :optional (z 0))
