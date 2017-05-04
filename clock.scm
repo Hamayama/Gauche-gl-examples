@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; clock.scm
-;; 2017-5-4 v1.02
+;; 2017-5-4 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、アナログ時計を表示するサンプルです。
@@ -45,15 +45,15 @@
 
 
 ;; 時計の表示
-(define (disp-clock)
+(define (disp-clock x y r :optional (hour 0) (minute 0) (second 0) (nanosecond 0))
   ;; 座標とサイズの計算
-  (define x1   (win-x *win* 0))       ; ウィンドウ上の中心のX座標(px)
-  (define y1   (win-y *win* 0))       ; ウィンドウ上の中心のY座標(px)
-  (define r1   (win-h *win* *csize*)) ; ウィンドウ上の時計の大きさ/2(px)
+  (define x1   (win-x *win* x)) ; ウィンドウ上の中心のX座標(px)
+  (define y1   (win-y *win* y)) ; ウィンドウ上の中心のY座標(px)
+  (define r1   (win-h *win* r)) ; ウィンドウ上の時計の大きさ/2(px)
   ;; 秒、分、時の計算
-  (define s1   (+ *second* (/. *nanosecond* 1e9))) ; 秒(小数部もあり)
-  (define m1   (+ *minute* (/. s1 60)))            ; 分(小数部もあり)
-  (define h1   (+ *hour*   (/. m1 60)))            ; 時(小数部もあり)
+  (define s1   (+ second (/. nanosecond 1e9))) ; 秒(小数部もあり)
+  (define m1   (+ minute (/. s1 60)))          ; 分(小数部もあり)
+  (define h1   (+ hour   (/. m1 60)))          ; 時(小数部もあり)
   ;; 針の角度の計算
   (define rad1 (- (* s1 (/. 2pi 60)) pi/2)) ; 秒針の角度(rad)
   (define rad2 (- (* m1 (/. 2pi 60)) pi/2)) ; 長針の角度(rad)
@@ -104,8 +104,8 @@
       ((>= i 12) #f)
     (draw-stroke-text (x->string (+ i 1))
                       (+ x1 (* r1 0.82 (cos rad)))
-                      (+ y1 (* r1 0.82 (sin rad)) (win-h-r *win* -1/26))
-                      *width* *height* (win-h-r *win* 1/13) 'center))
+                      (+ y1 (* r1 0.82 (sin rad)) (* r1 -0.1))
+                      *width* *height* (* r1 0.2) 'center))
   )
 
 
@@ -125,7 +125,9 @@
 (define (disp)
   (gl-clear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
   ;; 時計の表示
-  (disp-clock)
+  (disp-clock 0 0 *csize* *hour* *minute* *second* *nanosecond*)
+  ;(disp-clock (if (= *width* 0) 0 (* 100 (/. *height* *width*))) 100 80
+  ;            (- *hour* 9) *minute* *second* *nanosecond*)
   ;; 背景の表示
   (gl-color *backcolor*)
   (draw-win-rect 0 0 *width* *height* *width* *height* 'left)
