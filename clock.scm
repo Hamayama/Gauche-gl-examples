@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; clock.scm
-;; 2017-5-4 v1.01
+;; 2017-5-4 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、アナログ時計を表示するサンプルです。
@@ -103,9 +103,9 @@
        (rad (- (/. 2pi 6)) (+ rad (/. 2pi 12))))
       ((>= i 12) #f)
     (draw-stroke-text (x->string (+ i 1))
-                      (+ x1 (* r1 0.83 (cos rad)))
-                      (+ y1 (* r1 0.83 (sin rad)) (win-h-r *win* -1/30))
-                      *width* *height* (win-h-r *win* 1/15) 'center))
+                      (+ x1 (* r1 0.82 (cos rad)))
+                      (+ y1 (* r1 0.82 (sin rad)) (win-h-r *win* -1/26))
+                      *width* *height* (win-h-r *win* 1/13) 'center))
   )
 
 
