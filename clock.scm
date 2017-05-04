@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; clock.scm
-;; 2017-5-4 v1.00
+;; 2017-5-4 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、アナログ時計を表示するサンプルです。
@@ -46,17 +46,18 @@
 
 ;; 時計の表示
 (define (disp-clock)
+  ;; 座標とサイズの計算
   (define x1   (win-x *win* 0))       ; ウィンドウ上の中心のX座標(px)
   (define y1   (win-y *win* 0))       ; ウィンドウ上の中心のY座標(px)
-  (define r1   (win-h *win* *csize*)) ; ウィンドウ上の時計のサイズ(px)
+  (define r1   (win-h *win* *csize*)) ; ウィンドウ上の時計の大きさ/2(px)
   ;; 秒、分、時の計算
   (define s1   (+ *second* (/. *nanosecond* 1e9))) ; 秒(小数部もあり)
   (define m1   (+ *minute* (/. s1 60)))            ; 分(小数部もあり)
   (define h1   (+ *hour*   (/. m1 60)))            ; 時(小数部もあり)
   ;; 針の角度の計算
-  (define rad1 (- (* s1 (/. |2pi| 60)) pi/2)) ; 秒針の角度(rad)
-  (define rad2 (- (* m1 (/. |2pi| 60)) pi/2)) ; 長針の角度(rad)
-  (define rad3 (- (* h1 (/. |2pi| 12)) pi/2)) ; 短針の角度(rad)
+  (define rad1 (- (* s1 (/. 2pi 60)) pi/2)) ; 秒針の角度(rad)
+  (define rad2 (- (* m1 (/. 2pi 60)) pi/2)) ; 長針の角度(rad)
+  (define rad3 (- (* h1 (/. 2pi 12)) pi/2)) ; 短針の角度(rad)
 
   ;; 中心
   (gl-color *centercolor*)
@@ -89,7 +90,7 @@
   ;(draw-win-poly-line x1 y1 (vector (f32vector 0 (- r1)) (f32vector (- r1) r1) (f32vector r1 r1)) *width* *height*)
   ;; 目盛
   (do ((i   0 (+ i 1))
-       (rad 0 (+ rad (/. |2pi| 60))))
+       (rad 0 (+ rad (/. 2pi 60))))
       ((>= i 60) #f)
     (gl-line-width (if (= (mod i 5) 0) 3.5 1.5))
     (draw-win-line (+ x1 (* r1 0.97 (cos rad)))
@@ -99,7 +100,7 @@
   ;; 数字
   (gl-color *numbercolor*)
   (do ((i   0 (+ i 1))
-       (rad (- (/. |2pi| 6)) (+ rad (/. |2pi| 12))))
+       (rad (- (/. 2pi 6)) (+ rad (/. 2pi 12))))
       ((>= i 12) #f)
     (draw-stroke-text (x->string (+ i 1))
                       (+ x1 (* r1 0.83 (cos rad)))
@@ -151,7 +152,7 @@
 
 ;; タイマー
 (define (timer val)
-  ;; 日時の取得
+  ;; 現在時刻の取得
   (let1 d1 (current-date)
     (set! *hour*       (date-hour       d1))
     (set! *minute*     (date-minute     d1))
