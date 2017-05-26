@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; clock.scm
-;; 2017-5-4 v1.03
+;; 2017-5-26 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、アナログ時計を表示するサンプルです。
@@ -23,7 +23,7 @@
 
 (define *wd/2*     400) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
-(define *csize*    300) ; 時計の大きさ/2
+(define *csize*    600) ; 時計のサイズ
 (define *hour*       0) ; 時
 (define *minute*     0) ; 分
 (define *second*     0) ; 秒
@@ -49,7 +49,7 @@
   ;; 座標とサイズの計算
   (define x1   (win-x *win* x)) ; ウィンドウ上の中心のX座標(px)
   (define y1   (win-y *win* y)) ; ウィンドウ上の中心のY座標(px)
-  (define r1   (win-h *win* r)) ; ウィンドウ上の時計の大きさ/2(px)
+  (define r1   (win-h *win* r)) ; ウィンドウ上の時計の半径(px)
   ;; 秒、分、時の計算
   (define s1   (+ second (/. nanosecond 1e9))) ; 秒(小数部もあり)
   (define m1   (+ minute (/. s1 60)))          ; 分(小数部もあり)
@@ -104,8 +104,8 @@
       ((>= i 12) #f)
     (draw-stroke-text (x->string (+ i 1))
                       (+ x1 (* r1 0.82 (cos rad)))
-                      (+ y1 (* r1 0.82 (sin rad)) (* r1 -0.1))
-                      *width* *height* (* r1 0.2) 'center))
+                      (+ y1 (* r1 0.82 (sin rad)) (* r1 -0.105))
+                      *width* *height* (* r1 0.21) 'center))
   )
 
 
@@ -125,7 +125,7 @@
 (define (disp)
   (gl-clear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
   ;; 時計の表示
-  (disp-clock 0 0 *csize* *hour* *minute* *second* *nanosecond*)
+  (disp-clock 0 0 (/. *csize* 2) *hour* *minute* *second* *nanosecond*)
   ;(disp-clock (if (= *width* 0) 0 (* 100 (/. *height* *width*))) 100 80
   ;            (- *hour* 9) *minute* *second* *nanosecond*)
   ;; 背景の表示
