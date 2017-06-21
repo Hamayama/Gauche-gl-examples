@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2017-2-23 1.92
+;; 2017-6-21 1.93
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -21,6 +21,7 @@
 (use glmintool)
 (use gltextscrn)
 (use alaudplay)
+(use alauddata)
 (use glmodelkit)
 
 (define *wait*      28) ; ウェイト(msec)
@@ -51,11 +52,6 @@
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
-
-;; 音楽データクラスのインスタンス生成
-(define *adata-start* (make <auddata>))
-(define *adata-hit*   (make <auddata>))
-(define *adata-end*   (make <auddata>))
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -244,7 +240,7 @@
       (set! (~ f2 'vx)  (- (~ f2 'vx)))
       (if (< (~ f1 'vy) 15) (set! (~ f1 'vy) 15))
       (if (< (~ f2 'vy) 15) (set! (~ f2 'vy) 15))
-      (if (not *demoflg*) (auddata-play *adata-hit*))
+      (if (not *demoflg*) (auddata-play *adata-hit1*))
       )
      ;; 自分の勝ち
      ((and (or  (= (~ f1 'act) 2) (= (~ f1 'act) 3))
@@ -255,7 +251,7 @@
       (set! (~ f2 'dir) (- (~ f1 'dir)))
       (set! (~ f2 'vx)  (* (~ f2 'dir) -10))
       (set! (~ f2 'vy)  50)
-      (if (not *demoflg*) (auddata-play *adata-hit*))
+      (if (not *demoflg*) (auddata-play *adata-hit1*))
       )
      ;; 敵の勝ち
      ((and (or  (= (~ f2 'act) 2) (= (~ f2 'act) 3))
@@ -266,7 +262,7 @@
       (set! (~ f1 'dir) (- (~ f2 'dir)))
       (set! (~ f1 'vx)  (* (~ f1 'dir) -10))
       (set! (~ f1 'vy)  50)
-      (if (not *demoflg*) (auddata-play *adata-hit*))
+      (if (not *demoflg*) (auddata-play *adata-hit1*))
       )
      )
     )
@@ -317,15 +313,7 @@
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; 音楽データの初期化
-  (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
-  (auddata-set-prop *adata-start* AL_GAIN  0.07)
-  (auddata-set-prop *adata-start* AL_PITCH 3.0)
-  (auddata-load-wav-file *adata-hit*   (make-fpath *app-dpath* "sound/decide2.wav"))
-  (auddata-set-prop *adata-hit*   AL_GAIN  0.4)
-  (auddata-set-prop *adata-hit*   AL_PITCH 1.1)
-  (auddata-load-wav-file *adata-end*   (make-fpath *app-dpath* "sound/pattern05.wav"))
-  (auddata-set-prop *adata-end*   AL_GAIN  0.2)
-  (auddata-set-prop *adata-end*   AL_PITCH 1.3)
+  (init-auddata *app-dpath*)
   )
 
 ;; 画面表示
@@ -457,7 +445,7 @@
          (keywait  *kwinfo* '(#\s #\S)
                    (lambda ()
                      (set! *scene*   1)
-                     (auddata-play *adata-start*)
+                     (auddata-play *adata-start1*)
                      ))
          ;; 時間待ち(タイムアップでデモへ移行)
          (timewait *twinfo* 5000
@@ -488,7 +476,7 @@
           ;; デモでないとき
           (else
            (set! *scene* 2)
-           (auddata-play *adata-end*)
+           (auddata-play *adata-end1*)
            (inc! *playcount*)
            (if (fighter-finished? *f2*) (inc! *wincount*)))
           ))

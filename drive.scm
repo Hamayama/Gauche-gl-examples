@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2017-3-26 v1.51
+;; 2017-6-21 v1.52
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -20,6 +20,7 @@
 (use glmintool)
 (use gltextscrn)
 (use alaudplay)
+(use alauddata)
 
 (define *wait*      25) ; ウェイト(msec)
 (define *minwait*   25) ; ウェイト最小値(msec)
@@ -85,12 +86,6 @@
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
-
-;; 音楽データクラスのインスタンス生成
-(define *adata-start* (make <auddata>))
-(define *adata-brake* (make <auddata>))
-(define *adata-end1*  (make <auddata>))
-(define *adata-end2*  (make <auddata>))
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -201,7 +196,7 @@
   ;; 速度の更新
   (cond
    ((key-on? *ksinfo* #\space) (set! *spd* (- *spd* 6))
-                               (auddata-play *adata-brake*))
+                               (auddata-play *adata-brake1*))
    ((< *spd* *maxspd*)         (set! *spd* (+ *spd* 2)))
    (else                       (set! *spd* (- *spd* 1))))
   (set! *spd* (clamp *spd* *minspd* *maxspd*))
@@ -232,16 +227,7 @@
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; 音楽データの初期化
-  (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
-  (auddata-set-prop *adata-start* AL_GAIN  0.07)
-  (auddata-set-prop *adata-start* AL_PITCH 3.0)
-  (auddata-load-wav-file *adata-brake* (make-fpath *app-dpath* "sound/cursor4.wav"))
-  (auddata-set-prop *adata-brake* AL_GAIN  0.15)
-  (auddata-load-wav-file *adata-end1*  (make-fpath *app-dpath* "sound/pattern05.wav"))
-  (auddata-set-prop *adata-end1*  AL_GAIN  0.2)
-  (auddata-set-prop *adata-end1*  AL_PITCH 1.3)
-  (auddata-load-wav-file *adata-end2*  (make-fpath *app-dpath* "sound/pattern03.wav"))
-  (auddata-set-prop *adata-end2*  AL_GAIN  0.3)
+  (init-auddata *app-dpath*)
   )
 
 ;; 画面表示
@@ -365,7 +351,7 @@
        (keywait *kwinfo* '(#\s #\S)
                 (lambda ()
                   (set! *scene* 1)
-                  (auddata-play *adata-start*)
+                  (auddata-play *adata-start1*)
                   (keywait-clear *kwinfo*)))
        )
       ((1) ; プレイ中

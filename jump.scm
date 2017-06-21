@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2017-3-24 v1.59
+;; 2017-6-21 v1.60
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -22,6 +22,7 @@
 (use glmintool)
 (use gltextscrn)
 (use alaudplay)
+(use alauddata)
 
 (define *wait*      30) ; ウェイト(msec)
 (define *title* "jump") ; ウィンドウのタイトル
@@ -61,11 +62,6 @@
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
-
-;; 音楽データクラスのインスタンス生成
-(define *adata-start* (make <auddata>))
-(define *adata-goal*  (make <auddata>))
-(define *adata-end*   (make <auddata>))
 
 ;; テクスチャデータクラスのインスタンス生成
 (define *tex* (make-vector-of-class 6 <texdata>))
@@ -373,15 +369,7 @@
   (load-texture-bitmap-file (~ *tex* 5) (make-fpath *app-dpath* "image/char0106.bmp") '(0 0 0))
   (set-char-texture #\@ (~ *tex* 4) 0.75 0.75)
   ;; 音楽データの初期化
-  (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
-  (auddata-set-prop *adata-start* AL_GAIN  0.07)
-  (auddata-set-prop *adata-start* AL_PITCH 3.0)
-  (auddata-load-wav-file *adata-goal*  (make-fpath *app-dpath* "sound/decide2.wav"))
-  (auddata-set-prop *adata-goal*  AL_GAIN  0.4)
-  (auddata-set-prop *adata-goal*  AL_PITCH 1.05)
-  (auddata-load-wav-file *adata-end*   (make-fpath *app-dpath* "sound/pattern05.wav"))
-  (auddata-set-prop *adata-end*   AL_GAIN  0.2)
-  (auddata-set-prop *adata-end*   AL_PITCH 1.3)
+  (init-auddata *app-dpath*)
   )
 
 ;; 画面表示
@@ -511,12 +499,12 @@
          (keywait *kwinfo* '(#\s #\S)
                   (lambda ()
                     (set! *scene* 1)
-                    (auddata-play *adata-start*)
+                    (auddata-play *adata-start1*)
                     (keywait-clear *kwinfo*))))
         ;; ステージクリア後のとき
         (else
          (set! *scene* 1)
-         (auddata-play *adata-start*))
+         (auddata-play *adata-start1*))
         )
        )
       ((1) ; プレイ中
@@ -540,11 +528,11 @@
         ((check-goal?)
          (set! *scene* 2)
          (add-score (* *stage* 100))
-         (auddata-play *adata-goal*))
+         (auddata-play *adata-hit2*))
         ;; 敵の当たり判定
         ((hit-enemies?)
          (set! *scene* 3)
-         (auddata-play *adata-end*)))
+         (auddata-play *adata-end1*)))
        )
       ((2) ; ステージクリア
        ;; 時間待ち

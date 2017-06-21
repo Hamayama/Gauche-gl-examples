@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2017-2-23 v1.61
+;; 2017-6-21 v1.62
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -18,6 +18,7 @@
 (use glmintool)
 (use gltextscrn)
 (use alaudplay)
+(use alauddata)
 (use glmodelkit)
 
 (define *wait*      15) ; ウェイト(msec)
@@ -54,12 +55,6 @@
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
-
-;; 音楽データクラスのインスタンス生成
-(define *adata-start* (make <auddata>))
-(define *adata-hit*   (make <auddata>))
-(define *adata-end1*  (make <auddata>))
-(define *adata-end2*  (make <auddata>))
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -123,17 +118,7 @@
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; 音楽データの初期化
-  (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/warp1.wav"))
-  (auddata-set-prop *adata-start* AL_GAIN  0.2)
-  (auddata-set-prop *adata-start* AL_PITCH 1.2)
-  (auddata-load-wav-file *adata-hit*   (make-fpath *app-dpath* "sound/pattern05.wav"))
-  (auddata-set-prop *adata-hit*   AL_GAIN  0.4)
-  (auddata-set-prop *adata-hit*   AL_PITCH 2.0)
-  (auddata-load-wav-file *adata-end1*  (make-fpath *app-dpath* "sound/pattern05.wav"))
-  (auddata-set-prop *adata-end1*  AL_GAIN  0.2)
-  (auddata-set-prop *adata-end1*  AL_PITCH 1.3)
-  (auddata-load-wav-file *adata-end2*  (make-fpath *app-dpath* "sound/pattern03.wav"))
-  (auddata-set-prop *adata-end2*  AL_GAIN  0.3)
+  (init-auddata *app-dpath*)
   )
 
 ;; 画面表示
@@ -271,7 +256,7 @@
        (keywait *kwinfo* '(#\s #\S)
                 (lambda ()
                   (set! *scene* 1)
-                  (auddata-play *adata-start*)
+                  (auddata-play *adata-start2*)
                   (keywait-clear *kwinfo*)))
        )
       ((1) ; 打撃前
@@ -297,7 +282,7 @@
        (when (>= *z* *zend*)
          (set! *scene* 2)
          (when (>= *hit* 2)
-           (auddata-play *adata-hit*)
+           (auddata-play *adata-hit3*)
            (set! *vx* *vx2*)
            (set! *vy* *vy2*)
            (set! *vz* -5))

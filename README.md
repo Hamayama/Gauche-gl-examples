@@ -114,6 +114,8 @@
       Gauche-gl を使って文字列の表示等を行うためのモジュールです。
    alaudplay.scm
       Gauche-al を使って音楽を演奏するためのモジュールです。
+   alauddata.scm
+      alaudplay 用の音楽データをいくつか設定するためのモジュールです。
    glmodelkit.scm
       Gauche-gl を使って基本的なモデルの生成を行うためのモジュールです。
    ```
@@ -159,4 +161,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2017-5-4)
+(2017-6-21)

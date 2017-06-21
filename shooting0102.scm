@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2017-4-15 v1.30
+;; 2017-6-21 v1.31
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -22,6 +22,7 @@
 (use glmintool)
 (use gltextscrn)
 (use alaudplay)
+(use alauddata)
 
 (define *wait*      20) ; ウェイト(msec)
 (define *title* "shooting0102") ; ウィンドウのタイトル
@@ -65,11 +66,6 @@
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
-
-;; 音楽データクラスのインスタンス生成
-(define *adata-start* (make <auddata>))
-(define *adata-hit*   (make <auddata>))
-(define *adata-end*   (make <auddata>))
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -377,7 +373,7 @@
                 (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y)) 'center)
            (set! ret #t))))
      enemies)
-    (if (and ret (not *demoflg*)) (auddata-play *adata-end*))
+    (if (and ret (not *demoflg*)) (auddata-play *adata-end1*))
     ret))
 
 ;; 自機ビームの表示
@@ -429,7 +425,7 @@
               (set! (~ e2 'state) 1)
               (when (not *demoflg*)
                 (set! *sc* (+ *sc* 100))
-                (auddata-play *adata-hit*))))
+                (auddata-play *adata-hit1*))))
            ;; 外周のとき(削る)
            (else
             (set! (~ e2 'contact) #t)
@@ -476,7 +472,7 @@
                     (set! (~ e2 'state) 1)
                     (when (not *demoflg*)
                       (set! *sc* (+ *sc* 200))
-                      (auddata-play *adata-hit*)))))
+                      (auddata-play *adata-hit1*)))))
               ))
           *enemies*)
          ))
@@ -539,15 +535,7 @@
                          (%draw-win-rect (- x (* chw 1.5)) y
                                          (* chw 3.5) (* chh 1.5) width height 'left z)))
   ;; 音楽データの初期化
-  (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
-  (auddata-set-prop *adata-start* AL_GAIN  0.07)
-  (auddata-set-prop *adata-start* AL_PITCH 3.0)
-  (auddata-load-wav-file *adata-hit*   (make-fpath *app-dpath* "sound/decide2.wav"))
-  (auddata-set-prop *adata-hit*   AL_GAIN  0.4)
-  (auddata-set-prop *adata-hit*   AL_PITCH 1.1)
-  (auddata-load-wav-file *adata-end*   (make-fpath *app-dpath* "sound/pattern05.wav"))
-  (auddata-set-prop *adata-end*   AL_GAIN  0.2)
-  (auddata-set-prop *adata-end*   AL_PITCH 1.3)
+  (init-auddata *app-dpath*)
   )
 
 ;; 画面表示
@@ -692,7 +680,7 @@
                    (lambda ()
                      (set! *scene*   1)
                      (set! *sc*      0)
-                     (auddata-play *adata-start*)
+                     (auddata-play *adata-start1*)
                      ))
          ;; 時間待ち(タイムアップでデモへ移行)
          (timewait *twinfo* 5000

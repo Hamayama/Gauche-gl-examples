@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-4-15 v1.42
+;; 2017-6-21 v1.43
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -24,6 +24,7 @@
 (use glmintool)
 (use gltextscrn)
 (use alaudplay)
+(use alauddata)
 (use glmodelkit)
 
 (define *wait*      20) ; ウェイト(msec)
@@ -68,11 +69,6 @@
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
-
-;; 音楽データクラスのインスタンス生成
-(define *adata-start* (make <auddata>))
-(define *adata-point* (make <auddata>))
-(define *adata-end*   (make <auddata>))
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -161,7 +157,7 @@
       (set! *landing* #t))
      ((and (>  *angle* 210) (<  *angle* 330))
       (set! *angle* (- 360 *angle*))
-      (auddata-play *adata-point*))
+      (auddata-play *adata-hit1*))
      ))
   (when *landing*
     (cond
@@ -212,14 +208,7 @@
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (gl-enable GL_BLEND)
   ;; 音楽データの初期化
-  (auddata-load-wav-file *adata-start* (make-fpath *app-dpath* "sound/appear1.wav"))
-  (auddata-set-prop *adata-start* AL_GAIN  0.07)
-  (auddata-set-prop *adata-start* AL_PITCH 3.0)
-  (auddata-load-wav-file *adata-point* (make-fpath *app-dpath* "sound/decide2.wav"))
-  (auddata-set-prop *adata-point* AL_GAIN  0.4)
-  (auddata-set-prop *adata-point* AL_PITCH 1.1)
-  (auddata-load-wav-file *adata-end*   (make-fpath *app-dpath* "sound/decide10.wav"))
-  (auddata-set-prop *adata-end*   AL_GAIN  0.4)
+  (init-auddata *app-dpath*)
   )
 
 ;; 画面表示
@@ -356,7 +345,7 @@
        (keywait *kwinfo* '(#\space)
                 (lambda ()
                   (set! *scene* 1)
-                  (auddata-play *adata-start*)
+                  (auddata-play *adata-start1*)
                   (keywait-clear *kwinfo*)))
        )
       ((1) ; プレイ中
@@ -369,12 +358,12 @@
        ;; チェックポイントの判定
        (when (and (check-point?) (= *goal* 0))
          (set! *goal* 1)
-         (auddata-play *adata-point*))
+         (auddata-play *adata-hit1*))
        ;; 終了判定
        (when (= *goal* 2)
          (set! *scene* 2)
          (if (or (= *hs* 0) (< *sc* *hs*)) (set! *hs* *sc*))
-         (auddata-play *adata-end*))
+         (auddata-play *adata-end3*))
        ;; リセット
        (if (key-on? *ksinfo* '(#\r #\R))
          (set! *scene* 0))
