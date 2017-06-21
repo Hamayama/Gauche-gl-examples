@@ -19,6 +19,11 @@
                write-wav get-wav-size))
 (test-end)
 
+(test-start "alauddata")
+(use alauddata)
+(test-module 'alauddata)
+(test-end)
+
 (test-start "glmintool")
 (use glmintool)
 (test-module 'glmintool)

@@ -478,6 +478,7 @@ alaudplay.scm
 
 alauddata.scm
   2017-6-21  v1.00  初版
+  2017-6-21  v1.01  音量調整
 
 glmodelkit.scm
   2017-2-22  v1.00  初版
