@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; alauddata.scm
-;; 2017-6-21 v1.01
+;; 2017-6-22 v1.02
 ;;
 ;; ＜内容＞
 ;;   alaudplay 用の音楽データをいくつか設定するためのモジュールです。
@@ -37,28 +37,28 @@
 ;; 音楽データの初期化
 (define (init-auddata app-dpath)
   (auddata-load-wav-file *adata-start1* (make-fpath app-dpath "sound/appear1B.wav"))
-  (auddata-set-prop *adata-start1* AL_GAIN  0.2)
-  (auddata-set-prop *adata-start1* AL_PITCH 1.1)
-  (auddata-load-wav-file *adata-start2* (make-fpath app-dpath "sound/warp1.wav"))
-  (auddata-set-prop *adata-start2* AL_GAIN  0.2)
-  (auddata-set-prop *adata-start2* AL_PITCH 1.2)
+  (auddata-set-prop *adata-start1* AL_GAIN  0.3)
+  ;(auddata-set-prop *adata-start1* AL_PITCH 2.75)
+  (auddata-load-wav-file *adata-start2* (make-fpath app-dpath "sound/warp1B.wav"))
+  (auddata-set-prop *adata-start2* AL_GAIN  0.3)
+  ;(auddata-set-prop *adata-start2* AL_PITCH 1.2)
   (auddata-load-wav-file *adata-brake1* (make-fpath app-dpath "sound/cursor4.wav"))
-  (auddata-set-prop *adata-brake1* AL_GAIN  0.15)
-  (auddata-load-wav-file *adata-hit1*   (make-fpath app-dpath "sound/decide2.wav"))
+  (auddata-set-prop *adata-brake1* AL_GAIN  0.3)
+  (auddata-load-wav-file *adata-hit1*   (make-fpath app-dpath "sound/decide2B.wav"))
   (auddata-set-prop *adata-hit1*   AL_GAIN  0.4)
-  (auddata-set-prop *adata-hit1*   AL_PITCH 1.1)
-  (auddata-load-wav-file *adata-hit2*   (make-fpath app-dpath "sound/decide2.wav"))
+  ;(auddata-set-prop *adata-hit1*   AL_PITCH 1.1)
+  (auddata-load-wav-file *adata-hit2*   (make-fpath app-dpath "sound/decide2C.wav"))
   (auddata-set-prop *adata-hit2*   AL_GAIN  0.4)
-  (auddata-set-prop *adata-hit2*   AL_PITCH 1.05)
-  (auddata-load-wav-file *adata-hit3*   (make-fpath app-dpath "sound/pattern05.wav"))
+  ;(auddata-set-prop *adata-hit2*   AL_PITCH 1.05)
+  (auddata-load-wav-file *adata-hit3*   (make-fpath app-dpath "sound/pattern05B.wav"))
   (auddata-set-prop *adata-hit3*   AL_GAIN  0.4)
-  (auddata-set-prop *adata-hit3*   AL_PITCH 2.0)
-  (auddata-load-wav-file *adata-end1*   (make-fpath app-dpath "sound/pattern05.wav"))
-  (auddata-set-prop *adata-end1*   AL_GAIN  0.2)
-  (auddata-set-prop *adata-end1*   AL_PITCH 1.3)
+  ;(auddata-set-prop *adata-hit3*   AL_PITCH 2.0)
+  (auddata-load-wav-file *adata-end1*   (make-fpath app-dpath "sound/pattern05C.wav"))
+  (auddata-set-prop *adata-end1*   AL_GAIN  0.4)
+  ;(auddata-set-prop *adata-end1*   AL_PITCH 1.3)
   (auddata-load-wav-file *adata-end2*   (make-fpath app-dpath "sound/pattern03.wav"))
   (auddata-set-prop *adata-end2*   AL_GAIN  0.3)
   (auddata-load-wav-file *adata-end3*   (make-fpath app-dpath "sound/decide10.wav"))
-  (auddata-set-prop *adata-end3*   AL_GAIN  0.3)
+  (auddata-set-prop *adata-end3*   AL_GAIN  0.5)
   )
 
