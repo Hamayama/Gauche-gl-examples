@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; alauddata.scm
-;; 2017-6-22 v1.03
+;; 2017-7-16 v1.04
 ;;
 ;; ＜内容＞
 ;;   alaudplay 用の音楽データをいくつか設定するためのモジュールです。
@@ -57,7 +57,7 @@
   (auddata-set-prop *adata-end1*   AL_GAIN  0.4)
   ;(auddata-set-prop *adata-end1*   AL_PITCH 1.3)
   (auddata-load-wav-file *adata-end2*   (make-fpath app-dpath "sound/pattern03.wav"))
-  (auddata-set-prop *adata-end2*   AL_GAIN  0.5)
+  (auddata-set-prop *adata-end2*   AL_GAIN  0.6)
   (auddata-load-wav-file *adata-end3*   (make-fpath app-dpath "sound/decide10.wav"))
   (auddata-set-prop *adata-end3*   AL_GAIN  0.5)
   )
