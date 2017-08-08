@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2017-6-21 v1.81
+;; 2017-8-8 v1.90
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -460,8 +460,7 @@
                                                      (f32vector chw 0))
                                          width height z)))
   ;; 音楽データの初期化
-  (init-auddata *app-dpath*)
-  )
+  (init-auddata *app-dpath*))
 
 ;; 画面表示
 (define (disp)
@@ -573,9 +572,6 @@
    ((or (keywait-waiting? *kwinfo*) (timewait-waiting? *twinfo*))
     (keywait-timer  *kwinfo*)
     (timewait-timer *twinfo*)
-    (when (= *scene* 0)
-      (if (keywait-finished?  *kwinfo*) (timewait-clear *twinfo*))
-      (if (timewait-finished? *twinfo*) (keywait-clear  *kwinfo*)))
     )
    ;; 待ち状態でないとき
    (else
@@ -606,17 +602,16 @@
                      (set! *scene*   1)
                      (set! *sc*      0)
                      (auddata-play *adata-start1*)
-                     ))
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*)))
          ;; 時間待ち(タイムアップでデモへ移行)
          (timewait *twinfo* 5000
                    (lambda ()
                      (set! *scene*   1)
                      (set! *demoflg* #t)
                      (waitcalc-set-wait *wcinfo* (if (> *demomode* 0) 1 *wait*))
-                     ))
-         (when (= *scene* 1)
-           (keywait-clear  *kwinfo*)
-           (timewait-clear *twinfo*))
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*)))
          )
         )
        )

@@ -55,8 +55,7 @@
 ;; 初期化
 (define (init)
   (gl-clear-color 0.0 0.0 0.0 0.0)
-  (gl-enable GL_DEPTH_TEST)
-  )
+  (gl-enable GL_DEPTH_TEST))
 
 ;; 画面表示
 (define (disp)

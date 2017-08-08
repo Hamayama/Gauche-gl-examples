@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; trochoid.scm
-;; 2017-3-25 v1.18
+;; 2017-8-8 v1.19
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、内トロコイド曲線を描くサンプルです。
@@ -83,8 +83,7 @@
   (gl-enable-client-state GL_VERTEX_ARRAY)
   (gl-enable-client-state GL_COLOR_ARRAY)
   (gl-vertex-pointer 2 *vvec*)
-  (gl-color-pointer  3 *cvec*)
-  )
+  (gl-color-pointer  3 *cvec*))
 
 ;; 画面表示
 (define (disp)

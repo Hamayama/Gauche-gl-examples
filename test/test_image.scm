@@ -57,8 +57,7 @@
   (set-char-texture #\A (~ *tex* 0))
   (set-char-texture #\B (~ *tex* 1))
   (set-char-texture #\C (~ *tex* 2) 1.0 1.0  0.5 1.0 0.25 0.0)
-  (set-char-texture #\D (~ *tex* 2) 1.0 1.0 -0.5 1.0 0.75 0.0)
-  )
+  (set-char-texture #\D (~ *tex* 2) 1.0 1.0 -0.5 1.0 0.75 0.0))
 
 ;; 画面表示
 (define (disp)

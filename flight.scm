@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-6-21 v1.43
+;; 2017-8-8 v1.44
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -13,7 +13,7 @@
 ;;   画面右上のチェックポイント(オレンジ色の円)に触れてから、地面に着陸するとゴールです。
 ;;   着陸の際は、地面への進入角が30度以下である必要があります。
 ;;   (進入角が30度より大きいとバウンドしてしまいます)
-;;   [r]キーを押すとリセットします。
+;;   [r]キーを押すとゲームをリセットします。
 ;;   ESCキーを押すと終了します。
 ;;
 (add-load-path "." :relative)
@@ -117,8 +117,8 @@
     (%win-rotate *angle* 0 0 *width* *height*)
     (%draw-win-rect (* w1 -5) (* w1   -1) (* w1 8) (* w1   2) *width* *height* 'left -0.999999)
     (%draw-win-rect (* w1 -1) (* wing -1) (* w1 2) (* wing 2) *width* *height* 'left -0.999999)
-    (%win-ortho-off))
-  )
+    (%win-ortho-off)
+    ))
 
 ;; 自機の移動
 (define (move-mychr)
@@ -170,8 +170,7 @@
      )
     (when (and (= *goal* 1) (< *v* 10))
       (set! *goal* 2))
-    )
-  )
+    ))
 
 ;; チェックポイントの表示
 (define (disp-check-point)
@@ -208,8 +207,7 @@
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (gl-enable GL_BLEND)
   ;; 音楽データの初期化
-  (init-auddata *app-dpath*)
-  )
+  (init-auddata *app-dpath*))
 
 ;; 画面表示
 (define (disp)

@@ -41,6 +41,11 @@
 (test-module 'glmodelkit)
 (test-end)
 
+(test-start "glmazekit")
+(use glmazekit)
+(test-module 'glmazekit)
+(test-end)
+
 (print "HIT ENTER KEY!")
 (flush)
 (read-line)

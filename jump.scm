@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2017-6-21 v1.60
+;; 2017-8-8 v1.61
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -369,8 +369,7 @@
   (load-texture-bitmap-file (~ *tex* 5) (make-fpath *app-dpath* "image/char0106.bmp") '(0 0 0))
   (set-char-texture #\@ (~ *tex* 4) 0.75 0.75)
   ;; 音楽データの初期化
-  (init-auddata *app-dpath*)
-  )
+  (init-auddata *app-dpath*))
 
 ;; 画面表示
 (define (disp)

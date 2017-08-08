@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2017-5-4 v1.93
+;; 2017-8-8 v1.94
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -414,7 +414,7 @@
    (data   :init-form (make-u32vector 0)) ; テキスト画面のデータ(u32vector)
    ))
 
-;; 初期化
+;; テキスト画面の初期化
 (define-method textscrn-init ((ts <textscrn>) (w <integer>) (h <integer>))
   (set! (~ ts 'width)  w)
   (set! (~ ts 'height) h)

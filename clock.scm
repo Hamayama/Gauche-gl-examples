@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; clock.scm
-;; 2017-5-26 v1.04
+;; 2017-8-8 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、アナログ時計を表示するサンプルです。
@@ -118,8 +118,7 @@
   (gl-enable GL_BLEND)
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (gl-hint GL_LINE_SMOOTH_HINT GL_DONT_CARE)
-  (gl-line-width 1.5)
-  )
+  (gl-line-width 1.5))
 
 ;; 画面表示
 (define (disp)

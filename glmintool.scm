@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2017-3-28 v1.41
+;; 2017-8-8 v1.50
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -125,8 +125,7 @@
     (set! (~ wn 'xoffset) (- (/. wd 2))))
   (if yoffset
     (set! (~ wn 'yoffset) yoffset)
-    (set! (~ wn 'yoffset) (/. ht 2)))
-  )
+    (set! (~ wn 'yoffset) (/. ht 2))))
 ;; ウィンドウのサイズ変更に追従
 (define-method win-update-size ((wn <wininfo>) (width <real>) (height <real>))
   (set! (~ wn 'width)  width)
@@ -191,11 +190,9 @@
   (%check-mdkey k)
   (hash-table-put! (~ k 'spkeystate) key #f))
 (define (%check-keystate keystate key/keylist)
-  (cond
-   ((list? key/keylist)
-    (any (lambda (key) (hash-table-get keystate (x->integer key) #f)) key/keylist))
-   (else
-    (hash-table-get keystate (x->integer key/keylist) #f))))
+  (if (list? key/keylist)
+    (any (lambda (key) (hash-table-get keystate (x->integer key) #f)) key/keylist)
+    (hash-table-get keystate (x->integer key/keylist) #f)))
 (define-method key-on? ((k <keystateinfo>) key/keylist)
   (%check-keystate (~ k 'keystate) key/keylist))
 (define-method spkey-on? ((k <keystateinfo>) key/keylist)
@@ -212,18 +209,25 @@
   ((state    :init-value 0)   ; 待ち状態(=0:初期状態,=1:キー入力待ち開始,=2:キー入力待ち中,=3:キー入力完了)
    (waitkey  :init-value '()) ; 待ち受けキー(文字のリストで指定)
    (keystate :init-keyword :keystate :init-form (make-hash-table 'eqv?)) ; キー入力状態(ハッシュテーブル)
+   (hitkey   :init-value #\null)     ; キー入力待ち完了時に入力されたキー(文字)
+   (callback :init-form (lambda ())) ; キー入力待ち完了時に実行されるコールバック手続き
    ))
-(define-method keywait ((k <keywaitinfo>) (wk <list>) (finished-func <procedure>))
+(define-method keywait ((k <keywaitinfo>) (wk <list>) (cbk <procedure>))
   (case (~ k 'state)
-    ((0) (set! (~ k 'waitkey) wk)
-         (set! (~ k 'state) 1))
-    ((3) (finished-func))))
+    ((0) (set! (~ k 'waitkey)  wk)
+         (set! (~ k 'hitkey)   #\null)
+         (set! (~ k 'callback) cbk)
+         (set! (~ k 'state)    1))))
 (define-method keywait-timer ((k <keywaitinfo>))
   (case (~ k 'state)
     ((1) (for-each (lambda (c) (hash-table-put! (~ k 'keystate) (char->integer c) #f)) (~ k 'waitkey))
          (set! (~ k 'state) 2))
-    ((2) (when (any (lambda (c) (hash-table-get (~ k 'keystate) (char->integer c) #f)) (~ k 'waitkey))
-           (set! (~ k 'state) 3)))))
+    ((2) (let1 c (find (lambda (c) (hash-table-get (~ k 'keystate) (char->integer c) #f)) (~ k 'waitkey))
+           (when c
+             (set! (~ k 'state)  3)
+             (set! (~ k 'hitkey) c)
+             ((~ k 'callback))
+             )))))
 (define-method keywait-clear ((k <keywaitinfo>))
   (set! (~ k 'state) 0))
 (define-method keywait-waiting? ((k <keywaitinfo>))
@@ -241,19 +245,22 @@
    (waittime     :init-value 0) ; 待ち時間(msec)
    (waitinterval :init-keyword :waitinterval :init-value 0) ; 待ち時間インターバル(msec)
    (waitcount    :init-value 0) ; 待ち時間カウント用(msec)
+   (callback     :init-form (lambda ())) ; 時間待ち完了時に実行されるコールバック手続き
    ))
-(define-method timewait ((t <timewaitinfo>) (wt <integer>) (finished-func <procedure>))
+(define-method timewait ((t <timewaitinfo>) (wt <integer>) (cbk <procedure>))
   (case (~ t 'state)
     ((0) (set! (~ t 'waittime) wt)
-         (set! (~ t 'state) 1))
-    ((3) (finished-func))))
+         (set! (~ t 'callback) cbk)
+         (set! (~ t 'state)    1))))
 (define-method timewait-timer ((t <timewaitinfo>))
   (case (~ t 'state)
     ((1) (set! (~ t 'waitcount) 0)
-         (set! (~ t 'state) 2))
+         (set! (~ t 'state)     2))
     ((2) (set! (~ t 'waitcount) (+ (~ t 'waitcount) (~ t 'waitinterval)))
          (when (>= (~ t 'waitcount) (~ t 'waittime))
-           (set! (~ t 'state) 3)))))
+           (set! (~ t 'state) 3)
+           ((~ t 'callback))
+           ))))
 (define-method timewait-clear ((t <timewaitinfo>))
   (set! (~ t 'state) 0))
 (define-method timewait-waiting? ((t <timewaitinfo>))

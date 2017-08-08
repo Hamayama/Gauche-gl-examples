@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2017-6-21 1.93
+;; 2017-8-8 2.00
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -93,8 +93,7 @@
   (set! (~ f1 'act)      0)
   (set! (~ f1 'dir)      dir)
   (set! (~ f1 'ft)       0)
-  (set! (~ f1 'endstate) 0)
-  )
+  (set! (~ f1 'endstate) 0))
 (define-method fighter-finished? ((f1 <fighter>))
   (= (~ f1 'endstate) 3))
 (define-method fighter-move ((f1 <fighter>) (f2 <fighter>))
@@ -240,8 +239,7 @@
       (set! (~ f2 'vx)  (- (~ f2 'vx)))
       (if (< (~ f1 'vy) 15) (set! (~ f1 'vy) 15))
       (if (< (~ f2 'vy) 15) (set! (~ f2 'vy) 15))
-      (if (not *demoflg*) (auddata-play *adata-hit1*))
-      )
+      (if (not *demoflg*) (auddata-play *adata-hit1*)))
      ;; 自分の勝ち
      ((and (or  (= (~ f1 'act) 2) (= (~ f1 'act) 3))
            (not (= (~ f2 'act) 14)))
@@ -251,8 +249,7 @@
       (set! (~ f2 'dir) (- (~ f1 'dir)))
       (set! (~ f2 'vx)  (* (~ f2 'dir) -10))
       (set! (~ f2 'vy)  50)
-      (if (not *demoflg*) (auddata-play *adata-hit1*))
-      )
+      (if (not *demoflg*) (auddata-play *adata-hit1*)))
      ;; 敵の勝ち
      ((and (or  (= (~ f2 'act) 2) (= (~ f2 'act) 3))
            (not (= (~ f1 'act) 14)))
@@ -262,11 +259,8 @@
       (set! (~ f1 'dir) (- (~ f2 'dir)))
       (set! (~ f1 'vx)  (* (~ f1 'dir) -10))
       (set! (~ f1 'vy)  50)
-      (if (not *demoflg*) (auddata-play *adata-hit1*))
-      )
-     )
-    )
-  )
+      (if (not *demoflg*) (auddata-play *adata-hit1*)))
+     )))
 (define-method fighter-disp ((f1 <fighter>))
   (gl-push-matrix)
   (gl-translate (~ f1 'x) (~ f1 'y) 0)
@@ -280,8 +274,7 @@
                       ((< (* (~ f1 'dir) (~ f1 'vx)) 0) 2)
                       ((> (* (~ f1 'dir) (~ f1 'vx)) 0) 1)
                       (else 0)))))
-  (gl-pop-matrix)
-  )
+  (gl-pop-matrix))
 (define *f1* (make <fighter>)) ; インスタンス生成(自分)
 (define *f2* (make <fighter>)) ; インスタンス生成(敵)
 (fighter-init *f1* 0 (+ *minx* 40) *miny*  1)
@@ -313,8 +306,7 @@
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; 音楽データの初期化
-  (init-auddata *app-dpath*)
-  )
+  (init-auddata *app-dpath*))
 
 ;; 画面表示
 (define (disp)
@@ -421,9 +413,6 @@
    ((or (keywait-waiting? *kwinfo*) (timewait-waiting? *twinfo*))
     (keywait-timer  *kwinfo*)
     (timewait-timer *twinfo*)
-    (when (= *scene* 0)
-      (if (keywait-finished?  *kwinfo*) (timewait-clear *twinfo*))
-      (if (timewait-finished? *twinfo*) (keywait-clear  *kwinfo*)))
     )
    ;; 待ち状態でないとき
    (else
@@ -446,15 +435,15 @@
                    (lambda ()
                      (set! *scene*   1)
                      (auddata-play *adata-start1*)
-                     ))
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*)))
          ;; 時間待ち(タイムアップでデモへ移行)
          (timewait *twinfo* 5000
                    (lambda ()
                      (set! *scene*   1)
-                     (set! *demoflg* #t)))
-         (when (= *scene* 1)
-           (keywait-clear  *kwinfo*)
-           (timewait-clear *twinfo*))
+                     (set! *demoflg* #t)
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*)))
          )
         )
        )

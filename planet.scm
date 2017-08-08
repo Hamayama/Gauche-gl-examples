@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; planet.scm
-;; 2017-3-25 v1.15
+;; 2017-8-8 v1.16
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、星を表示するサンプルです。
@@ -69,8 +69,7 @@
                                         (truncate->exact    (* *zmax* *tanvan*))))
       (f32vector-set! *yvec* i (randint (truncate->exact (- (* z *tanvan*)))
                                         (truncate->exact    (* z *tanvan*))))
-      ))
-  )
+      )))
 
 ;; タイマー
 (define (timer val)

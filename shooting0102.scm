@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2017-6-21 v1.31
+;; 2017-8-8 v1.40
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -34,10 +34,10 @@
 (define *ht/2*     400) ; 画面高さ/2
 (define *chw*       16) ; 文字の幅
 (define *chh*       16) ; 文字の高さ
-(define *maxx*       (- *wd/2* *chw*))       ; 自機のX座標最大値
-(define *minx*       (- *maxx*))             ; 自機のX座標最小値
-(define *maxy*       (- *ht/2* (* *chh* 2))) ; 自機のY座標最大値
-(define *miny*       (- *maxy*))             ; 自機のY座標最小値
+(define *maxx*       (- *wd/2* *chw*))        ; 自機のX座標最大値
+(define *minx*       (- *maxx*))              ; 自機のX座標最小値
+(define *maxy*       (- *ht/2* (* *chh* 2)))  ; 自機のY座標最大値
+(define *miny*       (- *maxy*))              ; 自機のY座標最小値
 (define *x*          (- (/. (* *wd/2* 3) 4))) ; 自機のX座標
 (define *y*          0) ; 自機のY座標
 (define *v*         10) ; 自機の速度
@@ -535,8 +535,7 @@
                          (%draw-win-rect (- x (* chw 1.5)) y
                                          (* chw 3.5) (* chh 1.5) width height 'left z)))
   ;; 音楽データの初期化
-  (init-auddata *app-dpath*)
-  )
+  (init-auddata *app-dpath*))
 
 ;; 画面表示
 (define (disp)
@@ -648,9 +647,6 @@
    ((or (keywait-waiting? *kwinfo*) (timewait-waiting? *twinfo*))
     (keywait-timer  *kwinfo*)
     (timewait-timer *twinfo*)
-    (when (= *scene* 0)
-      (if (keywait-finished?  *kwinfo*) (timewait-clear *twinfo*))
-      (if (timewait-finished? *twinfo*) (keywait-clear  *kwinfo*)))
     )
    ;; 待ち状態でないとき
    (else
@@ -681,17 +677,16 @@
                      (set! *scene*   1)
                      (set! *sc*      0)
                      (auddata-play *adata-start1*)
-                     ))
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*)))
          ;; 時間待ち(タイムアップでデモへ移行)
          (timewait *twinfo* 5000
                    (lambda ()
                      (set! *scene*   1)
                      (set! *demoflg* #t)
                      (waitcalc-set-wait *wcinfo* (if (> *demomode* 0) 1 *wait*))
-                     ))
-         (when (= *scene* 1)
-           (keywait-clear  *kwinfo*)
-           (timewait-clear *twinfo*))
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*)))
          )
         )
        )
