@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-9 v1.01
+;; 2017-8-10 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -346,8 +346,8 @@
   ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_MODULATE)
   (gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_REPLACE)
   ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_DECAL)
-  (load-texture-bitmap-file (~ *tex* 0) (make-fpath *app-dpath* "image/char0251.bmp") '(0 0 0))
-  (load-texture-bitmap-file (~ *tex* 1) (make-fpath *app-dpath* "image/char0252.bmp") '(0 0 0))
+  (load-texture-bitmap-file (~ *tex* 0) (make-fpath *app-dpath* "image/char0201.bmp") '(0 0 0))
+  (load-texture-bitmap-file (~ *tex* 1) (make-fpath *app-dpath* "image/char0202.bmp") '(0 0 0))
   ;; 音楽データの初期化
   (init-auddata *app-dpath*))
 
