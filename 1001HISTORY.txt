@@ -372,6 +372,7 @@ clock.scm
 
 walker.scm
   2017-8-9   v1.00  初版
+  2017-8-9   v1.01  コメント修正のみ
 
 
 glmintool.scm
@@ -508,6 +509,7 @@ alauddata.scm
 
 glmazekit.scm
   2017-8-9   v1.00  初版
+  2017-8-9   v1.01  コメント修正のみ
 
 
 (2017-8-9)

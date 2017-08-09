@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmazekit.scm
-;; 2017-8-9 v1.00
+;; 2017-8-9 v1.01
 ;;
 ;; ＜内容＞
 ;;   迷路の生成と探索を行うためのモジュールです。
@@ -168,7 +168,7 @@
      ((< y1 (- mh 1)) (loop 0 (+ y1 1))))
     ))
 
-;; 迷路のスタート設定
+;; 迷路のスタート地点の設定
 (define-method maze-set-start ((mz <maze>) (sx <integer>) (sy <integer>))
   (define mw    (~ mz 'width))  ; 迷路の幅
   (define mdata (~ mz 'data))   ; 迷路データ
@@ -177,7 +177,7 @@
   (set! (~ mz 'start-y) sy)
   (set! (~ mdata (pt sx sy)) (logior (~ mdata (pt sx sy)) 64)))
 
-;; 迷路のゴール設定
+;; 迷路のゴール地点の設定
 (define-method maze-set-goal ((mz <maze>) (gx <integer>) (gy <integer>))
   (define mw    (~ mz 'width))  ; 迷路の幅
   (define mdata (~ mz 'data))   ; 迷路データ

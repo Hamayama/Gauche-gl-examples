@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-9 v1.00
+;; 2017-8-9 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -103,7 +103,7 @@
 (define *maze* (make <maze>))
 (maze-init *maze* *mw* *mh*)
 
-;; マーク(目印)クラス
+;; マーククラス
 (define-class <mark> ()
   ((useflag :init-value #f) ; 使用フラグ
    (st      :init-value "") ; 表示文字列
@@ -112,7 +112,7 @@
    (rx      :init-value 0)  ; 部屋上のX座標
    (ry      :init-value 0)  ; 部屋上のY座標
    ))
-;; マーク(目印)クラスのインスタンス生成
+;; マーククラスのインスタンス生成
 (define *marks* (make-vector-of-class *mknum* <mark>))
 (do ((i 0 (+ i 1)))
     ((>= i *mknum*) #f)
