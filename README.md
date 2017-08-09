@@ -118,20 +118,15 @@
 
 ## その他 注意事項等
 1. 一部のサンプルは、以下のモジュールを使用しています。同一フォルダに配置してください。
-   ```
-   glmintool.scm
-      Gauche-gl を使うプログラムのための簡単なツール類です。
-   gltextscrn.scm
-      Gauche-gl を使って文字列の表示等を行うためのモジュールです。
-   alaudplay.scm
-      Gauche-al を使って音楽を演奏するためのモジュールです。
-   alauddata.scm
-      alaudplay 用の音楽データをいくつか設定するためのモジュールです。
-   glmodelkit.scm
-      Gauche-gl を使って基本的なモデルの生成を行うためのモジュールです。
-   glmazekit.scm
-      迷路の生成と探索を行うためのモジュールです。
-   ```
+   
+   |<div align="center">ファイル名</div>|<div align="center">内容</div>|
+   |---|---|
+   |glmintool.scm |Gauche-gl を使うプログラムのための簡単なツール類です。            |
+   |gltextscrn.scm|Gauche-gl を使って文字列の表示等を行うためのモジュールです。      |
+   |alaudplay.scm |Gauche-al を使って音楽を演奏するためのモジュールです。            |
+   |alauddata.scm |alaudplay 用の音楽データをいくつか設定するためのモジュールです。  |
+   |glmodelkit.scm|Gauche-gl を使って基本的なモデルの生成を行うためのモジュールです。|
+   |glmazekit.scm |迷路の生成と探索を行うためのモジュールです。                      |
 
 2. シューティングゲームについて、キーボードによっては キーの同時押しの制限が存在し、  
    斜め移動とスペースキーの同時押しが効かない場合があります。  
