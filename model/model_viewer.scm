@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデルビューワー
-;; 2017-3-28
+;; 2017-8-10
 ;;
 ;; ＜使い方＞
 ;;   gosh  model_viewer.scm  [modelXXXX.scm]
@@ -9,7 +9,7 @@
 ;; ＜注意事項＞
 ;; ・モデルのサイズは一辺が100程度であることを想定しています
 ;;
-(add-load-path ".." :relative)
+(add-load-path "../lib" :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2017-8-8 v1.53
+;; 2017-8-10 v1.60
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -12,7 +12,7 @@
 ;;   (道路の端が画面の中心に来ると、コースアウトと判定されます)
 ;;   ESCキーを押すと終了します。
 ;;
-(add-load-path "." :relative)
+(add-load-path "lib" :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)

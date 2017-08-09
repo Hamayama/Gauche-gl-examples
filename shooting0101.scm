@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2017-8-8 v1.90
+;; 2017-8-10 v2.00
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -13,7 +13,7 @@
 ;;   また、スタート画面でしばらく待つとデモになります。
 ;;   ESCキーを押すと終了します。
 ;;
-(add-load-path "." :relative)
+(add-load-path "lib" :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)

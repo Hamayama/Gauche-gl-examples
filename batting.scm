@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2017-8-8 v1.63
+;; 2017-8-10 v1.70
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -10,7 +10,7 @@
 ;;   引き付けるほど飛びます(最大199m)。ただし見逃しは0mです。
 ;;   ESCキーを押すと終了します。
 ;;
-(add-load-path "." :relative)
+(add-load-path "lib" :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)

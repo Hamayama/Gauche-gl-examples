@@ -2,7 +2,7 @@
 ;; testing alaudplay, glmintool, gltextscrn and glmodelkit
 ;;
 
-(add-load-path ".." :relative)
+(add-load-path "../lib" :relative)
 (display #\cr)(flush) ; allocate console for windows
 (use gauche.test)
 

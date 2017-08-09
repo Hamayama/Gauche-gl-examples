@@ -1,9 +1,9 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0101(人形)
-;; 2017-3-27
+;; 2017-8-10
 ;;
-;(add-load-path ".." :relative)
+;(add-load-path "../lib" :relative)
 ;(use glmodelkit) ; box-model,cylinder用
 
 ;; モデル0101(人形)(頭に原点あり)(高さ100)

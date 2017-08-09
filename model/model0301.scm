@@ -1,9 +1,9 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0301(簡易飛行機)
-;; 2017-3-26
+;; 2017-8-10
 ;;
-;(add-load-path ".." :relative)
+;(add-load-path "../lib" :relative)
 ;(use glmodelkit) ; box-model用
 
 ;; モデル0301(簡易飛行機)(胴体と羽の交点に原点あり)(胴体の長さ80)

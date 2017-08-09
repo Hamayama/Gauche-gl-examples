@@ -1,9 +1,9 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 音楽演奏のテスト
-;; 2016-9-26
+;; 2017-8-10
 ;;
-(add-load-path ".." :relative)
+(add-load-path "../lib" :relative)
 (display #\cr)(flush) ; allocate console for windows
 (use glmintool)
 (use alaudplay)

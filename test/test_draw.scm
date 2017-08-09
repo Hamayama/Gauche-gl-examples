@@ -1,9 +1,9 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; 2D描画のテスト
-;; 2017-3-25
+;; 2017-8-10
 ;;
-(add-load-path ".." :relative)
+(add-load-path "../lib" :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)

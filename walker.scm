@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-10 v1.02
+;; 2017-8-10 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -14,7 +14,7 @@
 ;;   [r]キーを押すとゲームをリセットします。
 ;;   ESCキーを押すと終了します。
 ;;
-(add-load-path "." :relative)
+(add-load-path "lib" :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; maze.scm
-;; 2017-8-9 v1.10
+;; 2017-8-10 v1.20
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、迷路を自動生成して表示するサンプルです。
@@ -13,7 +13,7 @@
 ;;   参考「古くて新しい自動迷路生成アルゴリズム」
 ;;   http://d.hatena.ne.jp/yaneurao/20130125
 ;;
-(add-load-path "." :relative)
+(add-load-path "lib" :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
