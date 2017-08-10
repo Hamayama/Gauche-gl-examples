@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; maze.scm
-;; 2017-8-10 v1.20
+;; 2017-8-10 v1.21
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、迷路を自動生成して表示するサンプルです。
@@ -26,16 +26,17 @@
 (define *width*    480) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 
-(define *wd/2*     400) ; 画面幅/2
-(define *ht/2*     400) ; 画面高さ/2
-(define *wsize*     20) ; 壁の長さ
-(define *wwide*      3) ; 壁の幅
 (define *mw*        30) ; 迷路の幅  (=水平方向のブロック数)
 (define *mh*        30) ; 迷路の高さ(=垂直方向のブロック数)
 (define *sx*         1) ; スタートのX座標
 (define *sy*         1) ; スタートのY座標
 (define *gx*         (quotient (+ *mw* 1) 2)) ; ゴールのX座標
 (define *gy*         (quotient (+ *mh* 1) 2)) ; ゴールのY座標
+
+(define *wd/2*     400) ; 画面幅/2
+(define *ht/2*     400) ; 画面高さ/2
+(define *wsize*     20) ; 壁の長さ
+(define *wwide*      3) ; 壁の幅
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 (define *wallcolor*  #f32(1.0 1.0 1.0 1.0)) ; 壁の色
 (define *startcolor* #f32(0.0 0.7 1.0 1.0)) ; スタートの色
@@ -81,8 +82,8 @@
       (draw-win-rect bx1 by1 ws ws *width* *height* 'left -0.99999)
       )
     (cond
-     ((< x1 (- *mw* 1)) (loop (+ x1 1) y1))
-     ((< y1 (- *mh* 1)) (loop 0 (+ y1 1))))
+     ((< x1 (- mw 1)) (loop (+ x1 1) y1))
+     ((< y1 (- mh 1)) (loop 0 (+ y1 1))))
     ))
 
 
