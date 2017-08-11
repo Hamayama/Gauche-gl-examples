@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmazekit.scm
-;; 2017-8-9 v1.01
+;; 2017-8-11 v1.02
 ;;
 ;; ＜内容＞
 ;;   迷路の生成と探索を行うためのモジュールです。
@@ -25,16 +25,16 @@
 
 ;; 迷路クラス
 (define-class <maze> ()
-  ((width      :init-value 0)  ; 迷路の幅  (=水平方向のブロック数)
-   (height     :init-value 0)  ; 迷路の高さ(=垂直方向のブロック数)
-   (data       :init-form (make-vector 0)) ; 迷路データ
+  ((width      :init-value 0) ; 迷路の幅  (=水平方向のブロック数)
+   (height     :init-value 0) ; 迷路の高さ(=垂直方向のブロック数)
+   (data       :init-form (make-vector 0)) ; 迷路データ(ベクタ)
    ;                                       ; (=1:上側に壁あり,=2:右,=4:下,=8:左,
    ;                                       ;  =32:探索ルート,=64:スタート,=128:ゴール)
-   (start-x    :init-value 0)  ; スタートのX座標
-   (start-y    :init-value 0)  ; スタートのY座標
-   (goal-x     :init-value 0)  ; ゴールのX座標
-   (goal-y     :init-value 0)  ; ゴールのY座標
-   (goal-state :init-value #f) ; ゴール状態(=0:未ゴール,=1:ゴール)
+   (start-x    :init-value 0) ; スタートのX座標
+   (start-y    :init-value 0) ; スタートのY座標
+   (goal-x     :init-value 0) ; ゴールのX座標
+   (goal-y     :init-value 0) ; ゴールのY座標
+   (goal-state :init-value 0) ; ゴール状態(=0:未ゴール,=1:ゴール)
    ))
 
 ;; 迷路の初期化
@@ -46,7 +46,7 @@
   (set! (~ mz 'start-y)    0)
   (set! (~ mz 'goal-x)     0)
   (set! (~ mz 'goal-y)     0)
-  (set! (~ mz 'goal-state) #f))
+  (set! (~ mz 'goal-state) 0))
 
 ;; 迷路の生成
 (define-method maze-generate ((mz <maze>) :optional (disp-proc #f))
@@ -251,5 +251,5 @@
         (loop (~ spx sind) (~ spy sind)))
       ))
   ;; 迷路のゴール状態を更新
-  (set! (~ mz 'goal-state) goal))
+  (set! (~ mz 'goal-state) (if goal 1 0)))
 
