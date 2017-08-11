@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; planet.scm
-;; 2017-8-8 v1.16
+;; 2017-8-11 v1.17
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、星を表示するサンプルです。
@@ -77,15 +77,14 @@
   (do ((i 0 (+ i 1)))
       ((>= i *snum*) #f)
     (let1 x (+ (f32vector-ref *xvec* i) *sspeed*)
-      (if (> x (truncate->exact (* *zmax* *tanvan*)))
+      (if (<= x (truncate->exact (* *zmax* *tanvan*)))
+        (f32vector-set! *xvec* i x)
         (let1 z (randint *zmin* *zmax*)
           (vector-set!    *cvec* i (randint 10 15))
           (f32vector-set! *zvec* i (- z))
           (f32vector-set! *xvec* i (truncate->exact (- (* *zmax* *tanvan*))))
           (f32vector-set! *yvec* i (randint (truncate->exact (- (* z *tanvan*)))
-                                            (truncate->exact    (* z *tanvan*))))
-          )
-        (f32vector-set! *xvec* i x))
+                                            (truncate->exact    (* z *tanvan*))))))
       ))
   ;; 画面表示
   (glut-post-redisplay)
@@ -106,8 +105,7 @@
                   (f32vector-ref *yvec* i)
                   (f32vector-ref *zvec* i))
     (glut-solid-sphere *ssize* 20 20)
-    (gl-pop-matrix)
-    )
+    (gl-pop-matrix))
   ;(gl-flush)
   (glut-swap-buffers))
 
