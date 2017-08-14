@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-10 v1.12
+;; 2017-8-15 v1.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -101,7 +101,6 @@
 
 ;; 迷路クラスのインスタンス生成
 (define *maze* (make <maze>))
-(maze-init *maze* *mw* *mh*)
 
 ;; マーククラス
 (define-class <mark> ()
@@ -216,7 +215,7 @@
          (set! *mx* (pxadd *mx*  1))
          (set! *rx* (- *rx* *rw*)))
        )
-      (else ; 上下移動(階段)
+      ((1) ; 上下移動(階段)
        ;; 移動方向で場合分け
        (case *movdir*
          ((1 2) ; 上/右
@@ -272,14 +271,15 @@
   (define (pyadd y dy) (wrap-range (+ y dy) 0 mh)) ; Y座標加算(端を超えたら反対側に移動する)
 
   ;; 上下左右の部屋も表示する
+  (gl-color *roomcolor*)
+  (gl-line-width 2)
+  (%win-ortho-on *width* *height*)
   (let loop ((i -2) (j -1))
     (let ((ox  (win-w *win* (- (* *rw* j) *rx*)))
           (oy  (win-h *win* (+ (* *rh* i) *ry*)))
           (mx1 (pxadd *mx* j))
           (my1 (pyadd *my* i)))
-      (gl-color *roomcolor*)
-      (gl-line-width 2)
-      (%win-ortho-on *width* *height*)
+      (gl-push-matrix)
       (%win-translate ox oy *width* *height*)
       ;; 壁
       (%draw-win-line (win-x *win* (- (/. *rw* 2)))
@@ -325,12 +325,13 @@
                              (win-x *win* (~ *marks* i2 'rx))
                              (win-y *win* (+ *y* (~ *marks* i2 'ry)))
                              *width* *height* (win-h-r *win* 1/13) 'center)))
-      (%win-ortho-off)
-      (gl-line-width 1)
+      (gl-pop-matrix)
       (cond
        ((< i 1) (loop (+ i 1) j))
        ((< j 1) (loop -2 (+ j 1))))
-      )))
+      ))
+  (%win-ortho-off)
+  (gl-line-width 1))
 
 
 ;; 初期化
@@ -396,7 +397,7 @@
   ;; 自機の表示
   (disp-mychr)
   ;; 部屋の表示
-  (disp-rooms *maze*)
+  (if (= (~ *maze* 'maze-state) 1) (disp-rooms *maze*))
   ;; 背景の表示
   (gl-color *backcolor*)
   (draw-win-rect 0 0 *width* *height* *width* *height*)

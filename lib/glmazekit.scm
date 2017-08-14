@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmazekit.scm
-;; 2017-8-11 v1.02
+;; 2017-8-15 v1.03
 ;;
 ;; ＜内容＞
 ;;   迷路の生成と探索を行うためのモジュールです。
@@ -35,6 +35,7 @@
    (goal-x     :init-value 0) ; ゴールのX座標
    (goal-y     :init-value 0) ; ゴールのY座標
    (goal-state :init-value 0) ; ゴール状態(=0:未ゴール,=1:ゴール)
+   (maze-state :init-value 0) ; 迷路状態(=0:初期状態,=1:生成済み)
    ))
 
 ;; 迷路の初期化
@@ -46,7 +47,8 @@
   (set! (~ mz 'start-y)    0)
   (set! (~ mz 'goal-x)     0)
   (set! (~ mz 'goal-y)     0)
-  (set! (~ mz 'goal-state) 0))
+  (set! (~ mz 'goal-state) 0)
+  (set! (~ mz 'maze-state) 0))
 
 ;; 迷路の生成
 (define-method maze-generate ((mz <maze>) :optional (disp-proc #f))
@@ -138,7 +140,9 @@
      ((< y1 (- mh 1)) (loop 0 (+ y1 1))))
     )
   ;; 柱ごとの壁データを、迷路データに変換する
-  (convert-maze mz pdata))
+  (convert-maze mz pdata)
+  ;; 迷路状態を更新
+  (set! (~ mz 'maze-state) 1))
 
 ;; 柱ごとの壁データを、迷路データに変換する(内部処理用)
 (define (convert-maze mz pdata)
@@ -211,7 +215,7 @@
     (set! (~ spx  snum) x)
     (set! (~ spy  snum) y)
     (set! (~ spno snum) sind)
-    (set! (~ sflag (pt x y)) #t) ; 探索ずみにする
+    (set! (~ sflag (pt x y)) #t) ; 探索済みにする
     (inc! snum))
 
   ;; 最初の探索点を生成
@@ -250,6 +254,6 @@
       (if (>= sind 0)
         (loop (~ spx sind) (~ spy sind)))
       ))
-  ;; 迷路のゴール状態を更新
+  ;; ゴール状態を更新
   (set! (~ mz 'goal-state) (if goal 1 0)))
 
