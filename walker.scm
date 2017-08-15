@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-15 v1.16
+;; 2017-8-15 v1.17
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -121,11 +121,11 @@
 
 ;; 自分の表示
 (define (disp-mychr)
-  (let1 tno (~ *anime* *frame*)
-    (draw-texture-rect (~ *tex* tno) (win-x *win* *x*) (win-y *win* (+ *y* *myh*))
-                       (win-w *win* *mywA*) (win-w *win* *myh*)
-                       *width* *height* 'center 0 1.0 1.0 *chrdir* 1.0
-                       (if (= *chrdir* 1) 0.0 1.0) 0.0)))
+  (draw-texture-rect (~ *tex* (~ *anime* *frame*))
+                     (win-x *win* *x*) (win-y *win* (+ *y* *myh*))
+                     (win-w *win* *mywA*) (win-w *win* *myh*)
+                     *width* *height* 'center 0 1.0 1.0 *chrdir* 1.0
+                     (if (= *chrdir* 1) 0.0 1.0) 0.0))
 
 ;; 自分の移動
 (define (move-mychr mz)
@@ -282,10 +282,10 @@
   (gl-line-width 2)
   (%win-ortho-on *width* *height*)
   (let loop ((i -2) (j -1))
-    (let ((ox  (win-w *win* (- (* *rw* j) *rx*)))
-          (oy  (win-h *win* (+ (* *rh* i) *ry*)))
-          (mx1 (pxadd *mx* j))
-          (my1 (pyadd *my* i)))
+    (let ((ox  (win-w *win* (- (* *rw* j) *rx*))) ; ウィンドウ上の部屋の原点のX座標
+          (oy  (win-h *win* (+ (* *rh* i) *ry*))) ; ウィンドウ上の部屋の原点のY座標
+          (mx1 (pxadd *mx* j))  ; 部屋の迷路上のX座標
+          (my1 (pyadd *my* i))) ; 部屋の迷路上のY座標
       (gl-push-matrix)
       (%win-translate ox oy *width* *height*)
       ;; 壁
