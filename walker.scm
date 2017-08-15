@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-15 v1.14
+;; 2017-8-15 v1.15
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -47,7 +47,7 @@
 (define *movkind*    0) ; 移動種別(=0:左右移動,=1:上下移動(階段))
 (define *movdir*     0) ; 移動方向(=1:上,=2:右,=4:下,=8:左)
 (define *chrdir*     1) ; キャラの向き(=1:右向き,=-1:左向き)
-(define *anime*      #(0 1 1 1 1 2 2 2 2)) ; アニメフレーム(テクスチャ番号のベクタ)
+(define *anime*      #(0 1 1 1 1 0 0 0 0)) ; アニメフレーム(テクスチャ番号のベクタ)
 (define *frame*      0) ; アニメフレーム番号
 (define *rx*         0) ; 部屋上のX座標
 (define *ry*         0) ; 部屋上のY座標
@@ -82,7 +82,7 @@
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
 
 ;; テクスチャデータクラスのインスタンス生成
-(define *tex* (make-vector-of-class 3 <texdata>))
+(define *tex* (make-vector-of-class 2 <texdata>))
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -356,7 +356,6 @@
   ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_DECAL)
   (load-texture-bitmap-file (~ *tex* 0) (make-fpath *app-dpath* "image/char0201.bmp") '(0 0 0))
   (load-texture-bitmap-file (~ *tex* 1) (make-fpath *app-dpath* "image/char0202.bmp") '(0 0 0))
-  (load-texture-bitmap-file (~ *tex* 2) (make-fpath *app-dpath* "image/char0203.bmp") '(0 0 0))
   ;; 音楽データの初期化
   (init-auddata *app-dpath*))
 
