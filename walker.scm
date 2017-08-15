@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-15 v1.13
+;; 2017-8-15 v1.14
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -47,7 +47,8 @@
 (define *movkind*    0) ; 移動種別(=0:左右移動,=1:上下移動(階段))
 (define *movdir*     0) ; 移動方向(=1:上,=2:右,=4:下,=8:左)
 (define *chrdir*     1) ; キャラの向き(=1:右向き,=-1:左向き)
-(define *frame*      0) ; アニメフレーム(=0-3:自分1画像を表示,=4-7:自分2画像を表示)
+(define *anime*      #(0 1 1 1 1 2 2 2 2)) ; アニメフレーム(テクスチャ番号のベクタ)
+(define *frame*      0) ; アニメフレーム番号
 (define *rx*         0) ; 部屋上のX座標
 (define *ry*         0) ; 部屋上のY座標
 (define *mx*         *sx*) ; 迷路上のX座標
@@ -81,7 +82,7 @@
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
 
 ;; テクスチャデータクラスのインスタンス生成
-(define *tex* (make-vector-of-class 2 <texdata>))
+(define *tex* (make-vector-of-class 3 <texdata>))
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -120,7 +121,7 @@
 
 ;; 自分の表示
 (define (disp-mychr)
-  (let1 tno (if (< *frame* 4) 0 1)
+  (let1 tno (~ *anime* *frame*)
     (draw-texture-rect (~ *tex* tno) (win-x *win* *x*) (win-y *win* (+ *y* *myh*))
                        (win-w *win* *mywA*) (win-w *win* *myh*)
                        *width* *height* 'center 0 1.0 1.0 *chrdir* 1.0
@@ -196,6 +197,7 @@
        ;; ゴール判定
        (when (and (logtest (~ mdata (pt *mx* *my*)) 128)
                   (<= (abs (- *rx* *grx*)) *dx*))
+         (set! movflag #f)
          (set! *frame* 0)
          (set! *goal*  1))
        ;; 壁判定
@@ -241,9 +243,14 @@
     ;; アニメフレーム更新
     (when (or movflag (> *frame* 0))
       (inc! *frame*)
-      (when (> *frame* 7)
-        (set! *frame*  0)
-        (set! *movdir* 0)))
+      (if (> *frame* 8)
+        (cond
+         (movflag
+          (set! *frame*  1))
+         (else
+          (set! *frame*  0)
+          (set! *movdir* 0)))
+        ))
     ;; マークを書く
     (cond
      (*mkflag*
@@ -349,6 +356,7 @@
   ;(gl-tex-env GL_TEXTURE_ENV GL_TEXTURE_ENV_MODE GL_DECAL)
   (load-texture-bitmap-file (~ *tex* 0) (make-fpath *app-dpath* "image/char0201.bmp") '(0 0 0))
   (load-texture-bitmap-file (~ *tex* 1) (make-fpath *app-dpath* "image/char0202.bmp") '(0 0 0))
+  (load-texture-bitmap-file (~ *tex* 2) (make-fpath *app-dpath* "image/char0203.bmp") '(0 0 0))
   ;; 音楽データの初期化
   (init-auddata *app-dpath*))
 
