@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-15 v1.17
+;; 2017-8-16 v1.18
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -141,10 +141,14 @@
         (sxd1    0)) ; 階段の始点のX座標からの距離
     ;; キー入力
     (cond
-     ((spkey-on? *ksinfo* GLUT_KEY_LEFT) (set! *movdir* 8) (set! movflag #t))
-     ((spkey-on? *ksinfo* GLUT_KEY_RIGHT)(set! *movdir* 2) (set! movflag #t))
-     ((spkey-on? *ksinfo* GLUT_KEY_UP)   (set! *movdir* 1) (set! movflag #t))
-     ((spkey-on? *ksinfo* GLUT_KEY_DOWN) (set! *movdir* 4) (set! movflag #t))
+     ((and (spkey-on? *ksinfo* GLUT_KEY_LEFT) (not (spkey-on? *ksinfo* GLUT_KEY_RIGHT)))
+      (set! *movdir* 8) (set! movflag #t))
+     ((and (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (not (spkey-on? *ksinfo* GLUT_KEY_LEFT)))
+      (set! *movdir* 2) (set! movflag #t))
+     ((and (spkey-on? *ksinfo* GLUT_KEY_UP) (not (spkey-on? *ksinfo* GLUT_KEY_DOWN)))
+      (set! *movdir* 1) (set! movflag #t))
+     ((and (spkey-on? *ksinfo* GLUT_KEY_DOWN) (not (spkey-on? *ksinfo* GLUT_KEY_UP)))
+      (set! *movdir* 4) (set! movflag #t))
      )
     ;; 移動種別で場合分け
     (case *movkind*

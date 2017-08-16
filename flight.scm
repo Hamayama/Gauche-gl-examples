@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-8-10 v1.50
+;; 2017-8-16 v1.51
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -174,9 +174,7 @@
 
 ;; チェックポイントの表示
 (define (disp-check-point)
-  (if (= *goal* 0)
-    (gl-color *checkcolor1*)
-    (gl-color *checkcolor2*))
+  (gl-color (if (= *goal* 0) *checkcolor1* *checkcolor2*))
   (draw-win-circle (win-x *win* (remap-range *cx* *minx* *maxx* (- *wd/2*) *wd/2*))
                    (win-y *win* (remap-range *cy* *miny* *maxy* (- *ht/2*) *ht/2*))
                    (win-h *win* (remap-range *cr* 0 (- *maxy* *miny*) 0 (* *ht/2* 2)))

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2017-8-10 v1.50
+;; 2017-8-16 v1.51
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -146,15 +146,10 @@
 
 ;; 自機の表示
 (define (disp-mychr pattern)
-  (let1 tscrn #f
-    (case pattern
-      ((0)  (gl-color 1.0 1.0 0.0 1.0)
-            (set! tscrn *tscrn-mychr1*))
-      (else (gl-color 1.0 0.0 0.0 1.0)
-            (set! tscrn *tscrn-mychr2*)))
-    (textscrn-disp tscrn (win-x *win* *x*) (win-y *win* *y*) *width* *height*
-                   (win-w *win* *chw*) (win-h *win* *chh*) 'center)
-    ))
+  (gl-color (if (= pattern 0) #f32(1.0 1.0 0.0 1.0) #f32(1.0 0.0 0.0 1.0)))
+  (textscrn-disp (if (= pattern 0) *tscrn-mychr1* *tscrn-mychr2*)
+                 (win-x *win* *x*) (win-y *win* *y*) *width* *height*
+                 (win-w *win* *chw*) (win-h *win* *chh*) 'center))
 
 ;; 自機の移動
 (define (move-mychr)

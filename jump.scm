@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2017-8-10 v1.70
+;; 2017-8-16 v1.71
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -131,11 +131,10 @@
 
 ;; 自分の表示
 (define (disp-mychr)
-  (let1 tno (if (= *scene* 3) 1 0)
-    (draw-texture-rect (~ *tex* tno) (win-x *win* (- *x* *chw*)) (win-y *win* *y*)
-                       (win-w *win* (* *chw* 2)) (win-h *win* (* *chh* 2))
-                       *width* *height* 'left 0 0.75 0.75)
-    ))
+  (draw-texture-rect (~ *tex* (if (= *scene* 3) 1 0))
+                     (win-x *win* (- *x* *chw*)) (win-y *win* *y*)
+                     (win-w *win* (* *chw* 2)) (win-h *win* (* *chh* 2))
+                     *width* *height* 'left 0 0.75 0.75))
 
 ;; 自分の移動
 (define (move-mychr)
