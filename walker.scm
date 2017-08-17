@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-16 v1.18
+;; 2017-8-17 v1.20
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -11,6 +11,7 @@
 ;;   また、迷路の上下左右はつながっており、外周は存在しません。
 ;;   スペースキーを押すと、壁にマーク(アルファベット)を付加できます。
 ;;   マークは最大5つまでで、それをこえると古いものから消えていきます。
+;;   また、スタート画面でしばらく待つとデモになります。
 ;;   [r]キーを押すとゲームをリセットします。
 ;;   ESCキーを押すと終了します。
 ;;
@@ -47,7 +48,7 @@
 (define *movkind*    0) ; 移動種別(=0:左右移動,=1:上下移動(階段))
 (define *movdir*     0) ; 移動方向(=1:上,=2:右,=4:下,=8:左)
 (define *chrdir*     1) ; キャラの向き(=1:右向き,=-1:左向き)
-(define *anime*      #(0 1 1 1 1 0 0 0 0)) ; アニメフレーム(テクスチャ番号のベクタ)
+(define *anime*      #(0 1 1 1 1 0 0 0 0)) ; アニメフレームデータ(テクスチャ番号)
 (define *frame*      0) ; アニメフレーム番号
 (define *rx*         0) ; 部屋上のX座標
 (define *ry*         0) ; 部屋上のY座標
@@ -77,6 +78,9 @@
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:プレイ中,=2:プレイ終了)
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 (define *roomcolor*  #f32(1.0 1.0 1.0 1.0)) ; 部屋色
+
+(define *demoflag*   #f) ; デモフラグ
+(define *demotime*   0) ; デモ時間調整用(msec)
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
@@ -136,20 +140,60 @@
   (define (pxadd x dx) (wrap-range (+ x dx) 0 mw)) ; X座標加算(端を超えたら反対側に移動する)
   (define (pyadd y dy) (wrap-range (+ y dy) 0 mh)) ; Y座標加算(端を超えたら反対側に移動する)
 
-  (let ((movflag #f) ; 移動中フラグ
+  (let ((movflag #t) ; 移動中フラグ
         (sx1     0)  ; 階段の始点のX座標
         (sxd1    0)) ; 階段の始点のX座標からの距離
-    ;; キー入力
+
+    ;; 移動方向の決定
     (cond
-     ((and (spkey-on? *ksinfo* GLUT_KEY_LEFT) (not (spkey-on? *ksinfo* GLUT_KEY_RIGHT)))
-      (set! *movdir* 8) (set! movflag #t))
-     ((and (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (not (spkey-on? *ksinfo* GLUT_KEY_LEFT)))
-      (set! *movdir* 2) (set! movflag #t))
-     ((and (spkey-on? *ksinfo* GLUT_KEY_UP) (not (spkey-on? *ksinfo* GLUT_KEY_DOWN)))
-      (set! *movdir* 1) (set! movflag #t))
-     ((and (spkey-on? *ksinfo* GLUT_KEY_DOWN) (not (spkey-on? *ksinfo* GLUT_KEY_UP)))
-      (set! *movdir* 4) (set! movflag #t))
+     ;; デモのとき
+     (*demoflag*
+      ;; 現在位置を移動済みに設定
+      (set! (~ mdata (pt *mx* *my*)) (logior (~ mdata (pt *mx* *my*)) 16))
+      ;; 探索ルートをたどって移動方向を決定する
+      (cond
+       ;; 上の部屋が探索ルートのとき
+       ((and (= (logand (~ mdata (pt *mx* (pyadd *my* -1))) 48) 32)
+             (not (logtest (~ mdata (pt *mx* *my*)) 1)))
+        (set! *movdir* 1)) ; 上へ移動
+       ;; 右の部屋が探索ルートのとき
+       ((and (= (logand (~ mdata (pt (pxadd *mx* +1) *my*)) 48) 32)
+             (not (logtest (~ mdata (pt *mx* *my*)) 2)))
+        (set! *movdir* (if (= *movkind* 0) 2 4))) ; 右または下へ移動
+       ;; 下の部屋が探索ルートのとき
+       ((and (= (logand (~ mdata (pt *mx* (pyadd *my* +1))) 48) 32)
+             (not (logtest (~ mdata (pt *mx* *my*)) 4)))
+        (set! *movdir* 4)) ; 下へ移動
+       ;; 左の部屋が探索ルートのとき
+       ((and (= (logand (~ mdata (pt (pxadd *mx* -1) *my*)) 48) 32)
+             (not (logtest (~ mdata (pt *mx* *my*)) 8)))
+        (set! *movdir* 8)) ; 左へ移動
+       ;; ゴール部屋のとき
+       ((logtest (~ mdata (pt *mx* *my*)) 128)
+        (set! *movdir* (cond ((= *movkind* 1) 4)    ; 下へ移動
+                             ((> *rx* *grx*)  8)    ; 左へ移動
+                             (else            2)))) ; 右へ移動
+       (else
+        (set! movflag #f))
+       ))
+     ;; デモでないとき
+     (else
+      ;; キー入力で移動方向を決定する
+      (cond
+       ((and (spkey-on? *ksinfo* GLUT_KEY_LEFT) (not (spkey-on? *ksinfo* GLUT_KEY_RIGHT)))
+        (set! *movdir* 8)) ; 左へ移動
+       ((and (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (not (spkey-on? *ksinfo* GLUT_KEY_LEFT)))
+        (set! *movdir* 2)) ; 右へ移動
+       ((and (spkey-on? *ksinfo* GLUT_KEY_UP) (not (spkey-on? *ksinfo* GLUT_KEY_DOWN)))
+        (set! *movdir* 1)) ; 上へ移動
+       ((and (spkey-on? *ksinfo* GLUT_KEY_DOWN) (not (spkey-on? *ksinfo* GLUT_KEY_UP)))
+        (set! *movdir* 4)) ; 下へ移動
+       (else
+        (set! movflag #f))
+       ))
      )
+
+    ;; 移動処理
     ;; 移動種別で場合分け
     (case *movkind*
       ((0) ; 左右移動
@@ -165,7 +209,8 @@
           (set! sx1  (+ (- (/. *rh* 2)) (- (/. *mywB* 2)) (/. *rh* *steps*)))
           (set! sxd1 (abs (- sx1 *rx*)))
           (cond
-           ((or (logtest (~ mdata (pt *mx* *my*)) 1) (> sxd1 (* *mywA* 2)))
+           ((and (not *demoflag*)
+                 (or (logtest (~ mdata (pt *mx* *my*)) 1) (> sxd1 (* *mywA* 2))))
             (set! movflag #f))
            (else
             (cond
@@ -182,7 +227,8 @@
           (set! sx1  (- (/. *rh* 2) (/. *mywB* 2)))
           (set! sxd1 (abs (- sx1 *rx*)))
           (cond
-           ((or (logtest (~ mdata (pt *mx* *my*)) 4) (> sxd1 (* *mywA* 2)))
+           ((and (not *demoflag*)
+                 (or (logtest (~ mdata (pt *mx* *my*)) 4) (> sxd1 (* *mywA* 2))))
             (set! movflag #f))
            (else
             (cond
@@ -244,7 +290,8 @@
          )
        )
       )
-    ;; アニメフレーム更新
+
+    ;; アニメフレームの更新
     (when (or movflag (> *frame* 0))
       (inc! *frame*)
       (if (> *frame* 8)
@@ -255,13 +302,14 @@
           (set! *frame*  0)
           (set! *movdir* 0)))
         ))
+
     ;; マークを書く
     (cond
      (*mkflag*
       (unless (key-on? *ksinfo* #\space)
         (set! *mkflag* #f)))
      (else
-      (when (key-on? *ksinfo* #\space)
+      (when (and (key-on? *ksinfo* #\space) (not *demoflag*))
         (set! *mkflag* #t)
         (set! (~ *marks* *mkno* 'useflag) #t)
         (set! (~ *marks* *mkno* 'mx) *mx*)
@@ -369,23 +417,31 @@
   ;; 文字表示
   (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "")
         (x2 1) (y1 30) (y2 43))
-    ;; シーン情報で場合分け
-    (case *scene*
-      ((0) ; スタート画面
-       (set! str1 "== WALKER ==")
-       (set! str2 "HIT [S] KEY")
-       (set! x2  0)
-       (set! y2 42))
-      ((1) ; プレイ中
-       )
-      ((2) ; プレイ終了
-       (set! str1 "== GOAL!! ==")
-       (set! y1 24)
-       (set! str6 (format "TIME : ~A ~A"
-                          (make-time-text *sc*)
-                          (if (= *sc* *hs*) "(1st!!)" "")))
-       (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
-      )
+    (cond
+     ;; デモのとき
+     (*demoflag*
+      (set! str1 "== Demo ==")
+      (set! str2 "HIT [D] KEY"))
+     ;; デモでないとき
+     (else
+      ;; シーン情報で場合分け
+      (case *scene*
+        ((0) ; スタート画面
+         (set! str1 "== WALKER ==")
+         (set! str2 "HIT [S] KEY")
+         (set! x2  0)
+         (set! y2 42))
+        ((1) ; プレイ中
+         )
+        ((2) ; プレイ終了
+         (set! str1 "== GOAL!! ==")
+         (set! y1 24)
+         (set! str6 (format "TIME : ~A ~A"
+                            (make-time-text *sc*)
+                            (if (= *sc* *hs*) "(1st!!)" "")))
+         (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
+        ))
+     )
     (set! str3 (format "TIME : ~A" (make-time-text *sc*)))
     (set! str4 (format "1st : ~A"  (make-time-text *hs*)))
     (set! str5 (format "(MX=~D MY=~D)" *mx* *my*))
@@ -466,38 +522,59 @@
            (set! *reset* #f)))
         (else
          ;; 初期化
-         (set! *movkind* 0)
-         (set! *movdir*  0)
-         (set! *chrdir*  1)
-         (set! *frame*   0)
-         (set! *rx*      0)
-         (set! *ry*      0)
-         (set! *mx*      *sx*)
-         (set! *my*      *sy*)
-         (set! *mkno*    0)
-         (set! *mkflag*  #f)
-         (set! *goal*    0)
-         (set! *sc*      0)
+         (set! *movkind*   0)
+         (set! *movdir*    0)
+         (set! *chrdir*    1)
+         (set! *frame*     0)
+         (set! *rx*        0)
+         (set! *ry*        0)
+         (set! *mx*        *sx*)
+         (set! *my*        *sy*)
+         (set! *mkno*      0)
+         (set! *mkflag*    #f)
+         (set! *goal*      0)
+         ;(set! *sc*        0)
+         (set! *demotime*  0)
          (for-each (lambda (m) (set! (~ m 'useflag) #f)) *marks*)
          ;; 迷路の生成
          (maze-init      *maze* *mw* *mh*)
          (maze-generate  *maze*)
          (maze-set-start *maze* *sx* *sy*)
          (maze-set-goal  *maze* *gx* *gy*)
-         ;; キー入力待ち
-         (keywait *kwinfo* '(#\s #\S #\r #\R)
-                  (lambda ()
-                    (keywait-clear *kwinfo*)
-                    (case (~ *kwinfo* 'hitkey)
-                      ((#\r #\R)
-                       (set! *reset* #t))
-                      (else
-                       (set! *scene* 1)
-                       (auddata-play *adata-start1*)))))))
+         ;; 迷路の探索(デモ用)
+         (maze-search    *maze*)
+         (cond
+          ;; デモのとき
+          (*demoflag*
+           (set! *scene* 1))
+          ;; デモでないとき
+          (else
+           ;; キー入力待ち
+           (keywait *kwinfo* '(#\s #\S #\r #\R)
+                    (lambda ()
+                      (keywait-clear *kwinfo*)
+                      (timewait-clear *twinfo*)
+                      (case (~ *kwinfo* 'hitkey)
+                        ((#\r #\R)
+                         (set! *sc*     0)
+                         (set! *reset*  #t))
+                        (else
+                         (set! *scene*  1)
+                         (set! *sc*     0)
+                         (auddata-play *adata-start1*)))))
+           ;; 時間待ち(タイムアップでデモへ移行)
+           (timewait *twinfo* 5000
+                     (lambda ()
+                       (set! *scene*    1)
+                       (set! *demoflag* #t)
+                       (keywait-clear  *kwinfo*)
+                       (timewait-clear *twinfo*))))
+          ))
+        )
        )
       ((1) ; プレイ中
        ;; スコア処理
-       (when (< *goal* 2)
+       (when (and (< *goal* 2) (not *demoflag*))
          (set! *sc* (+ *sc* *wait*))
          (if (> *sc* 1800000) (set! *sc* 1800000)))
        ;; 自分の移動
@@ -505,22 +582,49 @@
        ;; 終了判定
        (when (= *goal* 1)
          (set! *scene* 2)
-         (if (or (= *hs* 0) (< *sc* *hs*)) (set! *hs* *sc*))
-         (auddata-play *adata-end3*))
+         (when (not *demoflag*)
+           (if (or (= *hs* 0) (< *sc* *hs*)) (set! *hs* *sc*))
+           (auddata-play *adata-end3*)))
        ;; リセット
-       (if (key-on? *ksinfo* '(#\r #\R))
-         (set! *scene* 0))
+       (when (key-on? *ksinfo* '(#\r #\R))
+         (set! *scene*    0)
+         (set! *sc*       0)
+         (set! *demoflag* #f))
+       ;; デモを抜けるチェック
+       (when (and *demoflag* (key-on? *ksinfo* '(#\d #\D)))
+         (set! *scene*    0)
+         (set! *demoflag* #f))
        )
       ((2) ; プレイ終了
-       ;; 時間待ち
-       (timewait *twinfo* 1500
-                 (lambda ()
-                   ;; キー入力待ち
-                   (keywait *kwinfo* '(#\d #\D #\r #\R)
-                            (lambda ()
-                              (set! *scene* 0)
-                              (timewait-clear *twinfo*)
-                              (keywait-clear  *kwinfo*)))))
+       (cond
+        ;; デモのとき
+        (*demoflag*
+         ;; 時間待ち
+         (set! *demotime* (+ *demotime* *wait*))
+         (if (>= *demotime* 2000) (set! *scene* 0))
+         ;; リセット
+         (when (key-on? *ksinfo* '(#\r #\R))
+           (set! *scene*    0)
+           (set! *sc*       0)
+           (set! *demoflag* #f))
+         ;; デモを抜けるチェック
+         (when (key-on? *ksinfo* '(#\d #\D))
+           (set! *scene*    0)
+           (set! *demoflag* #f)))
+        ;; デモでないとき
+        (else
+         ;; 時間待ち
+         (timewait *twinfo* 1500
+                   (lambda ()
+                     ;; キー入力待ち
+                     (keywait *kwinfo* '(#\d #\D #\r #\R)
+                              (lambda ()
+                                (set! *scene* 0)
+                                (if (memv (~ *kwinfo* 'hitkey) '(#\r #\R))
+                                  (set! *sc* 0))
+                                (timewait-clear *twinfo*)
+                                (keywait-clear  *kwinfo*))))))
+        )
        )
       )
     )

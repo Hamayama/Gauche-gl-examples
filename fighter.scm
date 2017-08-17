@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2017-8-10 2.10
+;; 2017-8-17 2.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -43,7 +43,7 @@
 (define *waku*      10) ; 当たり判定調整用
 (define *fixtime*   10) ; 硬直時間
 (define *stephigh*  29) ; ステップ高さ
-(define *demoflg*   #f) ; デモフラグ
+(define *demoflag*   #f) ; デモフラグ
 (define *demotime*   0) ; デモ時間調整用(msec)
 (define *starttime*  0) ; スタート後経過時間(msec)
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:戦闘中,=2:戦闘終了)
@@ -102,7 +102,7 @@
     ((0) ; 通常
      (cond
       ;; デモの起動直後のとき(何もしない)
-      ((and *demoflg* (<= *starttime* 300)))
+      ((and *demoflag* (<= *starttime* 300)))
       ;; デモの起動直後でないとき
       (else
        (set! (~ f1 'vy) (- (~ f1 'vy) 5))
@@ -110,7 +110,7 @@
        (set! (~ f1 'dir) (if (> (~ f1 'x) (~ f2 'x)) -1 1))
        (cond
         ;; 「タイプが自分」かつデモでないとき
-        ((and (= (~ f1 'type) 0) (not *demoflg*))
+        ((and (= (~ f1 'type) 0) (not *demoflag*))
          ;; キー操作で行動を決定する
          (cond
           ((and (spkey-on? *ksinfo* GLUT_KEY_LEFT) (not (spkey-on? *ksinfo* GLUT_KEY_RIGHT)))
@@ -239,7 +239,7 @@
       (set! (~ f2 'vx)  (- (~ f2 'vx)))
       (if (< (~ f1 'vy) 15) (set! (~ f1 'vy) 15))
       (if (< (~ f2 'vy) 15) (set! (~ f2 'vy) 15))
-      (if (not *demoflg*) (auddata-play *adata-hit1*)))
+      (if (not *demoflag*) (auddata-play *adata-hit1*)))
      ;; 自分の勝ち
      ((and (or  (= (~ f1 'act) 2) (= (~ f1 'act) 3))
            (not (= (~ f2 'act) 14)))
@@ -249,7 +249,7 @@
       (set! (~ f2 'dir) (- (~ f1 'dir)))
       (set! (~ f2 'vx)  (* (~ f2 'dir) -10))
       (set! (~ f2 'vy)  50)
-      (if (not *demoflg*) (auddata-play *adata-hit1*)))
+      (if (not *demoflag*) (auddata-play *adata-hit1*)))
      ;; 敵の勝ち
      ((and (or  (= (~ f2 'act) 2) (= (~ f2 'act) 3))
            (not (= (~ f1 'act) 14)))
@@ -259,7 +259,7 @@
       (set! (~ f1 'dir) (- (~ f2 'dir)))
       (set! (~ f1 'vx)  (* (~ f1 'dir) -10))
       (set! (~ f1 'vy)  50)
-      (if (not *demoflg*) (auddata-play *adata-hit1*)))
+      (if (not *demoflag*) (auddata-play *adata-hit1*)))
      )))
 (define-method fighter-disp ((f1 <fighter>))
   (gl-push-matrix)
@@ -315,34 +315,28 @@
   (gl-load-identity)
   ;; 文字表示
   (let ((str1 "") (str2 "") (str3 "") (y2 31))
-    ;; シーン情報で場合分け
-    (case *scene*
-      ((0) ; スタート画面
-       (cond
-        ;; デモのとき
-        (*demoflg*)
-        ;; デモでないとき
-        (else
+    (cond
+     ;; デモのとき
+     (*demoflag*
+      (set! str1 "== Demo ==")
+      (set! str2 "HIT [D] KEY"))
+     ;; デモでないとき
+     (else
+      ;; シーン情報で場合分け
+      (case *scene*
+        ((0) ; スタート画面
          (set! str1 "Ready?")
          (set! str2 "HIT [S] KEY")
          (set! y2 32))
-        ))
-      ((1) ; 戦闘中
-       (cond
-        ;; デモのとき
-        (*demoflg*
-         (set! str1 "== Demo ==")
-         (set! str2 "HIT [D] KEY"))
-        ;; デモでないとき
-        (else
+        ((1) ; 戦闘中
          (when (<= *starttime* 3000)
            (set! str1 "Fight!!")
            (set! str2 "USE [<-] [->] [Z] [X] KEY")))
+        ((2) ; 戦闘終了
+         (set! str1 (if (fighter-finished? *f2*) "You win!!" "You lose!!"))
+         (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
         ))
-      ((2) ; 戦闘終了
-       (set! str1 (if (fighter-finished? *f2*) "You win!!" "You lose!!"))
-       (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
-      )
+     )
     (set! str3 (format "(W=~D L=~D R=~D)"
                        *wincount*
                        (- *playcount* *wincount*)
@@ -426,25 +420,24 @@
        (set! *starttime* 0)
        (cond
         ;; デモのとき
-        (*demoflg*
+        (*demoflag*
          (set! *scene* 1))
         ;; デモでないとき
         (else
          ;; キー入力待ち
          (keywait  *kwinfo* '(#\s #\S)
                    (lambda ()
-                     (set! *scene*   1)
+                     (set! *scene*    1)
                      (auddata-play *adata-start1*)
                      (keywait-clear  *kwinfo*)
                      (timewait-clear *twinfo*)))
          ;; 時間待ち(タイムアップでデモへ移行)
          (timewait *twinfo* 5000
                    (lambda ()
-                     (set! *scene*   1)
-                     (set! *demoflg* #t)
+                     (set! *scene*    1)
+                     (set! *demoflag* #t)
                      (keywait-clear  *kwinfo*)
-                     (timewait-clear *twinfo*)))
-         )
+                     (timewait-clear *twinfo*))))
         )
        )
       ((1) ; 戦闘中
@@ -456,34 +449,41 @@
        ;; 衝突判定
        (fighter-check *f1* *f2*)
        ;; 終了判定
-       (if (or (fighter-finished? *f1*) (fighter-finished? *f2*))
-         (cond
-          ;; デモのとき
-          (*demoflg*
-           (set! *demotime* (+ *demotime* *wait*))
-           (if (>= *demotime* 1600) (set! *scene* 0)))
-          ;; デモでないとき
-          (else
-           (set! *scene* 2)
+       (when (or (fighter-finished? *f1*) (fighter-finished? *f2*))
+         (set! *scene* 2)
+         (when (not *demoflag*)
            (auddata-play *adata-end1*)
            (inc! *playcount*)
-           (if (fighter-finished? *f2*) (inc! *wincount*)))
-          ))
+           (if (fighter-finished? *f2*) (inc! *wincount*))
+           ))
        ;; デモを抜けるチェック
-       (when (and *demoflg* (key-on? *ksinfo* '(#\d #\D)))
-         (set! *scene*   0)
-         (set! *demoflg* #f))
+       (when (and *demoflag* (key-on? *ksinfo* '(#\d #\D)))
+         (set! *scene*    0)
+         (set! *demoflag* #f))
        )
       ((2) ; 戦闘終了
-       ;; 時間待ち
-       (timewait *twinfo* 1500
-                 (lambda ()
-                   ;; キー入力待ち
-                   (keywait *kwinfo* '(#\d #\D)
-                            (lambda ()
-                              (set! *scene* 0)
-                              (timewait-clear *twinfo*)
-                              (keywait-clear  *kwinfo*)))))
+       (cond
+        ;; デモのとき
+        (*demoflag*
+         ;; 時間待ち
+         (set! *demotime* (+ *demotime* *wait*))
+         (if (>= *demotime* 2000) (set! *scene* 0))
+         ;; デモを抜けるチェック
+         (when (key-on? *ksinfo* '(#\d #\D))
+           (set! *scene*    0)
+           (set! *demoflag* #f)))
+        ;; デモでないとき
+        (else
+         ;; 時間待ち
+         (timewait *twinfo* 1500
+                   (lambda ()
+                     ;; キー入力待ち
+                     (keywait *kwinfo* '(#\d #\D)
+                              (lambda ()
+                                (set! *scene* 0)
+                                (timewait-clear *twinfo*)
+                                (keywait-clear  *kwinfo*))))))
+        )
        )
       )
     )

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2017-8-16 v1.51
+;; 2017-8-17 v1.52
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -55,7 +55,7 @@
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 
 (define *demomode*   0) ; デモモード(=0:通常デモ,=1:高速デモ)
-(define *demoflg*    #f) ; デモフラグ
+(define *demoflag*   #f) ; デモフラグ
 (define *demotime1*  0) ; デモ時間調整用1(msec)
 (define *demotime2*  0) ; デモ時間調整用2(msec)
 (define *democount*  0) ; デモ回数
@@ -155,7 +155,7 @@
 (define (move-mychr)
   (cond
    ;; デモのとき
-   (*demoflg*
+   (*demoflag*
     ;; 自機の移動
     (let* ((nes (get-near-enemies 1))
            (rr1 (car (~ nes 0)))
@@ -368,7 +368,7 @@
                 (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y)) 'center)
            (set! ret #t))))
      enemies)
-    (if (and ret (not *demoflg*)) (auddata-play *adata-end1*))
+    (if (and ret (not *demoflag*)) (auddata-play *adata-end1*))
     ret))
 
 ;; 自機ビームの表示
@@ -418,7 +418,7 @@
             (set! (~ e2 'life) 0)
             (when (<= (~ e2 'life) 0)
               (set! (~ e2 'state) 1)
-              (when (not *demoflg*)
+              (when (not *demoflag*)
                 (set! *sc* (+ *sc* 100))
                 (auddata-play *adata-hit1*))))
            ;; 外周のとき(削る)
@@ -465,7 +465,7 @@
                   (dec! (~ e2 'life))
                   (when (<= (~ e2 'life) 0)
                     (set! (~ e2 'state) 1)
-                    (when (not *demoflg*)
+                    (when (not *demoflag*)
                       (set! *sc* (+ *sc* 200))
                       (auddata-play *adata-hit1*)))))
               ))
@@ -540,15 +540,14 @@
         (y2 49) (z1 0.51))
     (cond
      ;; デモのとき
-     (*demoflg*
+     (*demoflag*
       (set! str1 "== Demo ==")
       (set! str2 "HIT [D] KEY")
       (set! str6 (format "TIME=(MAX=~D, MIN=~D, AVG=~D, NOW=~D)"
                          *demotmax*  *demotmin*  *demotavg*
                          (round-n (* *ssc* *wait* 0.001) 1)))
       (set! str7 (format "PARAM=(~D, ~D) COUNT=~D"
-                         (~ *dparam* 'p1) (~ *dparam* 'p2) *democount*))
-      )
+                         (~ *dparam* 'p1) (~ *dparam* 'p2) *democount*)))
      ;; デモでないとき
      (else
       ;; シーン情報で場合分け
@@ -562,8 +561,7 @@
         ((2) ; プレイ終了
          (set! str1 "GAME OVER")
          (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
-        )
-      )
+        ))
      )
     (set! str3 (format "SCORE : ~D"    *sc*))
     (set! str4 (format "HI-SCORE : ~D" *hs*))
@@ -662,32 +660,31 @@
        (set! *demotime2* 0)
        (cond
         ;; デモのとき
-        (*demoflg*
+        (*demoflag*
          (set! *scene* 1))
         ;; デモでないとき
         (else
          ;; キー入力待ち
          (keywait  *kwinfo* '(#\s #\S)
                    (lambda ()
-                     (set! *scene*   1)
-                     (set! *sc*      0)
+                     (set! *scene*    1)
+                     (set! *sc*       0)
                      (auddata-play *adata-start1*)
                      (keywait-clear  *kwinfo*)
                      (timewait-clear *twinfo*)))
          ;; 時間待ち(タイムアップでデモへ移行)
          (timewait *twinfo* 5000
                    (lambda ()
-                     (set! *scene*   1)
-                     (set! *demoflg* #t)
+                     (set! *scene*    1)
+                     (set! *demoflag* #t)
                      (waitcalc-set-wait *wcinfo* (if (> *demomode* 0) 1 *wait*))
                      (keywait-clear  *kwinfo*)
-                     (timewait-clear *twinfo*)))
-         )
+                     (timewait-clear *twinfo*))))
         )
        )
       ((1) ; プレイ中
        ;; スコアと制御カウンタの処理等
-       (if (not *demoflg*) (inc! *sc*))
+       (if (not *demoflag*) (inc! *sc*))
        (if (> *sc* 1000000) (set! *sc* 1000000))
        (if (> *sc* *hs*)    (set! *hs* *sc*))
        (inc! *ssc*)
@@ -718,15 +715,15 @@
        ;; 敵ミサイルの当たり判定
        (if (hit-enemies? *missiles*) (set! *scene* 2))
        ;; デモを抜けるチェック
-       (when (and *demoflg* (key-on? *ksinfo* '(#\d #\D)))
-         (set! *scene*   0)
-         (set! *demoflg* #f)
+       (when (and *demoflag* (key-on? *ksinfo* '(#\d #\D)))
+         (set! *scene*    0)
+         (set! *demoflag* #f)
          (waitcalc-set-wait *wcinfo* *wait*))
        )
       ((2) ; プレイ終了
        (cond
         ;; デモのとき
-        (*demoflg*
+        (*demoflag*
          (when (= *demotime1* 0)
            ;; デモの各種データを更新
            (inc! *democount*)
@@ -752,10 +749,9 @@
          (if (>= *demotime1* 1600) (set! *scene* 0))
          ;; デモを抜けるチェック
          (when (key-on? *ksinfo* '(#\d #\D))
-           (set! *scene*   0)
-           (set! *demoflg* #f)
-           (waitcalc-set-wait *wcinfo* *wait*))
-         )
+           (set! *scene*    0)
+           (set! *demoflag* #f)
+           (waitcalc-set-wait *wcinfo* *wait*)))
         ;; デモでないとき
         (else
          ;; 時間待ち
@@ -766,8 +762,8 @@
                               (lambda ()
                                 (set! *scene* 0)
                                 (timewait-clear *twinfo*)
-                                (keywait-clear  *kwinfo*)))))
-         ))
+                                (keywait-clear  *kwinfo*))))))
+        )
        )
       )
     )
