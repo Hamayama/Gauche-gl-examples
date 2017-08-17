@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-17 v1.20
+;; 2017-8-17 v1.21
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -35,10 +35,10 @@
 
 (define *mw*         5) ; 迷路の幅  (=水平方向のブロック数)
 (define *mh*         5) ; 迷路の高さ(=垂直方向のブロック数)
-(define *sx*         0) ; スタートのX座標
-(define *sy*         0) ; スタートのY座標
-(define *gx*         (quotient *mw* 2)) ; ゴールのX座標
-(define *gy*         (quotient *mh* 2)) ; ゴールのY座標
+(define *sx*         0) ; 迷路のスタートのX座標
+(define *sy*         0) ; 迷路のスタートのY座標
+(define *gx*         (quotient *mw* 2)) ; 迷路のゴールのX座標
+(define *gy*         (quotient *mh* 2)) ; 迷路のゴールのY座標
 
 (define *wd/2*     520) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
@@ -60,7 +60,7 @@
 
 (define *rw*         (/. (* *wd/2* 9) 5)) ; 部屋の幅
 (define *rh*         (/. (* *ht/2* 7) 5)) ; 部屋の高さ
-(define *steps*     12) ; 階段の段数
+(define *rsteps*    12) ; 部屋の階段の段数
 
 (define *gw*       106) ; ゴールの幅
 (define *gh*       224) ; ゴールの高さ
@@ -206,7 +206,7 @@
           (set! *chrdir*  1)
           (set! *rx* (+ *rx* *dx*)))
          ((1) ; 上 (階段の近くなら、階段まで移動する)
-          (set! sx1  (+ (- (/. *rh* 2)) (- (/. *mywB* 2)) (/. *rh* *steps*)))
+          (set! sx1  (+ (- (/. *rh* 2)) (- (/. *mywB* 2)) (/. *rh* *rsteps*)))
           (set! sxd1 (abs (- sx1 *rx*)))
           (cond
            ((and (not *demoflag*)
@@ -274,7 +274,7 @@
           (set! *chrdir*  1)
           (set! sx1  (+ (- (/. *rh* 2)) (- (/. *mywB* 2))))
           (set! *rx* (+ *rx* *dx*))
-          (set! *ry* (* (div (* (- *rx* sx1) *steps*) *rh*) (/. *rh* *steps*)))
+          (set! *ry* (* (div (* (- *rx* sx1) *rsteps*) *rh*) (/. *rh* *rsteps*)))
           (when (< (abs (- *ry* *rh*)) 5)
             (set! *ry* 0)
             (set! *my* (pyadd *my* -1))
@@ -283,7 +283,7 @@
           (set! *chrdir* -1)
           (set! sx1  (+ (- (/. *rh* 2)) (- (/. *mywB* 2))))
           (set! *rx* (- *rx* *dx*))
-          (set! *ry* (* (div (* (- *rx* sx1) *steps*) *rh*) (/. *rh* *steps*)))
+          (set! *ry* (* (div (* (- *rx* sx1) *rsteps*) *rh*) (/. *rh* *rsteps*)))
           (when (< (abs *ry*) 5)
             (set! *ry* 0)
             (set! *movkind* 0)))
@@ -357,11 +357,11 @@
       ;; 階段
       (unless (logtest (~ mdata (pt mx1 my1)) 1)
         (do ((i2 0 (+ i2 1)))
-            ((>= i2 *steps*) #f)
-          (let ((sx1 (+ (- (/. *rh* 2)) (/. (* *rh* i2) *steps*)))
-                (sy1 (+ *y* (/. (* *rh* i2) *steps*)))
-                (sx2 (+ (- (/. *rh* 2)) (/. (* *rh* (+ i2 1)) *steps*)))
-                (sy2 (+ *y* (/. (* *rh* (+ i2 1)) *steps*))))
+            ((>= i2 *rsteps*) #f)
+          (let ((sx1 (+ (- (/. *rh* 2)) (/. (* *rh* i2) *rsteps*)))
+                (sy1 (+ *y* (/. (* *rh* i2) *rsteps*)))
+                (sx2 (+ (- (/. *rh* 2)) (/. (* *rh* (+ i2 1)) *rsteps*)))
+                (sy2 (+ *y* (/. (* *rh* (+ i2 1)) *rsteps*))))
             (%draw-win-line (win-x *win* sx1) (win-y *win* sy1)
                             (win-x *win* sx2) (win-y *win* sy1) *width* *height*)
             (%draw-win-line (win-x *win* sx2) (win-y *win* sy1)
