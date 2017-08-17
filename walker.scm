@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-17 v1.21
+;; 2017-8-18 v1.22
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -71,6 +71,7 @@
 (define *mkno*       0) ; マークの現在番号
 (define *mkflag*     #f) ; マークフラグ
 
+(define *demoflag*   #f) ; デモフラグ
 (define *reset*      #f) ; リセットフラグ
 (define *goal*       0) ; ゴール情報(=0:通常,=1:ゴール)
 (define *sc*         0) ; スコア
@@ -78,9 +79,6 @@
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:プレイ中,=2:プレイ終了)
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 (define *roomcolor*  #f32(1.0 1.0 1.0 1.0)) ; 部屋色
-
-(define *demoflag*   #f) ; デモフラグ
-(define *demotime*   0) ; デモ時間調整用(msec)
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
@@ -534,7 +532,6 @@
          (set! *mkflag*    #f)
          (set! *goal*      0)
          ;(set! *sc*        0)
-         (set! *demotime*  0)
          (for-each (lambda (m) (set! (~ m 'useflag) #f)) *marks*)
          ;; 迷路の生成
          (maze-init      *maze* *mw* *mh*)
@@ -550,18 +547,18 @@
           ;; デモでないとき
           (else
            ;; キー入力待ち
-           (keywait *kwinfo* '(#\s #\S #\r #\R)
-                    (lambda ()
-                      (keywait-clear *kwinfo*)
-                      (timewait-clear *twinfo*)
-                      (case (~ *kwinfo* 'hitkey)
-                        ((#\r #\R)
-                         (set! *sc*     0)
-                         (set! *reset*  #t))
-                        (else
-                         (set! *scene*  1)
-                         (set! *sc*     0)
-                         (auddata-play *adata-start1*)))))
+           (keywait  *kwinfo* '(#\s #\S #\r #\R)
+                     (lambda ()
+                       (case (~ *kwinfo* 'hitkey)
+                         ((#\r #\R)
+                          (set! *sc*     0)
+                          (set! *reset*  #t))
+                         (else
+                          (set! *scene*  1)
+                          (set! *sc*     0)
+                          (auddata-play *adata-start1*)))
+                       (keywait-clear  *kwinfo*)
+                       (timewait-clear *twinfo*)))
            ;; 時間待ち(タイムアップでデモへ移行)
            (timewait *twinfo* 5000
                      (lambda ()
@@ -599,18 +596,20 @@
        (cond
         ;; デモのとき
         (*demoflag*
-         ;; 時間待ち
-         (set! *demotime* (+ *demotime* *wait*))
-         (if (>= *demotime* 2000) (set! *scene* 0))
-         ;; リセット
-         (when (key-on? *ksinfo* '(#\r #\R))
-           (set! *scene*    0)
-           (set! *sc*       0)
-           (set! *demoflag* #f))
-         ;; デモを抜けるチェック
-         (when (key-on? *ksinfo* '(#\d #\D))
-           (set! *scene*    0)
-           (set! *demoflag* #f)))
+         ;; キー入力待ち
+         (keywait  *kwinfo* '(#\d #\D #\r #\R)
+                   (lambda ()
+                     (set! *scene*    0)
+                     (set! *demoflag* #f)
+                     (if (memv (~ *kwinfo* 'hitkey) '(#\r #\R)) (set! *sc* 0))
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*)))
+         ;; 時間待ち(タイムアウトでデモを続行)
+         (timewait *twinfo* 2000
+                   (lambda ()
+                     (set! *scene* 0)
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*))))
         ;; デモでないとき
         (else
          ;; 時間待ち
@@ -620,10 +619,9 @@
                      (keywait *kwinfo* '(#\d #\D #\r #\R)
                               (lambda ()
                                 (set! *scene* 0)
-                                (if (memv (~ *kwinfo* 'hitkey) '(#\r #\R))
-                                  (set! *sc* 0))
-                                (timewait-clear *twinfo*)
-                                (keywait-clear  *kwinfo*))))))
+                                (if (memv (~ *kwinfo* 'hitkey) '(#\r #\R)) (set! *sc* 0))
+                                (keywait-clear  *kwinfo*)
+                                (timewait-clear *twinfo*))))))
         )
        )
       )

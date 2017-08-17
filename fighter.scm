@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2017-8-17 2.11
+;; 2017-8-18 2.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -44,7 +44,6 @@
 (define *fixtime*   10) ; 硬直時間
 (define *stephigh*  29) ; ステップ高さ
 (define *demoflag*   #f) ; デモフラグ
-(define *demotime*   0) ; デモ時間調整用(msec)
 (define *starttime*  0) ; スタート後経過時間(msec)
 (define *scene*      0) ; シーン情報(=0:スタート画面,=1:戦闘中,=2:戦闘終了)
 (define *playcount*  0) ; プレイ数
@@ -416,7 +415,6 @@
        ;; 初期化
        (fighter-init *f1* 0 (+ *minx* 40) *miny*  1)
        (fighter-init *f2* 1 (- *maxx* 40) *miny* -1)
-       (set! *demotime*  0)
        (set! *starttime* 0)
        (cond
         ;; デモのとき
@@ -465,13 +463,19 @@
        (cond
         ;; デモのとき
         (*demoflag*
-         ;; 時間待ち
-         (set! *demotime* (+ *demotime* *wait*))
-         (if (>= *demotime* 2000) (set! *scene* 0))
-         ;; デモを抜けるチェック
-         (when (key-on? *ksinfo* '(#\d #\D))
-           (set! *scene*    0)
-           (set! *demoflag* #f)))
+         ;; キー入力待ち
+         (keywait  *kwinfo* '(#\d #\D)
+                   (lambda ()
+                     (set! *scene*    0)
+                     (set! *demoflag* #f)
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*)))
+         ;; 時間待ち(タイムアウトでデモを続行)
+         (timewait *twinfo* 2000
+                   (lambda ()
+                     (set! *scene* 0)
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*))))
         ;; デモでないとき
         (else
          ;; 時間待ち
@@ -481,8 +485,8 @@
                      (keywait *kwinfo* '(#\d #\D)
                               (lambda ()
                                 (set! *scene* 0)
-                                (timewait-clear *twinfo*)
-                                (keywait-clear  *kwinfo*))))))
+                                (keywait-clear  *kwinfo*)
+                                (timewait-clear *twinfo*))))))
         )
        )
       )

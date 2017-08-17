@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2017-8-10 v1.60
+;; 2017-8-18 v1.61
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -390,8 +390,8 @@
                    (keywait *kwinfo* '(#\d #\D)
                             (lambda ()
                               (set! *scene* 0)
-                              (timewait-clear *twinfo*)
-                              (keywait-clear  *kwinfo*)))))
+                              (keywait-clear  *kwinfo*)
+                              (timewait-clear *twinfo*)))))
        )
       )
     )

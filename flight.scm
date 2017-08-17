@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-8-16 v1.51
+;; 2017-8-18 v1.52
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -372,8 +372,8 @@
                    (keywait *kwinfo* '(#\d #\D #\r #\R)
                             (lambda ()
                               (set! *scene* 0)
-                              (timewait-clear *twinfo*)
-                              (keywait-clear  *kwinfo*)))))
+                              (keywait-clear  *kwinfo*)
+                              (timewait-clear *twinfo*)))))
        )
       )
     )

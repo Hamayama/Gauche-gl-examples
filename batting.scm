@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2017-8-10 v1.70
+;; 2017-8-18 v1.71
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -324,8 +324,8 @@
                    (keywait *kwinfo* '(#\d #\D)
                             (lambda ()
                               (set! *scene* 0)
-                              (timewait-clear *twinfo*)
-                              (keywait-clear  *kwinfo*)))))
+                              (keywait-clear  *kwinfo*)
+                              (timewait-clear *twinfo*)))))
        )
       )
     )

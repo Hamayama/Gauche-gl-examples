@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2017-8-17 v1.52
+;; 2017-8-18 v1.53
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -761,8 +761,8 @@
                      (keywait *kwinfo* '(#\d #\D)
                               (lambda ()
                                 (set! *scene* 0)
-                                (timewait-clear *twinfo*)
-                                (keywait-clear  *kwinfo*))))))
+                                (keywait-clear  *kwinfo*)
+                                (timewait-clear *twinfo*))))))
         )
        )
       )
