@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2017-8-18 2.12
+;; 2017-8-18 2.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -106,7 +106,7 @@
       (else
        (set! (~ f1 'vy) (- (~ f1 'vy) 5))
        (if (<= (~ f1 'y) *miny*) (set! (~ f1 'vy) *stephigh*))
-       (set! (~ f1 'dir) (if (> (~ f1 'x) (~ f2 'x)) -1 1))
+       (set! (~ f1 'dir) (sign-value2 (- (~ f2 'x) (~ f1 'x))))
        (cond
         ;; 「タイプが自分」かつデモでないとき
         ((and (= (~ f1 'type) 0) (not *demoflag*))

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-18 v1.22
+;; 2017-8-18 v1.23
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -199,10 +199,10 @@
        (case *movdir*
          ((8) ; 左
           (set! *chrdir* -1)
-          (set! *rx* (- *rx* *dx*)))
+          (set! *rx*      (- *rx* *dx*)))
          ((2) ; 右
           (set! *chrdir*  1)
-          (set! *rx* (+ *rx* *dx*)))
+          (set! *rx*      (+ *rx* *dx*)))
          ((1) ; 上 (階段の近くなら、階段まで移動する)
           (set! sx1  (+ (- (/. *rh* 2)) (- (/. *mywB* 2)) (/. *rh* *rsteps*)))
           (set! sxd1 (abs (- sx1 *rx*)))
@@ -214,11 +214,11 @@
             (cond
              ((< sxd1 *dx*)
               (set! *chrdir*  1)
-              (set! *rx* sx1)
+              (set! *rx*      sx1)
               (set! *movkind* 1))
              (else
-              (set! *chrdir*  (if (> sx1 *rx*) 1 -1))
-              (set! *rx* (+ *rx* (* *dx* (if (> sx1 *rx*) 1 -1)))))
+              (set! *chrdir*  (sign-value2 (- sx1 *rx*)))
+              (set! *rx*      (+ *rx* (* *dx* (sign-value2 (- sx1 *rx*))))))
              ))
            ))
          ((4) ; 下 (階段の近くなら、階段まで移動する)
@@ -232,13 +232,13 @@
             (cond
              ((< sxd1 *dx*)
               (set! *chrdir* -1)
-              (set! *rx* sx1)
-              (set! *ry* *rh*)
-              (set! *my* (pyadd *my* 1))
+              (set! *rx*      sx1)
+              (set! *ry*      *rh*)
+              (set! *my*      (pyadd *my* 1))
               (set! *movkind* 1))
              (else
-              (set! *chrdir*  (if (> sx1 *rx*) 1 -1))
-              (set! *rx* (+ *rx* (* *dx* (if (> sx1 *rx*) 1 -1)))))
+              (set! *chrdir*  (sign-value2 (- sx1 *rx*)))
+              (set! *rx*      (+ *rx* (* *dx* (sign-value2 (- sx1 *rx*))))))
              ))
            ))
          )
@@ -251,11 +251,11 @@
        ;; 壁判定
        (when (and (logtest (~ mdata (pt *mx* *my*)) 8)
                   (< *rx* (+ (- (/. *rw* 2)) (/. *mywA* 2))))
-         (set! *rx* (+ (- (/. *rw* 2)) (/. *mywA* 2)))
+         (set! *rx*    (+ (- (/. *rw* 2)) (/. *mywA* 2)))
          (set! movflag #f))
        (when (and (logtest (~ mdata (pt *mx* *my*)) 2)
                   (> *rx* (+ (/. *rw* 2) (- (/. *mywA* 2)))))
-         (set! *rx* (+ (/. *rw* 2) (- (/. *mywA* 2))))
+         (set! *rx*    (+ (/. *rw* 2) (- (/. *mywA* 2))))
          (set! movflag #f))
        ;; となりの部屋へ移動
        (when (<  *rx* (- (/. *rw* 2)))
@@ -270,20 +270,20 @@
        (case *movdir*
          ((1 2) ; 上/右
           (set! *chrdir*  1)
-          (set! sx1  (+ (- (/. *rh* 2)) (- (/. *mywB* 2))))
-          (set! *rx* (+ *rx* *dx*))
-          (set! *ry* (* (div (* (- *rx* sx1) *rsteps*) *rh*) (/. *rh* *rsteps*)))
+          (set! sx1       (+ (- (/. *rh* 2)) (- (/. *mywB* 2))))
+          (set! *rx*      (+ *rx* *dx*))
+          (set! *ry*      (* (div (* (- *rx* sx1) *rsteps*) *rh*) (/. *rh* *rsteps*)))
           (when (< (abs (- *ry* *rh*)) 5)
-            (set! *ry* 0)
-            (set! *my* (pyadd *my* -1))
+            (set! *ry*      0)
+            (set! *my*      (pyadd *my* -1))
             (set! *movkind* 0)))
          ((4 8) ; 下/左
           (set! *chrdir* -1)
-          (set! sx1  (+ (- (/. *rh* 2)) (- (/. *mywB* 2))))
-          (set! *rx* (- *rx* *dx*))
-          (set! *ry* (* (div (* (- *rx* sx1) *rsteps*) *rh*) (/. *rh* *rsteps*)))
+          (set! sx1       (+ (- (/. *rh* 2)) (- (/. *mywB* 2))))
+          (set! *rx*      (- *rx* *dx*))
+          (set! *ry*      (* (div (* (- *rx* sx1) *rsteps*) *rh*) (/. *rh* *rsteps*)))
           (when (< (abs *ry*) 5)
-            (set! *ry* 0)
+            (set! *ry*      0)
             (set! *movkind* 0)))
          )
        )
@@ -459,7 +459,7 @@
     (draw-stroke-text-over str6 (win-w-r *win* 1/2) (win-h-r *win* 33/100) *width* *height*
                            (win-h-r *win* 1/13) 'center 0 #f *backcolor*)
     )
-  ;; 自機の表示
+  ;; 自分の表示
   (disp-mychr)
   ;; 部屋の表示
   (if (= (~ *maze* 'maze-state) 1) (disp-rooms *maze*))

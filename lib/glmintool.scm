@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2017-8-8 v1.50
+;; 2017-8-18 v1.51
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -12,7 +12,7 @@
   (use gauche.uvector)
   (use math.mt-random)
   (export
-    randint round-n truncate-n wrap-range remap-range recthit?
+    randint sign-value sign-value2 round-n truncate-n wrap-range remap-range recthit?
     make-fpath make-vector-of-class make-time-text
     <wininfo> win-init win-update-size win-x win-y win-w win-h win-w-r win-h-r
     <keystateinfo> key-on key-off spkey-on spkey-off key-on? spkey-on? mdkey-on?
@@ -30,6 +30,17 @@
     (lambda (n1 n2)
       (if (> n1 n2) (let1 t n1 (set! n1 n2) (set! n2 t)))
       (+ (mt-random-integer m (+ (- n2 n1) 1)) n1))))
+
+;; 符号に対応した値を返す
+(define (sign-value x)
+  (cond ((> x 0)  1)
+        ((< x 0) -1)
+        (else     0)))
+
+;; 符号に対応した値を返す(0は正と判定)
+(define (sign-value2 x)
+  (cond ((>= x 0)  1)
+        (else     -1)))
 
 ;; 数値xを偶数丸めして小数第n位までの数値にする
 ;;   (誤差が発生するケースあり 例. (round-n 5.015 2) → 5.01 等)
