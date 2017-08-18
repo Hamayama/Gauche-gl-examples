@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-18 v1.23
+;; 2017-8-18 v1.24
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -520,18 +520,18 @@
            (set! *reset* #f)))
         (else
          ;; 初期化
-         (set! *movkind*   0)
-         (set! *movdir*    0)
-         (set! *chrdir*    1)
-         (set! *frame*     0)
-         (set! *rx*        0)
-         (set! *ry*        0)
-         (set! *mx*        *sx*)
-         (set! *my*        *sy*)
-         (set! *mkno*      0)
-         (set! *mkflag*    #f)
-         (set! *goal*      0)
-         ;(set! *sc*        0)
+         (set! *movkind* 0)
+         (set! *movdir*  0)
+         (set! *chrdir*  1)
+         (set! *frame*   0)
+         (set! *rx*      0)
+         (set! *ry*      0)
+         (set! *mx*      *sx*)
+         (set! *my*      *sy*)
+         (set! *mkno*    0)
+         (set! *mkflag*  #f)
+         (set! *goal*    0)
+         ;(set! *sc*      0)
          (for-each (lambda (m) (set! (~ m 'useflag) #f)) *marks*)
          ;; 迷路の生成
          (maze-init      *maze* *mw* *mh*)
@@ -551,11 +551,11 @@
                      (lambda ()
                        (case (~ *kwinfo* 'hitkey)
                          ((#\r #\R)
-                          (set! *sc*     0)
-                          (set! *reset*  #t))
+                          (set! *sc*    0)
+                          (set! *reset* #t))
                          (else
-                          (set! *scene*  1)
-                          (set! *sc*     0)
+                          (set! *scene* 1)
+                          (set! *sc*    0)
                           (auddata-play *adata-start1*)))
                        (keywait-clear  *kwinfo*)
                        (timewait-clear *twinfo*)))

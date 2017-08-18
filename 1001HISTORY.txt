@@ -415,6 +415,7 @@ walker.scm
   2017-8-17  v1.21  変数名変更等
   2017-8-18  v1.22  待ち処理変更
   2017-8-18  v1.23  glmintool.scm v1.51 対応(sign-value2使用)
+  2017-8-18  v1.24  書式修正のみ
 
 
 glmintool.scm
