@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2017-8-18 v1.61
+;; 2017-8-18 v1.62
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -185,10 +185,10 @@
   (let1 rdc 0.0000005
     (if (< (abs (- *rcx1* *rcx2*)) rdc)
       (set! *rcx1* *rcx2*)
-      (set! *rcx1* (+ *rcx1* (if (< *rcx1* *rcx2*) rdc (- rdc)))))
+      (set! *rcx1* (+ *rcx1* (* (sign-value (- *rcx2* *rcx1*)) rdc))))
     (if (< (abs (- *rcy1* *rcy2*)) rdc)
       (set! *rcy1* *rcy2*)
-      (set! *rcy1* (+ *rcy1* (if (< *rcy1* *rcy2*) rdc (- rdc)))))
+      (set! *rcy1* (+ *rcy1* (* (sign-value (- *rcy2* *rcy1*)) rdc))))
     ))
 
 ;; 自分の移動
@@ -335,17 +335,17 @@
     (case *scene*
       ((0) ; スタート画面
        ;; 初期化
-       (set! *x*       0)
-       (set! *spd*   100)
-       (set! *rcx1*    0)
-       (set! *rcx2*    0)
-       (set! *rcy1*    0)
-       (set! *rcy2*    0)
-       (set! *rdx*     0)
-       (set! *stg*     1)
-       (set! *goal*    0)
-       (set! *sc*      0)
-       (set! *ssc*     0)
+       (set! *x*      0)
+       (set! *spd*  100)
+       (set! *rcx1*   0)
+       (set! *rcx2*   0)
+       (set! *rcy1*   0)
+       (set! *rcy2*   0)
+       (set! *rdx*    0)
+       (set! *stg*    1)
+       (set! *goal*   0)
+       (set! *sc*     0)
+       (set! *ssc*    0)
        ;; キー入力待ち
        (keywait *kwinfo* '(#\s #\S)
                 (lambda ()
