@@ -449,6 +449,7 @@ glmintool.scm
   2017-8-8   v1.50  キー入力待ちクラスと時間待ちクラスの動作変更
                     (コールバックの呼び出しタイミング変更)
   2017-8-18  v1.51  sign-value,sign-value2追加
+  2017-8-19  v1.52  sign-value2の処理見直し
 
 gltextscrn.scm
   2016-2-8   v1.00  初版
