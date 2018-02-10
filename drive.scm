@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2017-8-18 v1.62
+;; 2018-2-10 v1.63
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -82,7 +82,13 @@
 ;; 疑似乱数によりステージの情報を生成
 (do ((i 2 (+ i 1))) ((> i *maxstg*) #f)
   (set! (~ *rcx* i) (* (xrand-randint *xrand1* -10 10)  0.000004))
-  (set! (~ *rcy* i) (* (xrand-randint *xrand1* -15  5) -0.000004)))
+  (set! (~ *rcy* i) (* (xrand-randint *xrand1* -10 10) -0.000004))
+  ;; 最初の3ステージは曲がり量を半分にする
+  (when (<= i 4)
+    (set! (~ *rcx* i) (* (~ *rcx* i) 0.5))
+    (set! (~ *rcy* i) (* (~ *rcy* i) 0.5)))
+  ;; Y方向は上向きに調整
+  (set! (~ *rcy* i) (- (~ *rcy* i) (* 5 -0.000004))))
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
