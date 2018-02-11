@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2017-8-8 v1.94
+;; 2018-2-11 v2.00
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -46,11 +46,11 @@
     ;; テクスチャデータクラス
     <texdata> load-texture-bitmap-file
     %draw-texture-rect      draw-texture-rect
-    ;; 文字-テクスチャデータの割り付けテーブル
-    *char-texture-table* set-char-texture
+    ;; 文字-テクスチャデータ割り付けクラス
+    <char-texture> set-char-texture
     %textscrn-disp-texture  textscrn-disp-texture
-    ;; 文字-描画手続きの割り付けテーブル
-    *char-drawer-table* set-char-drawer
+    ;; 文字-描画手続き割り付けクラス
+    <char-drawer> set-char-drawer
     %textscrn-disp-drawer   textscrn-disp-drawer
     ))
 (select-module gltextscrn)
@@ -1193,8 +1193,9 @@
   (%win-ortho-off))
 
 
-;; 文字-テクスチャデータの割り付けテーブル(テクスチャの一括表示用)
-(define *char-texture-table* (make-hash-table 'eqv?))
+;; 文字-テクスチャデータ割り付けクラス(テクスチャの一括表示用)
+(define-class <char-texture> ()
+  ((table :init-form (make-hash-table 'eqv?))))
 
 ;; テクスチャデータレコード型(内部処理用)
 ;; (高速化のためクラスではなくレコード型(実体はベクタ)とする)
@@ -1213,11 +1214,11 @@
   )
 
 ;; 文字にテクスチャデータを割り付ける(テクスチャの一括表示用)
-(define-method set-char-texture ((ch <char>) (td <texdata>)
+(define-method set-char-texture ((chtex <char-texture>) (ch <char>) (td <texdata>)
                                  :optional (xcrd 1.0) (ycrd 1.0)
                                  (width-r 1.0) (height-r 1.0)
                                  (xoffset-r 0.0) (yoffset-r 0.0))
-  (hash-table-put! *char-texture-table*
+  (hash-table-put! (~ chtex 'table)
                    (char->integer ch)
                    (make-texdata (~ td 'tex) (~ td 'width) (~ td 'height)
                                  xcrd ycrd width-r height-r xoffset-r yoffset-r)))
@@ -1226,7 +1227,7 @@
 ;;   ・テキスト画面クラスの各文字に対応するテクスチャを一括表示する
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
 ;;   ・1文字あたりの表示サイズは、幅 chw と高さ chh の指定が必要
-(define-method %textscrn-disp-texture ((ts <textscrn>)
+(define-method %textscrn-disp-texture ((chtex <char-texture>) (ts <textscrn>)
                                        (x <real>) (y <real>)
                                        (width <real>) (height <real>)
                                        (chw <real>) (chh <real>)
@@ -1246,7 +1247,7 @@
     (gl-push-matrix)
     (for-each
      (lambda (c)
-       (if-let1 td1 (hash-table-get *char-texture-table* c #f)
+       (if-let1 td1 (hash-table-get (~ chtex 'table) c #f)
          (let ((xcrd1 (if *use-gl-texture-rectangle*
                         (* (texdata-xcrd td1) (texdata-width  td1))
                         (texdata-xcrd td1)))
@@ -1278,29 +1279,30 @@
     (gl-pop-matrix)
     (gl-disable target)
     ))
-(define-method textscrn-disp-texture ((ts <textscrn>)
+(define-method textscrn-disp-texture ((chtex <char-texture>) (ts <textscrn>)
                                       (x <real>) (y <real>)
                                       (width <real>) (height <real>)
                                       (chw <real>) (chh <real>)
                                       :optional (align 'left) (z 0))
   (%win-ortho-on width height)
-  (%textscrn-disp-texture ts x y width height chw chh align z)
+  (%textscrn-disp-texture chtex ts x y width height chw chh align z)
   (%win-ortho-off))
 
 
-;; 文字-描画手続きの割り付けテーブル(モデルの一括表示用)
-(define *char-drawer-table* (make-hash-table 'eqv?))
+;; 文字-描画手続き割り付けクラス(モデルの一括表示用)
+(define-class <char-drawer> ()
+  ((table :init-form (make-hash-table 'eqv?))))
 
 ;; 文字に描画手続きを割り付ける(モデルの一括表示用)
 ;;   ・drawer には引数 x y width height chw chh z を取る手続きを渡すこと
-(define-method set-char-drawer ((ch <char>) (drawer <procedure>))
-  (hash-table-put! *char-drawer-table* (char->integer ch) drawer))
+(define-method set-char-drawer ((chdraw <char-drawer>) (ch <char>) (drawer <procedure>))
+  (hash-table-put! (~ chdraw 'table) (char->integer ch) drawer))
 
 ;; 文字に割り付けた描画手続きによるモデルの一括表示
 ;;   ・テキスト画面クラスの各文字に対応するモデルを一括表示する
 ;;   ・座標 (x,y) は左上を原点として (0,0)-(width,height) の範囲で指定する
 ;;   ・1文字あたりの表示サイズは、幅 chw と高さ chh の指定が必要
-(define-method %textscrn-disp-drawer ((ts <textscrn>)
+(define-method %textscrn-disp-drawer ((chdraw <char-drawer>) (ts <textscrn>)
                                       (x <real>) (y <real>)
                                       (width <real>) (height <real>)
                                       (chw <real>) (chh <real>)
@@ -1316,7 +1318,7 @@
     (gl-push-matrix)
     (for-each
      (lambda (c)
-       (if-let1 drawer (hash-table-get *char-drawer-table* c #f)
+       (if-let1 drawer (hash-table-get (~ chdraw 'table) c #f)
          (drawer x1 y1 width height chw chh z))
        (set! x1 (+ x1 chw))
        (inc! i)
@@ -1328,13 +1330,13 @@
      (~ ts 'data))
     (gl-pop-matrix)
     ))
-(define-method textscrn-disp-drawer ((ts <textscrn>)
+(define-method textscrn-disp-drawer ((chdraw <char-drawer>) (ts <textscrn>)
                                      (x <real>) (y <real>)
                                      (width <real>) (height <real>)
                                      (chw <real>) (chh <real>)
                                      :optional (align 'left) (z 0))
   (%win-ortho-on width height)
-  (%textscrn-disp-drawer ts x y width height chw chh align z)
+  (%textscrn-disp-drawer chdraw ts x y width height chw chh align z)
   (%win-ortho-off))
 
 

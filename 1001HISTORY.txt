@@ -236,6 +236,7 @@ shooting0101.scm
   2017-8-16  v2.01  表示処理一部見直し
   2017-8-17  v2.02  変数名変更等
   2017-8-18  v2.03  待ち処理変更
+  2018-2-11  v2.10  gltextscrn.scm v2.00 対応
 
 shooting0102.scm
   2016-11-17 v1.00  初版
@@ -268,6 +269,7 @@ shooting0102.scm
   2017-8-16  v1.51  表示処理一部見直し
   2017-8-17  v1.52  変数名変更等
   2017-8-18  v1.53  待ち処理変更
+  2018-2-11  v1.60  gltextscrn.scm v2.00 対応
 
 drive.scm
   2016-7-16  v1.00  初版
@@ -344,6 +346,7 @@ jump.scm
   2017-8-10  v1.70  使用モジュールをlibフォルダに移動
   2017-8-16  v1.71  表示処理一部見直し
   2017-8-18  v1.72  待ち処理変更
+  2018-2-11  v1.80  gltextscrn.scm v2.00 対応
 
 flight.scm
   2017-2-13  v1.00  初版
@@ -418,6 +421,7 @@ walker.scm
   2017-8-18  v1.23  glmintool.scm v1.51 対応(sign-value2使用)
   2017-8-18  v1.24  書式修正のみ
   2017-8-19  v1.25  リセットフラグ削除等
+  2018-2-11  v1.26  処理順変更のみ
 
 
 glmintool.scm
@@ -529,6 +533,11 @@ gltextscrn.scm
   2017-5-4   v1.92  draw-win-rect-line,draw-win-circle-line,draw-win-poly-line追加
   2017-5-4   v1.93  コメント修正のみ
   2017-8-8   v1.94  コメント修正のみ
+  2018-2-11  v2.00  文字-テクスチャデータ割り付けをクラス化
+                    (set-char-texture,textscrn-disp-textureのI/F変更)
+                    文字-描画手続き割り付けをクラス化
+                    (set-char-drawer,textscrn-disp-drawerのI/F変更)
+                    (過去との互換性なし)
 
 alaudplay.scm
   2016-3-31  v1.00  初版
@@ -562,4 +571,4 @@ glmazekit.scm
   2017-8-17  v1.04  コメント修正のみ(迷路データの値を1個追加)
 
 
-(2018-2-10)
+(2018-2-11)

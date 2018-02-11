@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0102.scm
-;; 2017-8-18 v1.53
+;; 2018-2-11 v1.60
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -82,6 +82,9 @@
 
 ;; ウェイト時間調整クラスのインスタンス生成
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
+
+;; 文字-描画手続き割り付けクラスのインスタンス生成
+(define *char-drawer* (make <char-drawer>))
 
 ;; テキスト画面クラスのインスタンス生成
 ;; (自機)
@@ -278,7 +281,8 @@
     ;; (削れた部分)
     (when (~ e1 'contact)
       (gl-color 0.0 0.0 0.0 0.0)
-      (textscrn-disp-drawer (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
+      (textscrn-disp-drawer *char-drawer* (~ e1 'tscrn)
+                            (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
                             *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center z))
     ;; (コア)
     (gl-color 0.7 0.7 0.7 1.0)
@@ -518,17 +522,20 @@
   (gl-enable GL_BLEND)
   ;; 文字-描画手続きの割り付け設定
   ;;(削れた部分(中央))
-  (set-char-drawer #\. (lambda (x y width height chw chh z)
-                         (%draw-win-rect (- x (* chw 1.5)) y
-                                         (* chw 2.5) chh width height 'left z)))
+  (set-char-drawer *char-drawer* #\.
+                   (lambda (x y width height chw chh z)
+                     (%draw-win-rect (- x (* chw 1.5)) y
+                                     (* chw 2.5) chh width height 'left z)))
   ;;(削れた部分(上端))
-  (set-char-drawer #\, (lambda (x y width height chw chh z)
-                         (%draw-win-rect (- x (* chw 1.5)) (- y (* chh 0.5))
-                                         (* chw 3.5) (* chh 1.5) width height 'left z)))
+  (set-char-drawer *char-drawer* #\,
+                   (lambda (x y width height chw chh z)
+                     (%draw-win-rect (- x (* chw 1.5)) (- y (* chh 0.5))
+                                     (* chw 3.5) (* chh 1.5) width height 'left z)))
   ;;(削れた部分(下端))
-  (set-char-drawer #\' (lambda (x y width height chw chh z)
-                         (%draw-win-rect (- x (* chw 1.5)) y
-                                         (* chw 3.5) (* chh 1.5) width height 'left z)))
+  (set-char-drawer *char-drawer* #\'
+                   (lambda (x y width height chw chh z)
+                     (%draw-win-rect (- x (* chw 1.5)) y
+                                     (* chw 3.5) (* chh 1.5) width height 'left z)))
   ;; 音楽データの初期化
   (init-auddata *app-dpath*))
 

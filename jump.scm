@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; jump.scm
-;; 2017-8-18 v1.72
+;; 2018-2-11 v1.80
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なジャンプアクションゲームです。
@@ -63,9 +63,6 @@
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
 
-;; テクスチャデータクラスのインスタンス生成
-(define *tex* (make-vector-of-class 6 <texdata>))
-
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
 (win-init *win* *width* *height* (* *wd/2* 2) (* *ht/2* 2))
@@ -81,6 +78,12 @@
 
 ;; ウェイト時間調整クラスのインスタンス生成
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
+
+;; テクスチャデータクラスのインスタンス生成
+(define *tex* (make-vector-of-class 6 <texdata>))
+
+;; 文字-テクスチャデータ割り付けクラスのインスタンス生成
+(define *char-tex* (make <char-texture>))
 
 ;; テキスト画面クラスのインスタンス生成
 ;; (雲)
@@ -228,7 +231,8 @@
 (define (disp-clouds)
   (for-each
    (lambda (c1)
-     (textscrn-disp-texture *tscrn-cloud* (win-x *win* (~ c1 'x)) (win-y *win* (~ c1 'y))
+     (textscrn-disp-texture *char-tex* *tscrn-cloud*
+                            (win-x *win* (~ c1 'x)) (win-y *win* (~ c1 'y))
                             *width* *height* (win-w *win* (* *chw* 2)) (win-h *win* *chh*)))
    *clouds*))
 
@@ -366,7 +370,7 @@
   (load-texture-bitmap-file (~ *tex* 3) (make-fpath *app-dpath* "image/char0104.bmp") '(0 0 0))
   (load-texture-bitmap-file (~ *tex* 4) (make-fpath *app-dpath* "image/char0105.bmp") '(0 0 0))
   (load-texture-bitmap-file (~ *tex* 5) (make-fpath *app-dpath* "image/char0106.bmp") '(0 0 0))
-  (set-char-texture #\@ (~ *tex* 4) 0.75 0.75)
+  (set-char-texture *char-tex* #\@ (~ *tex* 4) 0.75 0.75)
   ;; 音楽データの初期化
   (init-auddata *app-dpath*))
 

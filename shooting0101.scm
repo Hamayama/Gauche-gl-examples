@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2017-8-18 v2.03
+;; 2018-2-11 v2.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -80,6 +80,9 @@
 
 ;; ウェイト時間調整クラスのインスタンス生成
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
+
+;; 文字-描画手続き割り付けクラスのインスタンス生成
+(define *char-drawer* (make <char-drawer>))
 
 ;; テキスト画面クラスのインスタンス生成
 ;; (自機)
@@ -256,7 +259,8 @@
        ;(gl-color 1.0 0.0 0.0 1.0)
        ;(textscrn-disp (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
        ;               *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
-       (textscrn-disp-drawer (~ e1 'tscrn) (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
+       (textscrn-disp-drawer *char-drawer* (~ e1 'tscrn)
+                             (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y))
                              *width* *height* (win-w *win* *chw*) (win-h *win* *chh*) 'center)
        ))
    enemies))
@@ -427,33 +431,37 @@
   (gl-enable GL_BLEND)
   ;; 文字-描画手続きの割り付け設定
   ;; (敵(外側))
-  (set-char-drawer #\= (lambda (x y width height chw chh z)
-                         (gl-color 0.6 0.6 0.6 1.0)
-                         (%draw-win-rect (+ x (* chw 0.3)) (+ y (* chh 0.4))
-                                         (* chw 0.4) (* chh 0.2) width height 'left z)
-                         (gl-color 0.5 0.5 0.5 1.0)
-                         (%draw-win-rect (+ x (* chw 0.1)) (+ y (* chh 0.3))
-                                         (* chw 0.8) (* chh 0.4) width height 'left z)))
+  (set-char-drawer *char-drawer* #\=
+                   (lambda (x y width height chw chh z)
+                     (gl-color 0.6 0.6 0.6 1.0)
+                     (%draw-win-rect (+ x (* chw 0.3)) (+ y (* chh 0.4))
+                                     (* chw 0.4) (* chh 0.2) width height 'left z)
+                     (gl-color 0.5 0.5 0.5 1.0)
+                     (%draw-win-rect (+ x (* chw 0.1)) (+ y (* chh 0.3))
+                                     (* chw 0.8) (* chh 0.4) width height 'left z)))
   ;; (敵(内側))
-  (set-char-drawer #\R (lambda (x y width height chw chh z)
-                         (gl-color 0.0 0.3 1.0 1.0)
-                         (%draw-win-rect (+ x (* chw 0.3)) (+ y (* chh 0.3))
-                                         (* chw 0.4) (* chh 0.4) width height 'left z)
-                         (gl-color 0.6 0.6 0.6 1.0)
-                         (%draw-win-rect (+ x (* chw 0.1)) (+ y (* chh 0.1))
-                                         (* chw 0.8) (* chh 0.8) width height 'left z)))
+  (set-char-drawer *char-drawer* #\R
+                   (lambda (x y width height chw chh z)
+                     (gl-color 0.0 0.3 1.0 1.0)
+                     (%draw-win-rect (+ x (* chw 0.3)) (+ y (* chh 0.3))
+                                     (* chw 0.4) (* chh 0.4) width height 'left z)
+                     (gl-color 0.6 0.6 0.6 1.0)
+                     (%draw-win-rect (+ x (* chw 0.1)) (+ y (* chh 0.1))
+                                     (* chw 0.8) (* chh 0.8) width height 'left z)))
   ;; (敵ミサイル(上側))
-  (set-char-drawer #\| (lambda (x y width height chw chh z)
-                         (gl-color 0.7 0.7 0.7 1.0)
-                         (%draw-win-rect (+ x (* chw 0.4)) y
-                                         (* chw 0.2) chh width height 'left z)))
+  (set-char-drawer *char-drawer* #\|
+                   (lambda (x y width height chw chh z)
+                     (gl-color 0.7 0.7 0.7 1.0)
+                     (%draw-win-rect (+ x (* chw 0.4)) y
+                                     (* chw 0.2) chh width height 'left z)))
   ;; (敵ミサイル(下側))
-  (set-char-drawer #\V (lambda (x y width height chw chh z)
-                         (gl-color 0.9 0.9 0.9 1.0)
-                         (%draw-win-poly x y (vector (f32vector 0 0)
-                                                     (f32vector (* chw 0.5) chh)
-                                                     (f32vector chw 0))
-                                         width height z)))
+  (set-char-drawer *char-drawer* #\V
+                   (lambda (x y width height chw chh z)
+                     (gl-color 0.9 0.9 0.9 1.0)
+                     (%draw-win-poly x y (vector (f32vector 0 0)
+                                                 (f32vector (* chw 0.5) chh)
+                                                 (f32vector chw 0))
+                                     width height z)))
   ;; 音楽データの初期化
   (init-auddata *app-dpath*))
 

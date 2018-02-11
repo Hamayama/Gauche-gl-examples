@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2017-8-19 v1.25
+;; 2018-2-11 v1.26
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -82,9 +82,6 @@
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
 
-;; テクスチャデータクラスのインスタンス生成
-(define *tex* (make-vector-of-class 2 <texdata>))
-
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
 (win-init *win* *width* *height* (* *wd/2* 2) (* *ht/2* 2))
@@ -100,6 +97,9 @@
 
 ;; ウェイト時間調整クラスのインスタンス生成
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
+
+;; テクスチャデータクラスのインスタンス生成
+(define *tex* (make-vector-of-class 2 <texdata>))
 
 ;; 迷路クラスのインスタンス生成
 (define *maze* (make <maze>))
