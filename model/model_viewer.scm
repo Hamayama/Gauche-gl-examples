@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデルビューワー
-;; 2017-8-10
+;; 2018-3-3
 ;;
 ;; ＜使い方＞
 ;;   gosh  model_viewer.scm  [modelXXXX.scm]
@@ -32,7 +32,9 @@
 (define *zd/2*     110) ; 奥行き/2
 (define *xrot*       0) ; X軸を軸とする回転角(度)
 (define *yrot*       0) ; Y軸を軸とする回転角(度)
-(define *drot*       2) ; 回転角の増分(度)
+(define *zrot*       0) ; Z軸を軸とする回転角(度)
+(define *drot1*      2) ; 回転角の増分1(度)
+(define *drot2*     45) ; 回転角の増分2(度)
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 
 ;; アプリのディレクトリのパス名
@@ -107,6 +109,7 @@
     )
   ;; モデルの表示
   (gl-push-matrix)
+  (gl-rotate *zrot* 0 0 1) ; Z軸を軸とする回転
   (gl-rotate *yrot* 0 1 0) ; Y軸を軸とする回転
   (gl-rotate *xrot* 1 0 0) ; X軸を軸とする回転
   (viewer-disp)
@@ -148,6 +151,14 @@
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
     (gc) (print (gc-stat)))
+   ;; [,][.]キーでZ軸を軸とする回転
+   ((= key (char->integer #\,)) (set! *zrot* (- *zrot* *drot2*)))
+   ((= key (char->integer #\.)) (set! *zrot* (+ *zrot* *drot2*)))
+   ;; [/]キーで回転をリセット
+   ((= key (char->integer #\/))
+    (set! *xrot* 0)
+    (set! *yrot* 0)
+    (set! *zrot* 0))
    )
   ;; カスタマイズ用
   (viewer-keyboard))
@@ -172,13 +183,14 @@
 
 ;; タイマー
 (define (timer val)
-  ;; モデルの回転操作
-  (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! *yrot* (- *yrot* *drot*)))
-  (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! *yrot* (+ *yrot* *drot*)))
-  (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! *xrot* (- *xrot* *drot*)))
-  (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! *xrot* (+ *xrot* *drot*)))
+  ;; 矢印キーでX軸とY軸を軸とする回転
+  (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! *xrot* (- *xrot* *drot1*)))
+  (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! *xrot* (+ *xrot* *drot1*)))
+  (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! *yrot* (- *yrot* *drot1*)))
+  (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! *yrot* (+ *yrot* *drot1*)))
   (set! *xrot* (wrap-range *xrot* 0 360))
   (set! *yrot* (wrap-range *yrot* 0 360))
+  (set! *zrot* (wrap-range *zrot* 0 360))
   ;; カスタマイズ用
   (viewer-timer)
   ;; 画面表示
