@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmodelkit.scm
-;; 2017-2-22 v1.01
+;; 2018-5-2 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って基本的なモデルの生成を行うためのモジュールです。
@@ -29,14 +29,14 @@
         (face   #(#(0 1 2 3) #(0 4 5 1) #(1 5 6 2) #(2 6 7 3) #(3 7 4 0) #(4 7 6 5)))
         (normal #(#f32( 0 0 1) #f32(1 0 0) #f32(0 -1  0)
                   #f32(-1 0 0) #f32(0 1 0) #f32(0  0 -1))))
-    (gl-begin GL_QUADS)
     (do ((i 0 (+ i 1)))
         ((>= i 6) #f)
+      (gl-begin GL_TRIANGLE_FAN)
       (gl-normal (~ normal i))
       (do ((j 0 (+ j 1)))
           ((>= j 4) #f)
-        (gl-vertex (~ vertex (~ face i j)))))
-    (gl-end)))
+        (gl-vertex (~ vertex (~ face i j))))
+      (gl-end))))
 
 ;; 円柱(上面に原点あり)
 (define (cylinder r h s)
@@ -60,15 +60,14 @@
     (gl-vertex (f32 (* r (cos angle)) c1 (* r (sin angle)))))
   (gl-end)
   ;; 側面
-  (gl-begin GL_QUAD_STRIP)
+  (gl-begin GL_TRIANGLE_STRIP)
   (do ((i 0 (+ i 1))
-       (angle 0 (+ angle step)))
+       (angle 0 (if (< i s) (+ angle step) 0)))
       ((> i s) #f)
     (let ((x (cos angle))
           (z (sin angle)))
       (gl-normal (f32 x 0 z))
       (gl-vertex (f32 (* r x) 0  (* r z)))
-      (gl-vertex (f32 (* r x) c1 (* r z)))
-      ))
+      (gl-vertex (f32 (* r x) c1 (* r z)))))
   (gl-end))
 

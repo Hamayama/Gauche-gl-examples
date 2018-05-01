@@ -562,6 +562,7 @@ alauddata.scm
 glmodelkit.scm
   2017-2-22  v1.00  初版
   2017-2-22  v1.01  コメント修正のみ
+  2018-5-2   v1.02  GL_QUADS を GL_TRIANGLE_FAN に変更等
 
 glmazekit.scm
   2017-8-9   v1.00  初版
@@ -571,4 +572,4 @@ glmazekit.scm
   2017-8-17  v1.04  コメント修正のみ(迷路データの値を1個追加)
 
 
-(2018-2-11)
+(2018-5-2)
