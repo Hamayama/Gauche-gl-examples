@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-3 v1.02
+;; 2018-5-3 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -63,14 +63,14 @@
    (rr    :init-value 2000)  ; 末尾の半径
    (rv    :init-value  100)  ; 末尾の速度
    (rcv   :init-value  1.0)  ; 末尾の角速度(度)
-   (anum  :init-value    8)  ; 関節のパーツの数
-   (ax    :init-value    #f) ; 関節のパーツのX座標(ベクタ)
-   (ay    :init-value    #f) ; 関節のパーツのY座標(ベクタ)
-   (ar    :init-value 1000)  ; 関節のパーツの半径
-   (al    :init-value 4000)  ; 関節のパーツの距離
-   (ac    :init-value    #f) ; 関節のパーツの角度(度)(ベクタ)
-   (acv   :init-value  0.2)  ; 関節のパーツの角速度(度)
-   (maxac :init-value   45)  ; 関節のパーツの角度の最大値(度)
+   (anum  :init-value    8)  ; 関節の数
+   (ax    :init-value    #f) ; 関節のX座標(ベクタ)
+   (ay    :init-value    #f) ; 関節のY座標(ベクタ)
+   (ar    :init-value 1000)  ; 関節の半径
+   (al    :init-value 4000)  ; 関節の距離
+   (ac    :init-value    #f) ; 関節の角度(度)(ベクタ)
+   (acv   :init-value  0.2)  ; 関節の角速度(度)
+   (maxac :init-value   45)  ; 関節の角度の最大値(度)
    (fx    :init-value    0)  ; 先端のX座標
    (fy    :init-value    0)  ; 先端のY座標
    (fr    :init-value 2000)  ; 先端の半径
@@ -114,7 +114,7 @@
         (set! diffc (clamp diffc (- rcv) rcv))
         (set! (~ w1 'ac 0) (wrap-range (+ (~ w1 'ac 0) diffc) -180 180)))
        (else
-        ;; 関節のパーツの角度を計算
+        ;; 関節の角度を計算
         (set! diffc (clamp diffc (- acv) acv))
         (set! ac1 (+ (~ w1 'ac i) diffc))
         (when (> (abs ac1) maxac)
@@ -149,7 +149,7 @@
     (set! (~ w1 'ry) (clamp (+ (~ w1 'ry) (* rv (sin (* (- (~ w1 'ac 0) 90) pi/180))))
                             (- *ht/2*) *ht/2*))
     )
-  ;; 関節のパーツと先端の座標を計算
+  ;; 関節と先端の座標を計算
   (do ((i 0 (+ i 1)))
       ((> i anum) #f)
     (set! acsum (+ acsum (~ w1 'ac i)))
@@ -170,7 +170,7 @@
   (gl-translate (~ w1 'rx) (~ w1 'ry) 0)
   (glut-solid-sphere (~ w1 'rr) 20 20)
   (gl-pop-matrix)
-  ;; 関節のパーツ
+  ;; 関節
   (do ((i 0 (+ i 1)))
       ((>= i anum) #f)
     (gl-push-matrix)
