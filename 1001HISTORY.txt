@@ -426,6 +426,7 @@ walker.scm
 
 worm.scm
   2018-5-2   v1.00  初版
+  2018-5-2   v1.01  マウス座標計算修正
 
 
 glmintool.scm

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-2 v1.00
+;; 2018-5-2 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -51,8 +51,10 @@
 ;; ウェイト時間調整クラスのインスタンス生成
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
-;; マウスボタン1状態
+;; マウスドラッグ用
 (define *mouse-button1* #f)
+(define *mouse-offsetx* 0)
+(define *mouse-offsety* 0)
 
 ;; ワームクラス
 (define-class <worm> ()
@@ -66,7 +68,7 @@
    (ay    :init-value    #f) ; 関節のパーツのY座標(ベクタ)
    (ar    :init-value 1000)  ; 関節のパーツの半径
    (al    :init-value 4000)  ; 関節のパーツの距離
-   (ac    :init-value    #f) ; 関節のパーツの角度(ベクタ)
+   (ac    :init-value    #f) ; 関節のパーツの角度(度)(ベクタ)
    (acv   :init-value  0.2)  ; 関節のパーツの角速度(度)
    (maxac :init-value   45)  ; 関節のパーツの角度の最大値(度)
    (fx    :init-value    0)  ; 先端のX座標
@@ -84,6 +86,8 @@
   (set! (~ w1 'ac)   (make-vector (+ anum 1) 0))
   (set! (~ w1 'ac 0) rc))
 ;; ワームの角度計算
+;;   gx  目標のX座標
+;;   gy  目標のY座標
 (define-method worm-calc-angle ((w1 <worm>) (gx <real>) (gy <real>))
   (define anum  (~ w1 'anum))
   (define rcv   (~ w1 'rcv))
@@ -126,6 +130,8 @@
                      (* fy1 (cos (* diffc pi/180))))))
       )))
 ;; ワームの座標計算
+;;   gx  目標のX座標
+;;   gy  目標のY座標
 (define-method worm-calc-point ((w1 <worm>) (gx <real>) (gy <real>))
   (define acsum -90)
   (define anum  (~ w1 'anum))
@@ -135,7 +141,7 @@
   (define rv    (~ w1 'rv))
   (define (get-ax i) (if (>= i 0) (~ w1 'ax i) (~ w1 'rx)))
   (define (get-ay i) (if (>= i 0) (~ w1 'ay i) (~ w1 'ry)))
-  ;; 末尾を移動
+  ;; 末尾を移動(目標に到達していないときのみ)
   (unless (recthit? (- gx *waku*) (- gy *waku*) (* *waku* 2) (* *waku* 2)
                     (- fx *waku*) (- fy *waku*) (* *waku* 2) (* *waku* 2))
     (set! (~ w1 'rx) (clamp (+ (~ w1 'rx) (* rv (cos (* (- (~ w1 'ac 0) 90) pi/180))))
@@ -255,6 +261,8 @@
   (set! *width*  (min w (truncate->exact (*  h *aratio*))))
   (set! *height* (min h (truncate->exact (/. w *aratio*))))
   (win-update-size *win* *width* *height*)
+  (set! *mouse-offsetx* (quotient (- w *width*)  2))
+  (set! *mouse-offsety* (quotient (- h *height*) 2))
   ;; 縦横比を変えずにリサイズ
   (gl-viewport (quotient (- w *width*) 2) (quotient (- h *height*) 2) *width* *height*)
   (gl-matrix-mode GL_PROJECTION)
@@ -297,8 +305,10 @@
 ;; マウスドラッグ
 (define (mousedrag x y)
   (when *mouse-button1*
-    (set! *cx* (clamp (win-gl-x *win* x) (- *wd/2*) *wd/2*))
-    (set! *cy* (clamp (win-gl-y *win* y) (- *ht/2*) *ht/2*))))
+    (set! *cx* (clamp (win-gl-x *win* (- x *mouse-offsetx*))
+                      (- *wd/2*) *wd/2*))
+    (set! *cy* (clamp (win-gl-y *win* (- y *mouse-offsety*))
+                      (- *ht/2*) *ht/2*))))
 
 ;; タイマー
 (define (timer val)
