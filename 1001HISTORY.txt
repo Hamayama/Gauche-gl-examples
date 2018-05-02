@@ -90,6 +90,7 @@ batting.scm
   2017-8-8   v1.63  書式修正のみ
   2017-8-10  v1.70  使用モジュールをlibフォルダに移動
   2017-8-18  v1.71  待ち処理変更
+  2018-5-2   v1.72  glmodelkit.scm v1.03 対応(十字カーソルモデル使用)
 
 fighter.scm
   2015-7-21  v1.00  初版
@@ -423,6 +424,9 @@ walker.scm
   2017-8-19  v1.25  リセットフラグ削除等
   2018-2-11  v1.26  処理順変更のみ
 
+worm.scm
+  2018-5-2   v1.00  初版
+
 
 glmintool.scm
   2016-2-8   v1.00  初版
@@ -455,6 +459,7 @@ glmintool.scm
                     (コールバックの呼び出しタイミング変更)
   2017-8-18  v1.51  sign-value,sign-value2追加
   2017-8-19  v1.52  sign-value2の処理見直し
+  2018-5-2   v1.53  win-gl-x,win-gl-y追加
 
 gltextscrn.scm
   2016-2-8   v1.00  初版
@@ -563,6 +568,7 @@ glmodelkit.scm
   2017-2-22  v1.00  初版
   2017-2-22  v1.01  コメント修正のみ
   2018-5-2   v1.02  GL_QUADS を GL_TRIANGLE_FAN に変更等
+  2018-5-2   v1.03  十字カーソルモデル追加
 
 glmazekit.scm
   2017-8-9   v1.00  初版

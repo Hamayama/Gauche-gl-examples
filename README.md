@@ -1,11 +1,11 @@
 # Gauche-gl-examples
 
-|   |   |   |
-|---|---|---|
-|![image](image/image0101.png)|![image](image/image0201.png)|![image](image/image0301.png)|
-|![image](image/image0401.png)|![image](image/image0501.png)|![image](image/image0601.png)|
-|![image](image/image0701.png)|![image](image/image0801.png)|![image](image/image0901.png)|
-|![image](image/image1001.png)|![image](image/image1101.png)|![image](image/image1201.png)|
+|   |   |   |   |
+|---|---|---|---|
+|![image](image/image0101.png)|![image](image/image0201.png)|![image](image/image0301.png)|![image](image/image0401.png)|
+|![image](image/image0501.png)|![image](image/image0601.png)|![image](image/image0701.png)|![image](image/image0801.png)|
+|![image](image/image0901.png)|![image](image/image1001.png)|![image](image/image1101.png)|![image](image/image1201.png)|
+|![image](image/image1301.png)|
 
 ## 概要
 - Gauche-gl を使用したサンプルプログラム等です。  
@@ -116,6 +116,12 @@
     [r]キーを押すとゲームをリセットします。  
     ESCキーを押すと終了します。
 
+13. ワームシミュレータ ( worm.scm )  
+    Gauche-gl を使用した、ワームシミュレータです。  
+    矢印キーかマウスボタン1でカーソルを移動します。  
+    ワームはカーソルを追跡します。  
+    ESCキーを押すと終了します。
+
 
 ## その他 注意事項等
 1. 一部のサンプルは、以下のモジュールを使用しています。これらは、lib フォルダに格納しています。
@@ -158,7 +164,7 @@
 - OS
   - Windows 8.1 (64bit)
 - 言語
-  - Gauche v0.9.6_pre5
+  - Gauche v0.9.6_pre6
   - Gauche v0.9.5
   - Gauche v0.9.4
 - 拡張ライブラリ
@@ -171,4 +177,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2018-2-10)
+(2018-5-2)

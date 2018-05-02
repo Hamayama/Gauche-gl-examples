@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2017-8-19 v1.52
+;; 2018-5-2 v1.53
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -14,7 +14,7 @@
   (export
     randint sign-value sign-value2 round-n truncate-n wrap-range remap-range recthit?
     make-fpath make-vector-of-class make-time-text
-    <wininfo> win-init win-update-size win-x win-y win-w win-h win-w-r win-h-r
+    <wininfo> win-init win-update-size win-x win-y win-w win-h win-w-r win-h-r win-gl-x win-gl-y
     <keystateinfo> key-on key-off spkey-on spkey-off key-on? spkey-on? mdkey-on?
     <keywaitinfo>  keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
@@ -160,6 +160,12 @@
 (define-method win-h-r ((wn <wininfo>) (n1 <real>) :optional (n2 #f))
   (if n2 (/. (* (~ wn 'height) n1) n2)
       (* (~ wn 'height) (inexact n1))))
+;; OpenGL上のX座標を計算
+(define-method win-gl-x ((wn <wininfo>) (x <real>))
+  (+ (~ wn 'xoffset) (/. (* x (~ wn 'wd)) (~ wn 'width))))
+;; OpenGL上のY座標を計算
+(define-method win-gl-y ((wn <wininfo>) (y <real>))
+  (- (~ wn 'yoffset) (/. (* y (~ wn 'ht)) (~ wn 'height))))
 
 
 ;; キー入力状態管理クラス

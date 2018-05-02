@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; batting.scm
-;; 2017-8-18 v1.71
+;; 2018-5-2 v1.72
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、バッティングゲームです。
@@ -83,14 +83,7 @@
 (define (cursor r)
   (gl-material GL_FRONT GL_DIFFUSE #f32(1.0 0.0 0.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
-  (gl-push-matrix)
-  (gl-translate 0 r 0)
-  (box-model 1 r 1)
-  (gl-pop-matrix)
-  (gl-push-matrix)
-  (gl-translate 0 1 0)
-  (box-model r 1 1)
-  (gl-pop-matrix))
+  (cross-cursor *r* 1))
 
 ;; 空(正射影で表示)
 (define (sky)

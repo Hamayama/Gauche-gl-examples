@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmodelkit.scm
-;; 2018-5-2 v1.02
+;; 2018-5-2 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って基本的なモデルの生成を行うためのモジュールです。
@@ -12,12 +12,15 @@
   (use gauche.uvector)
   (use math.const)
   (export
-    box-model cylinder
+    box-model cylinder cross-cursor
     ))
 (select-module glmodelkit)
 
 ;; 直方体(上面に原点あり)
 ;; (box という手続きが別に存在していたので名前を box-model に変更)
+;;   x  X軸方向の幅/2
+;;   y  Y軸方向の幅/2
+;;   z  Z軸方向の幅/2
 ;(define (box x y z)
 (define (box-model x y z)
   (define f32 f32vector)
@@ -39,6 +42,9 @@
       (gl-end))))
 
 ;; 円柱(上面に原点あり)
+;;   r  円の半径
+;;   h  円柱の高さ/2
+;;   s  円の分割数
 (define (cylinder r h s)
   (define f32  f32vector)
   (define step (/. 2pi s))
@@ -70,4 +76,17 @@
       (gl-vertex (f32 (* r x) 0  (* r z)))
       (gl-vertex (f32 (* r x) c1 (* r z)))))
   (gl-end))
+
+;; 十字カーソル(中心に原点あり)
+;;   r カーソルの半径
+;;   w カーソルの線の幅
+(define (cross-cursor r w)
+  (gl-push-matrix)
+  (gl-translate 0 r 0)
+  (box-model w r w)
+  (gl-pop-matrix)
+  (gl-push-matrix)
+  (gl-translate 0 w 0)
+  (box-model r w w)
+  (gl-pop-matrix))
 
