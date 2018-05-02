@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-2 v1.01
+;; 2018-5-3 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -162,6 +162,7 @@
 ;; ワームの表示
 (define-method worm-disp ((w1 <worm>))
   (define anum  (~ w1 'anum))
+  (define ar    (~ w1 'ar))
   (gl-material GL_FRONT GL_DIFFUSE #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_AMBIENT #f32(0.5 0.5 0.5 1.0))
   ;; 末尾
@@ -169,22 +170,20 @@
   (gl-translate (~ w1 'rx) (~ w1 'ry) 0)
   (glut-solid-sphere (~ w1 'rr) 20 20)
   (gl-pop-matrix)
+  ;; 関節のパーツ
   (do ((i 0 (+ i 1)))
-      ((> i anum) #f)
+      ((>= i anum) #f)
     (gl-push-matrix)
-    (cond
-     ((< i anum)
-      ;; 関節のパーツ
-      (gl-translate (~ w1 'ax i) (~ w1 'ay i) 0)
-      (glut-solid-sphere (~ w1 'ar) 20 20))
-     (else
-      ;; 先端
-      (gl-translate (~ w1 'fx) (~ w1 'fy) 0)
-      (gl-rotate (- (~ w1 'fc) 45) 0 0 1)
-      (gl-rotate -90 1 0 0)
-      (model0501 (~ w1 'fr) 20 20)))
-    (gl-pop-matrix)
-    ))
+    (gl-translate (~ w1 'ax i) (~ w1 'ay i) 0)
+    (glut-solid-sphere ar 20 20)
+    (gl-pop-matrix))
+  ;; 先端
+  (gl-push-matrix)
+  (gl-translate (~ w1 'fx) (~ w1 'fy) 0)
+  (gl-rotate (- (~ w1 'fc) 45) 0 0 1)
+  (gl-rotate -90 1 0 0)
+  (model0501 (~ w1 'fr) 20 20)
+  (gl-pop-matrix))
 ;; ワームクラスのインスタンス生成
 (define *worms* (make-vector-of-class *wnum* <worm>))
 (for-each
@@ -233,10 +232,7 @@
   (gl-enable GL_NORMALIZE)
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
-  (gl-material GL_FRONT GL_SHININESS 10.0)
-  ;; 透過設定
-  (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
-  (gl-enable GL_BLEND))
+  (gl-material GL_FRONT GL_SHININESS 10.0))
 
 ;; 画面表示
 (define (disp)
