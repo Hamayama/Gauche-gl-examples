@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-4 v1.04
+;; 2018-5-4 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -35,6 +35,7 @@
 (define *cr*      2000) ; カーソルの半径
 (define *cd*       800) ; カーソルの移動量
 (define *wnum*       2) ; ワームの数
+(define *wlen*       8) ; ワームの長さ(関節の数)
 (define *wtime1*  1000) ; ワームの食事時間(msec)
 (define *wtime2*  8000) ; ワームのランダム動作時間最小値(msec)
 (define *wtime3* 15000) ; ワームのランダム動作時間最大値(msec)
@@ -87,11 +88,12 @@
    (fc     :init-value    0)  ; 先端の角度(度)
    ))
 ;; ワームの初期化
-;;   rx  末尾のX座標
-;;   ry  末尾のY座標
-;;   rc  末尾の角度(度)
-(define-method worm-init ((w1 <worm>) (rx <real>) (ry <real>) (rc <real>))
-  (define anum  (~ w1 'anum))
+;;   anum  関節の数
+;;   rx    末尾のX座標
+;;   ry    末尾のY座標
+;;   rc    末尾の角度(度)
+(define-method worm-init ((w1 <worm>) (anum <integer>) (rx <real>) (ry <real>) (rc <real>))
+  (set! (~ w1 'anum) anum)
   (set! (~ w1 'rx)   rx)
   (set! (~ w1 'ry)   ry)
   (set! (~ w1 'ax)   (make-vector (+ anum 1) 0))
@@ -197,8 +199,6 @@
 ;;   gy  目標のY座標
 ;;   戻り値  目標に到達していれば #t を返す。そうでなければ #f を返す。
 (define (%worm-move-tail w1 gx gy)
-  (define (get-ax i) (if (>= i 0) (~ w1 'ax i) (~ w1 'rx)))
-  (define (get-ay i) (if (>= i 0) (~ w1 'ay i) (~ w1 'ry)))
   (define fx    (~ w1 'fx))
   (define fy    (~ w1 'fy))
   (define rv    (~ w1 'rv))
@@ -221,6 +221,7 @@
   (define (get-ax i) (if (>= i 0) (~ w1 'ax i) (~ w1 'rx)))
   (define (get-ay i) (if (>= i 0) (~ w1 'ay i) (~ w1 'ry)))
   ;; 関節と先端の座標を計算
+  ;; (末尾の方から順番に計算していく)
   (do ((i 0 (+ i 1)))
       ((> i anum) #f)
     (set! acsum (+ acsum (~ w1 'ac i)))
@@ -266,7 +267,7 @@
 (define *worms* (make-vector-of-class *wnum* <worm>))
 (for-each
  (lambda (w1)
-   (worm-init w1
+   (worm-init w1 *wlen*
               (randint (- *wd/2*) *wd/2*)
               (randint (- *ht/2*) *ht/2*)
               (randint -180 180)))
