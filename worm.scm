@@ -1,12 +1,12 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-3 v1.03
+;; 2018-5-4 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
 ;;   矢印キーかマウスボタン1でカーソルを移動します。
-;;   ワームはカーソルを追跡します。
+;;   空腹状態のワームはカーソルを追跡します。
 ;;   ESCキーを押すと終了します。
 ;;
 (add-load-path "lib" :relative)
@@ -30,11 +30,16 @@
 (define *wd/2*   52000) ; 画面幅/2
 (define *ht/2*   40000) ; 画面高さ/2
 (define *zd/2*   10000) ; 画面奥行き/2
-(define *cx*     41600) ; カーソルのX座標
-(define *cy*    -32000) ; カーソルのY座標
+(define *cx*         0) ; カーソルのX座標
+(define *cy*         0) ; カーソルのY座標
 (define *cr*      2000) ; カーソルの半径
 (define *cd*       800) ; カーソルの移動量
 (define *wnum*       2) ; ワームの数
+(define *wtime1*  1000) ; ワームの食事時間(msec)
+(define *wtime2*  8000) ; ワームのランダム動作時間最小値(msec)
+(define *wtime3* 15000) ; ワームのランダム動作時間最大値(msec)
+(define *wtime4*  2000) ; ワームのランダム動作切換時間最小値(msec)
+(define *wtime5*  8000) ; ワームのランダム動作切換時間最大値(msec)
 (define *waku*     400) ; 当たり判定調整用
 (define *backcolor*  #f32(0.2 0.2 0.2 1.0)) ; 背景色
 
@@ -58,25 +63,33 @@
 
 ;; ワームクラス
 (define-class <worm> ()
-  ((rx    :init-value    0)  ; 末尾のX座標
-   (ry    :init-value    0)  ; 末尾のY座標
-   (rr    :init-value 2000)  ; 末尾の半径
-   (rv    :init-value  100)  ; 末尾の速度
-   (rcv   :init-value  1.0)  ; 末尾の角速度(度)
-   (anum  :init-value    8)  ; 関節の数
-   (ax    :init-value    #f) ; 関節のX座標(ベクタ)
-   (ay    :init-value    #f) ; 関節のY座標(ベクタ)
-   (ar    :init-value 1000)  ; 関節の半径
-   (al    :init-value 4000)  ; 関節の距離
-   (ac    :init-value    #f) ; 関節の角度(度)(ベクタ)
-   (acv   :init-value  0.2)  ; 関節の角速度(度)
-   (maxac :init-value   45)  ; 関節の角度の最大値(度)
-   (fx    :init-value    0)  ; 先端のX座標
-   (fy    :init-value    0)  ; 先端のY座標
-   (fr    :init-value 2000)  ; 先端の半径
-   (fc    :init-value    0)  ; 先端の角度(度)
+  ((state  :init-value    0)  ; 状態(=0:追跡中,=1:食事中,=2:ランダム動作中)
+   (count1 :init-value    0)  ; 動作カウンタ1
+   (count2 :init-value    0)  ; 動作カウンタ2
+   (rgx    :init-value    0)  ; ランダム動作中の目標のX座標
+   (rgy    :init-value    0)  ; ランダム動作中の目標のY座標
+   (rx     :init-value    0)  ; 末尾のX座標
+   (ry     :init-value    0)  ; 末尾のY座標
+   (rr     :init-value 2000)  ; 末尾の半径
+   (rv     :init-value  100)  ; 末尾の速度
+   (rcv    :init-value  1.0)  ; 末尾の角速度(度)
+   (anum   :init-value    8)  ; 関節の数
+   (ax     :init-value    #f) ; 関節のX座標(ベクタ)
+   (ay     :init-value    #f) ; 関節のY座標(ベクタ)
+   (ar     :init-value 1000)  ; 関節の半径
+   (al     :init-value 4000)  ; 関節の距離
+   (ac     :init-value    #f) ; 関節の角度(度)(ベクタ)
+   (acv    :init-value  0.2)  ; 関節の角速度(度)
+   (maxac  :init-value   45)  ; 関節の角度の最大値(度)
+   (fx     :init-value    0)  ; 先端のX座標
+   (fy     :init-value    0)  ; 先端のY座標
+   (fr     :init-value 2000)  ; 先端の半径
+   (fc     :init-value    0)  ; 先端の角度(度)
    ))
 ;; ワームの初期化
+;;   rx  末尾のX座標
+;;   ry  末尾のY座標
+;;   rc  末尾の角度(度)
 (define-method worm-init ((w1 <worm>) (rx <real>) (ry <real>) (rc <real>))
   (define anum  (~ w1 'anum))
   (set! (~ w1 'rx)   rx)
@@ -84,11 +97,61 @@
   (set! (~ w1 'ax)   (make-vector (+ anum 1) 0))
   (set! (~ w1 'ay)   (make-vector (+ anum 1) 0))
   (set! (~ w1 'ac)   (make-vector (+ anum 1) 0))
-  (set! (~ w1 'ac 0) rc))
-;; ワームの角度計算
+  (set! (~ w1 'ac 0) rc)
+  (%worm-calc-point w1))
+;; ワームの移動
 ;;   gx  目標のX座標
 ;;   gy  目標のY座標
-(define-method worm-calc-angle ((w1 <worm>) (gx <real>) (gy <real>))
+(define-method worm-move ((w1 <worm>) (gx <real>) (gy <real>))
+  (define state  (~ w1 'state))
+  (define count1 (~ w1 'count1))
+  (define count2 (~ w1 'count2))
+  (define rgx    (~ w1 'rgx))
+  (define rgy    (~ w1 'rgy))
+  ;; 状態によって場合分け
+  (case state
+    ((0 1) ; 追跡中/食事中
+     (set! state 0)
+     (%worm-calc-angle w1 gx gy)
+     (when (%worm-move-tail w1 gx gy)
+       (set! state 1)
+       (set! count1 (+ count1 *wait*))
+       (when (>= count1 *wtime1*)
+         (set! state 2)))
+     (%worm-calc-point w1)
+     (set! count2 (+ count2 *wait*))
+     ;; 3分で強制移行
+     ;; (まれにS字になって回り続けるケースがある)
+     (when (>= count2 180000)
+       (set! state 2))
+     (when (= state 2)
+       (set! count1 (randint *wtime2* *wtime3*))
+       (set! count2 (randint *wtime4* *wtime5*))
+       (set! (~ w1 'rgx) (randint (- *wd/2*) *wd/2*))
+       (set! (~ w1 'rgy) (randint (- *ht/2*) *ht/2*))))
+    ((2) ; ランダム動作中
+     (%worm-calc-angle w1 rgx rgy)
+     (when (%worm-move-tail w1 rgx rgy)
+       (set! count2 0))
+     (%worm-calc-point w1)
+     (set! count1 (- count1 *wait*))
+     (set! count2 (- count2 *wait*))
+     (cond
+      ((<= count1 0)
+       (set! state 0)
+       (set! count1 0)
+       (set! count2 0))
+      ((<= count2 0)
+       (set! count2 (randint *wtime4* *wtime5*))
+       (set! (~ w1 'rgx) (randint (- *wd/2*) *wd/2*))
+       (set! (~ w1 'rgy) (randint (- *ht/2*) *ht/2*))))))
+  (set! (~ w1 'state)  state)
+  (set! (~ w1 'count1) count1)
+  (set! (~ w1 'count2) count2))
+;; ワームの角度計算(内部処理用)
+;;   gx  目標のX座標
+;;   gy  目標のY座標
+(define (%worm-calc-angle w1 gx gy)
   (define anum  (~ w1 'anum))
   (define rcv   (~ w1 'rcv))
   (define acv   (~ w1 'acv))
@@ -129,26 +192,34 @@
                   (+ (* fx1 (sin (* diffc pi/180)))
                      (* fy1 (cos (* diffc pi/180))))))
       )))
-;; ワームの座標計算
+;; ワームの末尾移動(内部処理用)
 ;;   gx  目標のX座標
 ;;   gy  目標のY座標
-(define-method worm-calc-point ((w1 <worm>) (gx <real>) (gy <real>))
-  (define acsum -90)
-  (define anum  (~ w1 'anum))
-  (define al    (~ w1 'al))
+;;   戻り値  目標に到達していれば #t を返す。そうでなければ #f を返す。
+(define (%worm-move-tail w1 gx gy)
+  (define (get-ax i) (if (>= i 0) (~ w1 'ax i) (~ w1 'rx)))
+  (define (get-ay i) (if (>= i 0) (~ w1 'ay i) (~ w1 'ry)))
   (define fx    (~ w1 'fx))
   (define fy    (~ w1 'fy))
   (define rv    (~ w1 'rv))
-  (define (get-ax i) (if (>= i 0) (~ w1 'ax i) (~ w1 'rx)))
-  (define (get-ay i) (if (>= i 0) (~ w1 'ay i) (~ w1 'ry)))
-  ;; 末尾を移動(目標に到達していないときのみ)
-  (unless (recthit? (- gx *waku*) (- gy *waku*) (* *waku* 2) (* *waku* 2)
-                    (- fx *waku*) (- fy *waku*) (* *waku* 2) (* *waku* 2))
+  ;; 目標に到達していなければ、末尾を移動する
+  (cond
+   ((recthit? (- gx *waku*) (- gy *waku*) (* *waku* 2) (* *waku* 2)
+              (- fx *waku*) (- fy *waku*) (* *waku* 2) (* *waku* 2))
+    #t)
+   (else
     (set! (~ w1 'rx) (clamp (+ (~ w1 'rx) (* rv (cos (* (- (~ w1 'ac 0) 90) pi/180))))
                             (- *wd/2*) *wd/2*))
     (set! (~ w1 'ry) (clamp (+ (~ w1 'ry) (* rv (sin (* (- (~ w1 'ac 0) 90) pi/180))))
                             (- *ht/2*) *ht/2*))
-    )
+    #f)))
+;; ワームの座標計算(内部処理用)
+(define (%worm-calc-point w1)
+  (define acsum -90)
+  (define anum  (~ w1 'anum))
+  (define al    (~ w1 'al))
+  (define (get-ax i) (if (>= i 0) (~ w1 'ax i) (~ w1 'rx)))
+  (define (get-ay i) (if (>= i 0) (~ w1 'ay i) (~ w1 'ry)))
   ;; 関節と先端の座標を計算
   (do ((i 0 (+ i 1)))
       ((> i anum) #f)
@@ -163,7 +234,10 @@
 (define-method worm-disp ((w1 <worm>))
   (define anum  (~ w1 'anum))
   (define ar    (~ w1 'ar))
-  (gl-material GL_FRONT GL_DIFFUSE #f32(1.0 1.0 1.0 1.0))
+  (case (~ w1 'state)
+    ((0) (gl-material GL_FRONT GL_DIFFUSE #f32(0.5 0.0 0.0 1.0)))
+    ((1) (gl-material GL_FRONT GL_DIFFUSE #f32(0.0 0.7 0.3 1.0)))
+    ((2) (gl-material GL_FRONT GL_DIFFUSE #f32(1.0 1.0 1.0 1.0))))
   (gl-material GL_FRONT GL_AMBIENT #f32(0.5 0.5 0.5 1.0))
   ;; 末尾
   (gl-push-matrix)
@@ -180,17 +254,22 @@
   ;; 先端
   (gl-push-matrix)
   (gl-translate (~ w1 'fx) (~ w1 'fy) 0)
-  (gl-rotate (- (~ w1 'fc) 45) 0 0 1)
+  (gl-rotate (~ w1 'fc) 0 0 1)
   (gl-rotate -90 1 0 0)
-  (model0501 (~ w1 'fr) 20 20)
+  (model0501 (~ w1 'fr) 20 20
+             (case (~ w1 'state)
+               ((0) 120)
+               ((1) (randint 0 90))
+               ((2) 70)))
   (gl-pop-matrix))
 ;; ワームクラスのインスタンス生成
 (define *worms* (make-vector-of-class *wnum* <worm>))
 (for-each
- (lambda (w1) (worm-init w1 (randint (- *wd/2*) *wd/2*)
-                            (randint (- *ht/2*) *ht/2*)
-                            (randint -180 180))
-              (worm-calc-point w1 (~ w1 'fx) (~ w1 'fy)))
+ (lambda (w1)
+   (worm-init w1
+              (randint (- *wd/2*) *wd/2*)
+              (randint (- *ht/2*) *ht/2*)
+              (randint -180 180)))
  *worms*)
 
 
@@ -198,14 +277,18 @@
 ;;   r      半径
 ;;   slice  y軸のまわりの分割数
 ;;   stack  y軸に垂直な分割数
-;; (define (model0501 r slice stack) ...)
+;;   wedge  欠けの大きさ(角度)
+;; (define (model0501 r slice stack wedge) ...)
 (load (make-fpath *app-dpath* "model/model0501.scm"))
 
-;; カーソル(中心に原点あり)
-(define (cursor r)
+;; カーソルの表示
+(define (disp-cursor)
   (gl-material GL_FRONT GL_DIFFUSE #f32(1.0 1.0 0.0 1.0))
   (gl-material GL_FRONT GL_AMBIENT #f32(0.0 0.0 0.0 1.0))
-  (cross-cursor r (/. r 10)))
+  (gl-push-matrix)
+  (gl-translate *cx* *cy* 0)
+  (cross-cursor *cr* (/. *cr* 10))
+  (gl-pop-matrix))
 
 ;; カーソルの移動
 (define (move-cursor)
@@ -232,7 +315,7 @@
   (gl-enable GL_NORMALIZE)
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
-  (gl-material GL_FRONT GL_SHININESS 10.0))
+  (gl-material GL_FRONT GL_SHININESS 30.0))
 
 ;; 画面表示
 (define (disp)
@@ -240,10 +323,7 @@
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
   ;; カーソルの表示
-  (gl-push-matrix)
-  (gl-translate *cx* *cy* 0)
-  (cursor *cr*)
-  (gl-pop-matrix)
+  (disp-cursor)
   ;; ワームの表示
   (for-each (lambda (w1) (worm-disp w1)) *worms*)
   ;; 背景の表示
@@ -311,10 +391,7 @@
   ;; カーソルの移動
   (move-cursor)
   ;; ワームの移動
-  (for-each
-   (lambda (w1) (worm-calc-angle w1 *cx* *cy*)
-                (worm-calc-point w1 *cx* *cy*))
-   *worms*)
+  (for-each (lambda (w1) (worm-move w1 *cx* *cy*)) *worms*)
   ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整

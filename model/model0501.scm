@@ -1,20 +1,22 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0501(欠けた球)
-;; 2018-5-2
+;; 2018-5-4
 ;;
 
 ;; モデル0501(欠けた球)(中心に原点あり)
 ;;   r      半径
 ;;   slice  y軸のまわりの分割数
 ;;   stack  y軸に垂直な分割数
-(define (model0501 r slice stack)
+;;   wedge  欠けの大きさ(角度)
+(define (model0501 r slice stack wedge)
   (define f32 f32vector)
   (define s1 stack)
   (define s2 slice)
+  (define w1 (/. (* wedge pi/180) 2))
   (define step1 (/.  pi s1))
   ;(define step2 (/. 2pi s2))
-  (define step2 (/. (* 3 pi/2) s2))
+  (define step2 (* (/. (- pi w1) s2) 2))
   (define vertex (make-vector (* (+ s1 1) (+ s2 1))))
   (define normal (make-vector (* (+ s1 1) (+ s2 1))))
   ;; 座標計算
@@ -26,7 +28,7 @@
       (set! r1 (sin angle1))
       (do ((j 0 (+ j 1))
            ;(angle2 0 (if (< j s2) (+ angle2 step2) 0)))
-           (angle2 pi/2 (if (< j s2) (+ angle2 step2) 0)))
+           (angle2 w1 (if (< j s2) (+ angle2 step2) (- 2pi w1))))
           ((> j s2) #f)
         (set! x1 (* r1 (cos angle2)))
         (set! z1 (* r1 (sin angle2)))
@@ -57,7 +59,7 @@
   ;; 断面1
   (let ((idx 0))
     (gl-begin GL_TRIANGLE_FAN)
-    (gl-normal #f32(1 0 0))
+    (gl-normal (f32 (sin w1) 0 (- (cos w1))))
     (gl-vertex #f32(0 0 0))
     (do ((i 0 (+ i 1)))
         ((> i s1) #f)
@@ -67,7 +69,7 @@
   ;; 断面2
   (let ((idx s2))
     (gl-begin GL_TRIANGLE_FAN)
-    (gl-normal #f32(0 0 1))
+    (gl-normal (f32 (sin w1) 0 (cos w1)))
     (gl-vertex #f32(0 0 0))
     (do ((i 0 (+ i 1)))
         ((> i s1) #f)
@@ -86,6 +88,6 @@
 (define (viewer-disp)
   ;(glut-wire-sphere 50 5 10)
   ;(glut-solid-sphere 50 5 10)
-  (model0501 50 20 20)
+  (model0501 50 20 20 90)
   )
 
