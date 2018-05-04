@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-4 v1.05
+;; 2018-5-4 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -32,7 +32,7 @@
 (define *zd/2*   10000) ; 画面奥行き/2
 (define *cx*         0) ; カーソルのX座標
 (define *cy*         0) ; カーソルのY座標
-(define *cr*      2000) ; カーソルの半径
+(define *cr*      1500) ; カーソルの半径
 (define *cd*       800) ; カーソルの移動量
 (define *wnum*       2) ; ワームの数
 (define *wlen*       8) ; ワームの長さ(関節の数)
@@ -123,7 +123,7 @@
      (%worm-calc-point w1)
      (set! count2 (+ count2 *wait*))
      ;; 3分で強制移行
-     ;; (まれにS字になって回り続けるケースがある)
+     ;; (まれにS字になって回り続けるケースがあるため)
      (when (>= count2 180000)
        (set! state 2))
      (when (= state 2)
@@ -285,10 +285,10 @@
 ;; カーソルの表示
 (define (disp-cursor)
   (gl-material GL_FRONT GL_DIFFUSE #f32(1.0 1.0 0.0 1.0))
-  (gl-material GL_FRONT GL_AMBIENT #f32(0.0 0.0 0.0 1.0))
+  (gl-material GL_FRONT GL_AMBIENT #f32(0.5 0.5 0.0 1.0))
   (gl-push-matrix)
   (gl-translate *cx* *cy* 0)
-  (cross-cursor *cr* (/. *cr* 10))
+  (cross-cursor *cr* (/. *cr* 9))
   (gl-pop-matrix))
 
 ;; カーソルの移動
@@ -382,10 +382,8 @@
 ;; マウスドラッグ
 (define (mousedrag x y)
   (when *mouse-button1*
-    (set! *cx* (clamp (win-gl-x *win* (- x *mouse-offsetx*))
-                      (- *wd/2*) *wd/2*))
-    (set! *cy* (clamp (win-gl-y *win* (- y *mouse-offsety*))
-                      (- *ht/2*) *ht/2*))))
+    (set! *cx* (clamp (win-gl-x *win* (- x *mouse-offsetx*)) (- *wd/2*) *wd/2*))
+    (set! *cy* (clamp (win-gl-y *win* (- y *mouse-offsety*)) (- *ht/2*) *ht/2*))))
 
 ;; タイマー
 (define (timer val)
