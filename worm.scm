@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-4 v1.07
+;; 2018-5-4 v1.08
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -36,11 +36,6 @@
 (define *cd*       800) ; カーソルの移動量
 (define *wnum*       2) ; ワームの数
 (define *wlen*       8) ; ワームの長さ(関節の数)
-(define *wtime1*  1000) ; ワームの食事時間(msec)
-(define *wtime2*  8000) ; ワームのランダム動作時間最小値(msec)
-(define *wtime3* 15000) ; ワームのランダム動作時間最大値(msec)
-(define *wtime4*  2000) ; ワームのランダム動作切換時間最小値(msec)
-(define *wtime5*  8000) ; ワームのランダム動作切換時間最大値(msec)
 (define *waku*     400) ; 当たり判定調整用
 (define *backcolor*  #f32(0.2 0.2 0.2 1.0)) ; 背景色
 
@@ -64,28 +59,34 @@
 
 ;; ワームクラス
 (define-class <worm> ()
-  ((state  :init-value    0)  ; 状態(=0:追跡中,=1:食事中,=2:ランダム動作中)
-   (count1 :init-value    0)  ; 動作カウンタ1
-   (count2 :init-value    0)  ; 動作カウンタ2
-   (rgx    :init-value    0)  ; ランダム動作中の目標のX座標
-   (rgy    :init-value    0)  ; ランダム動作中の目標のY座標
-   (rx     :init-value    0)  ; 末尾のX座標
-   (ry     :init-value    0)  ; 末尾のY座標
-   (rr     :init-value 2000)  ; 末尾の半径
-   (rv     :init-value  100)  ; 末尾の速度
-   (rcv    :init-value  1.0)  ; 末尾の角速度(度)
-   (anum   :init-value    8)  ; 関節の数
-   (ax     :init-value    #f) ; 関節のX座標(ベクタ)
-   (ay     :init-value    #f) ; 関節のY座標(ベクタ)
-   (ar     :init-value 1000)  ; 関節の半径
-   (al     :init-value 4000)  ; 関節の距離
-   (ac     :init-value    #f) ; 関節の角度(度)(ベクタ)
-   (acv    :init-value  0.2)  ; 関節の角速度(度)
-   (maxac  :init-value   45)  ; 関節の角度の最大値(度)
-   (fx     :init-value    0)  ; 先端のX座標
-   (fy     :init-value    0)  ; 先端のY座標
-   (fr     :init-value 2000)  ; 先端の半径
-   (fc     :init-value    0)  ; 先端の角度(度)
+  ((state  :init-value     0)  ; 状態(=0:追跡中,=1:食事中,=2:ランダム動作中)
+   (count1 :init-value     0)  ; 動作カウンタ1
+   (count2 :init-value     0)  ; 動作カウンタ2
+   (rgx    :init-value     0)  ; ランダム動作中の目標のX座標
+   (rgy    :init-value     0)  ; ランダム動作中の目標のY座標
+   (wtime1 :init-value  1000)  ; 食事時間(msec)
+   (wtime2 :init-value  8000)  ; ランダム動作時間最小値(msec)
+   (wtime3 :init-value 15000)  ; ランダム動作時間最大値(msec)
+   (wtime4 :init-value  2000)  ; ランダム動作切換時間最小値(msec)
+   (wtime5 :init-value  8000)  ; ランダム動作切換時間最大値(msec)
+   ;; 以下は多関節表示用
+   (rx     :init-value     0)  ; 末尾のX座標
+   (ry     :init-value     0)  ; 末尾のY座標
+   (rr     :init-value  2000)  ; 末尾の半径
+   (rv     :init-value   100)  ; 末尾の速度
+   (rcv    :init-value   1.0)  ; 末尾の角速度(度)
+   (anum   :init-value     8)  ; 関節の数
+   (ax     :init-value     #f) ; 関節のX座標(ベクタ)
+   (ay     :init-value     #f) ; 関節のY座標(ベクタ)
+   (ar     :init-value  1000)  ; 関節の半径
+   (al     :init-value  4000)  ; 関節の距離
+   (ac     :init-value     #f) ; 関節の角度(度)(ベクタ)
+   (acv    :init-value   0.2)  ; 関節の角速度(度)
+   (maxac  :init-value    45)  ; 関節の角度の最大値(度)
+   (fx     :init-value     0)  ; 先端のX座標
+   (fy     :init-value     0)  ; 先端のY座標
+   (fr     :init-value  2000)  ; 先端の半径
+   (fc     :init-value     0)  ; 先端の角度(度)
    ))
 ;; ワームの初期化
 ;;   anum  関節の数
@@ -110,6 +111,11 @@
   (define count2 (~ w1 'count2))
   (define rgx    (~ w1 'rgx))
   (define rgy    (~ w1 'rgy))
+  (define wtime1 (~ w1 'wtime1))
+  (define wtime2 (~ w1 'wtime2))
+  (define wtime3 (~ w1 'wtime3))
+  (define wtime4 (~ w1 'wtime4))
+  (define wtime5 (~ w1 'wtime5))
   ;; 状態によって場合分け
   (case state
     ((0 1) ; 追跡中/食事中
@@ -118,7 +124,7 @@
      (when (%worm-move-tail w1 gx gy)
        (set! state 1)
        (set! count1 (+ count1 *wait*))
-       (when (>= count1 *wtime1*)
+       (when (>= count1 wtime1)
          (set! state 2)))
      (%worm-calc-point w1)
      (set! count2 (+ count2 *wait*))
@@ -127,8 +133,8 @@
      (when (>= count2 180000)
        (set! state 2))
      (when (= state 2)
-       (set! count1 (randint *wtime2* *wtime3*))
-       (set! count2 (randint *wtime4* *wtime5*))
+       (set! count1 (randint wtime2 wtime3))
+       (set! count2 (randint wtime4 wtime5))
        (set! (~ w1 'rgx) (randint (- *wd/2*) *wd/2*))
        (set! (~ w1 'rgy) (randint (- *ht/2*) *ht/2*))))
     ((2) ; ランダム動作中
@@ -144,7 +150,7 @@
        (set! count1 0)
        (set! count2 0))
       ((<= count2 0)
-       (set! count2 (randint *wtime4* *wtime5*))
+       (set! count2 (randint wtime4 wtime5))
        (set! (~ w1 'rgx) (randint (- *wd/2*) *wd/2*))
        (set! (~ w1 'rgy) (randint (- *ht/2*) *ht/2*))))))
   (set! (~ w1 'state)  state)
