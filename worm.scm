@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-4 v1.08
+;; 2018-5-4 v1.09
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -300,10 +300,10 @@
 ;; カーソルの移動
 (define (move-cursor)
   (let ((vx 0) (vy 0))
-    (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx (- *cd*)))
-    (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx    *cd*))
-    (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! vy (- *cd*)))
-    (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy    *cd*))
+    (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx (- vx *cd*)))
+    (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx (+ vx *cd*)))
+    (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! vy (- vy *cd*)))
+    (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy (+ vy *cd*)))
     (unless (= vx 0) (set! *cx* (wrap-range (+ *cx* vx) (- *wd/2*) *wd/2*)))
     (unless (= vy 0) (set! *cy* (wrap-range (+ *cy* vy) (- *ht/2*) *ht/2*)))
     ))
