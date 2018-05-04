@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-4 v1.06
+;; 2018-5-4 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -32,7 +32,7 @@
 (define *zd/2*   10000) ; 画面奥行き/2
 (define *cx*         0) ; カーソルのX座標
 (define *cy*         0) ; カーソルのY座標
-(define *cr*      1500) ; カーソルの半径
+(define *cr*      2000) ; カーソルの半径
 (define *cd*       800) ; カーソルの移動量
 (define *wnum*       2) ; ワームの数
 (define *wlen*       8) ; ワームの長さ(関節の数)
@@ -288,7 +288,7 @@
   (gl-material GL_FRONT GL_AMBIENT #f32(0.5 0.5 0.0 1.0))
   (gl-push-matrix)
   (gl-translate *cx* *cy* 0)
-  (cross-cursor *cr* (/. *cr* 9))
+  (cross-cursor *cr* (/. *cr* 10))
   (gl-pop-matrix))
 
 ;; カーソルの移動
