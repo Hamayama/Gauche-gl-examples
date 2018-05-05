@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-4 v1.09
+;; 2018-5-5 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -263,7 +263,7 @@
   (gl-translate (~ w1 'fx) (~ w1 'fy) 0)
   (gl-rotate (~ w1 'fc) 0 0 1)
   (gl-rotate -90 1 0 0)
-  (model0501 (~ w1 'fr) 20 20
+  (model0501 (~ w1 'fr) 15 10
              (case (~ w1 'state)
                ((0) 120)
                ((1) (randint 0 90))
