@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-5 v1.10
+;; 2018-5-5 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -85,7 +85,7 @@
    (maxac  :init-value    45)  ; 関節の角度の最大値(度)
    (fx     :init-value     0)  ; 先端のX座標
    (fy     :init-value     0)  ; 先端のY座標
-   (fr     :init-value  2000)  ; 先端の半径
+   (fr     :init-value  2500)  ; 先端の半径
    (fc     :init-value     0)  ; 先端の角度(度)
    ))
 ;; ワームの初期化
