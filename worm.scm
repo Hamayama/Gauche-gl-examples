@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-6 v1.12
+;; 2018-5-6 v1.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -124,7 +124,7 @@
     ((0 1) ; 追跡中/食事中
      (set! state 0)
      (%worm-calc-angle w1 gx gy)
-     (when (%worm-move-tail w1 gx gy)
+     (when (%worm-calc-tail w1 gx gy)
        (set! state 1)
        (set! count1 (+ count1 *wait*))
        (when (>= count1 wtime1)
@@ -142,7 +142,7 @@
        (set! (~ w1 'rgy) (randint (- *ht/2*) *ht/2*))))
     ((2) ; ランダム動作中
      (%worm-calc-angle w1 rgx rgy)
-     (when (%worm-move-tail w1 rgx rgy)
+     (when (%worm-calc-tail w1 rgx rgy)
        (set! count2 0))
      (%worm-calc-point w1)
      (set! count1 (- count1 *wait*))
@@ -205,11 +205,11 @@
                   (+ (* fx1 (sin (* diffc pi/180)))
                      (* fy1 (cos (* diffc pi/180))))))
       )))
-;; ワームの末尾移動(内部処理用)
+;; ワームの末尾計算(内部処理用)
 ;;   gx  目標のX座標
 ;;   gy  目標のY座標
 ;;   戻り値  目標に到達していれば #t を返す。そうでなければ #f を返す。
-(define (%worm-move-tail w1 gx gy)
+(define (%worm-calc-tail w1 gx gy)
   (define fx    (~ w1 'fx))
   (define fy    (~ w1 'fy))
   (define rv    (~ w1 'rv))
