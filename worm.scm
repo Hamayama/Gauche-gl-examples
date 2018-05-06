@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-6 v1.14
+;; 2018-5-6 v1.15
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -114,11 +114,6 @@
   (define count2 (~ w1 'count2))
   (define rgx    (~ w1 'rgx))
   (define rgy    (~ w1 'rgy))
-  (define wtime1 (~ w1 'wtime1))
-  (define wtime2 (~ w1 'wtime2))
-  (define wtime3 (~ w1 'wtime3))
-  (define wtime4 (~ w1 'wtime4))
-  (define wtime5 (~ w1 'wtime5))
   ;; 状態によって場合分け
   (case state
     ((0 1) ; 追跡中/食事中
@@ -128,7 +123,7 @@
       ((%worm-goal? w1 gx gy)
        (set! state 1)
        (set! count1 (+ count1 *wait*))
-       (when (>= count1 wtime1)
+       (when (>= count1 (~ w1 'wtime1))
          (set! state 2)))
       (else
        (%worm-move-tail w1)))
@@ -139,13 +134,13 @@
      (when (>= count2 180000)
        (set! state 2))
      (when (= state 2)
-       (set! count1 (randint wtime2 wtime3))
-       (set! count2 (randint wtime4 wtime5))
+       (set! count1 (randint (~ w1 'wtime2) (~ w1 'wtime3)))
+       (set! count2 (randint (~ w1 'wtime4) (~ w1 'wtime5)))
        (set! (~ w1 'rgx) (randint (- *wd/2*) *wd/2*))
        (set! (~ w1 'rgy) (randint (- *ht/2*) *ht/2*))))
     ((2) ; ランダム動作中
      (%worm-calc-angle w1 rgx rgy)
-     (if (%worm-goal? w1 gx gy)
+     (if (%worm-goal? w1 rgx rgy)
        (set! count2 0)
        (%worm-move-tail w1))
      (%worm-calc-point w1)
@@ -157,7 +152,7 @@
        (set! count1 0)
        (set! count2 0))
       ((<= count2 0)
-       (set! count2 (randint wtime4 wtime5))
+       (set! count2 (randint (~ w1 'wtime4) (~ w1 'wtime5)))
        (set! (~ w1 'rgx) (randint (- *wd/2*) *wd/2*))
        (set! (~ w1 'rgy) (randint (- *ht/2*) *ht/2*))))))
   (set! (~ w1 'state)  state)
@@ -202,12 +197,10 @@
           (set! diffc (- ac1 (~ w1 'ac i))))
         (set! (~ w1 'ac i) ac1)))
       ;; 先端の座標を補正して繰り返す
-      (set! fx (+ ax
-                  (- (* fx1 (cos (* diffc pi/180)))
-                     (* fy1 (sin (* diffc pi/180))))))
-      (set! fy (+ ay
-                  (+ (* fx1 (sin (* diffc pi/180)))
-                     (* fy1 (cos (* diffc pi/180))))))
+      (set! fx (+ ax (- (* fx1 (cos (* diffc pi/180)))
+                        (* fy1 (sin (* diffc pi/180))))))
+      (set! fy (+ ay (+ (* fx1 (sin (* diffc pi/180)))
+                        (* fy1 (cos (* diffc pi/180))))))
       )))
 ;; ワームの目標到達チェック(内部処理用)
 ;;   gx  目標のX座標
@@ -229,8 +222,7 @@
   (define acsum -90)
   (define anum  (~ w1 'anum))
   (define al    (~ w1 'al))
-  ;; 関節と先端の座標を計算
-  ;; (末尾の方から順番に計算していく)
+  ;; 末尾の方から順番に座標を計算していく
   (set! (~ w1 'ax 0) (~ w1 'rx))
   (set! (~ w1 'ay 0) (~ w1 'ry))
   (do ((i 0 (+ i 1)))
