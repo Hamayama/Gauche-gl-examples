@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm.scm
-;; 2018-5-5 v1.11
+;; 2018-5-6 v1.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -77,10 +77,13 @@
    (rcv    :init-value   1.0)  ; 末尾の角速度(度)
    (anum   :init-value     8)  ; 関節の数
    (ax     :init-value     #f) ; 関節のX座標(ベクタ)
+   ;                           ;   (ベクタ番号=0:末尾,=1～anum:関節,=anum+1:先端)
    (ay     :init-value     #f) ; 関節のY座標(ベクタ)
+   ;                           ;   (ベクタ番号=0:末尾,=1～anum:関節,=anum+1:先端)
    (ar     :init-value  1000)  ; 関節の半径
    (al     :init-value  4000)  ; 関節の距離
    (ac     :init-value     #f) ; 関節の角度(度)(ベクタ)
+   ;                           ;   (ベクタ番号=0:末尾,=1～anum:関節)
    (acv    :init-value   0.2)  ; 関節の角速度(度)
    (maxac  :init-value    45)  ; 関節の角度の最大値(度)
    (fx     :init-value     0)  ; 先端のX座標
@@ -97,8 +100,8 @@
   (set! (~ w1 'anum) anum)
   (set! (~ w1 'rx)   rx)
   (set! (~ w1 'ry)   ry)
-  (set! (~ w1 'ax)   (make-vector (+ anum 1) 0))
-  (set! (~ w1 'ay)   (make-vector (+ anum 1) 0))
+  (set! (~ w1 'ax)   (make-vector (+ anum 2) 0))
+  (set! (~ w1 'ay)   (make-vector (+ anum 2) 0))
   (set! (~ w1 'ac)   (make-vector (+ anum 1) 0))
   (set! (~ w1 'ac 0) rc)
   (%worm-calc-point w1))
@@ -166,15 +169,17 @@
   (define maxac (~ w1 'maxac))
   (define fx    (~ w1 'fx))
   (define fy    (~ w1 'fy))
-  (define (get-ax i) (if (>= i 0) (~ w1 'ax i) (~ w1 'rx)))
-  (define (get-ay i) (if (>= i 0) (~ w1 'ay i) (~ w1 'ry)))
   ;; 先端から順番に目標に近づけていく
+  (set! (~ w1 'ax 0) (~ w1 'rx))
+  (set! (~ w1 'ay 0) (~ w1 'ry))
   (do ((i anum (- i 1)))
       ((< i 0) #f)
-    (let* ((gx1   (- gx (get-ax (- i 1))))
-           (gy1   (- gy (get-ay (- i 1))))
-           (fx1   (- fx (get-ax (- i 1))))
-           (fy1   (- fy (get-ay (- i 1))))
+    (let* ((ax    (~ w1 'ax i))
+           (ay    (~ w1 'ay i))
+           (gx1   (- gx ax))
+           (gy1   (- gy ay))
+           (fx1   (- fx ax))
+           (fy1   (- fy ay))
            (c1    (* (atan gy1 gx1) 180/pi))
            (c2    (* (atan fy1 fx1) 180/pi))
            (diffc (wrap-range (- c1 c2) -180 180))
@@ -193,10 +198,10 @@
           (set! diffc (- ac1 (~ w1 'ac i))))
         (set! (~ w1 'ac i) ac1)))
       ;; 先端の座標を補正して繰り返す
-      (set! fx (+ (get-ax (- i 1))
+      (set! fx (+ ax
                   (- (* fx1 (cos (* diffc pi/180)))
                      (* fy1 (sin (* diffc pi/180))))))
-      (set! fy (+ (get-ay (- i 1))
+      (set! fy (+ ay
                   (+ (* fx1 (sin (* diffc pi/180)))
                      (* fy1 (cos (* diffc pi/180))))))
       )))
@@ -224,18 +229,18 @@
   (define acsum -90)
   (define anum  (~ w1 'anum))
   (define al    (~ w1 'al))
-  (define (get-ax i) (if (>= i 0) (~ w1 'ax i) (~ w1 'rx)))
-  (define (get-ay i) (if (>= i 0) (~ w1 'ay i) (~ w1 'ry)))
   ;; 関節と先端の座標を計算
   ;; (末尾の方から順番に計算していく)
+  (set! (~ w1 'ax 0) (~ w1 'rx))
+  (set! (~ w1 'ay 0) (~ w1 'ry))
   (do ((i 0 (+ i 1)))
       ((> i anum) #f)
     (set! acsum (+ acsum (~ w1 'ac i)))
-    (set! (~ w1 'ax i) (+ (get-ax (- i 1)) (* al (cos (* acsum pi/180)))))
-    (set! (~ w1 'ay i) (+ (get-ay (- i 1)) (* al (sin (* acsum pi/180)))))
+    (set! (~ w1 'ax (+ i 1)) (+ (~ w1 'ax i) (* al (cos (* acsum pi/180)))))
+    (set! (~ w1 'ay (+ i 1)) (+ (~ w1 'ay i) (* al (sin (* acsum pi/180)))))
     )
-  (set! (~ w1 'fx) (~ w1 'ax anum))
-  (set! (~ w1 'fy) (~ w1 'ay anum))
+  (set! (~ w1 'fx) (~ w1 'ax (+ anum 1)))
+  (set! (~ w1 'fy) (~ w1 'ay (+ anum 1)))
   (set! (~ w1 'fc) acsum))
 ;; ワームの表示
 (define-method worm-disp ((w1 <worm>))
@@ -252,8 +257,8 @@
   (glut-solid-sphere (~ w1 'rr) 20 20)
   (gl-pop-matrix)
   ;; 関節
-  (do ((i 0 (+ i 1)))
-      ((>= i anum) #f)
+  (do ((i 1 (+ i 1)))
+      ((> i anum) #f)
     (gl-push-matrix)
     (gl-translate (~ w1 'ax i) (~ w1 'ay i) 0)
     (glut-solid-sphere ar 20 20)
