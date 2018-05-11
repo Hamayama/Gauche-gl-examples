@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2018-5-2 v1.53
+;; 2018-5-12 v1.60
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -15,11 +15,14 @@
     randint sign-value sign-value2 round-n truncate-n wrap-range remap-range recthit?
     make-fpath make-vector-of-class make-time-text
     <wininfo> win-init win-update-size win-x win-y win-w win-h win-w-r win-h-r win-gl-x win-gl-y
+    <mousestateinfo> mouse-button mouse-button? mouse-x mouse-y mouse-update-offset
     <keystateinfo> key-on key-off spkey-on spkey-off key-on? spkey-on? mdkey-on?
     <keywaitinfo>  keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
     <waitcalcinfo> waitcalc waitcalc-set-wait
     <xrand> xrand-init xrand-randint xrand-test
+    <quedata> quedata-init quedata-push quedata-pop quedata-shift quedata-ref quedata-set
+    quedata-count quedata-test
     ))
 (select-module glmintool)
 
@@ -166,6 +169,31 @@
 ;; OpenGL上のY座標を計算
 (define-method win-gl-y ((wn <wininfo>) (y <real>))
   (- (~ wn 'yoffset) (/. (* y (~ wn 'ht)) (~ wn 'height))))
+
+
+;; マウス状態管理クラス
+;;   ・マウスのボタン状態とカーソル位置を管理する
+;;   ・glut-mouse-func, glut-motion-func と組み合わせて使用する
+;;   ・カーソル位置のオフセットを使用する場合、ウィンドウのサイズ変更に追従する必要がある。
+;;     このときは、glut-reshape-func のコールバックで mouse-update-offset を呼び出して、
+;;     カーソル位置のオフセットを更新すること
+(define-class <mousestateinfo> ()
+  ((buttonstate :init-form (make-hash-table 'eqv?)) ; ボタン状態(ハッシュテーブル)
+   (xoffset     :init-value 0) ; カーソル位置のX座標のオフセット
+   (yoffset     :init-value 0) ; カーソル位置のY座標のオフセット
+   ))
+(define-method mouse-update-offset ((m <mousestateinfo>) (xoffset <real>) (yoffset <real>))
+  (set! (~ m 'xoffset) xoffset)
+  (set! (~ m 'yoffset) yoffset))
+(define-method mouse-x ((m <mousestateinfo>) (x <real>))
+  (- x (~ m 'xoffset)))
+(define-method mouse-y ((m <mousestateinfo>) (y <real>))
+  (- y (~ m 'yoffset)))
+(define-method mouse-button ((m <mousestateinfo>) (button <integer>) (state <integer>))
+  (hash-table-put! (~ m 'buttonstate) button state))
+(define-method mouse-button? ((m <mousestateinfo>) (button <integer>))
+  (if (= (hash-table-get (~ m 'buttonstate) button GLUT_UP) GLUT_UP)
+    #f #t))
 
 
 ;; キー入力状態管理クラス
@@ -356,6 +384,85 @@
       (inc! (~ count (xrand-randint xr 0 9))))
     (print "count[0-9]=" count " -> "
            (if (equal? count #(1000 967 1024 975 977 1050 1039 1032 967 969)) "OK" "NG"))
+    ))
+
+
+;; キューデータクラス
+(define-class <quedata> ()
+  ((size :init-value 1) ; サイズ(格納可能なデータの数)(1以上)
+   (init :init-value 0) ; データの初期値
+   (buf  :init-form (make-vector 1 0)) ; バッファ(リングバッファ)
+   (next :init-value 0) ; 新規データへのポインタ
+   (last :init-value 0) ; 最古データへのポインタ
+   (num  :init-value 0) ; 現在のデータ数
+   ))
+;; 初期化
+(define-method quedata-init ((q <quedata>) (size <integer>) :optional (init 0))
+  (set! (~ q 'size) (max 1 size))
+  (set! (~ q 'init) init)
+  (set! (~ q 'buf)  (make-vector (~ q 'size) (~ q 'init)))
+  (set! (~ q 'next) 0)
+  (set! (~ q 'last) 0)
+  (set! (~ q 'num)  0))
+;; データの追加
+;; (サイズを超えて追加した場合、最古データが削除される)
+(define-method quedata-push ((q <quedata>) data)
+  (set! (~ q 'buf (~ q 'next)) data)
+  (set! (~ q 'next) (mod (+ (~ q 'next) 1) (~ q 'size)))
+  (if (< (~ q 'num) (~ q 'size))
+    (inc! (~ q 'num))
+    (set! (~ q 'last) (mod (+ (~ q 'last) 1) (~ q 'size)))))
+;; 最新データの取り出し(スタック)
+(define-method quedata-pop ((q <quedata>))
+  (cond
+   ((<= (~ q 'num) 0)
+    (~ q 'init))
+   (else
+    (set! (~ q 'next) (mod (- (~ q 'next) 1) (~ q 'size)))
+    (dec! (~ q 'num))
+    (~ q 'buf (~ q 'next)))))
+;; 最古データの取り出し(キュー)
+(define-method quedata-shift ((q <quedata>))
+  (cond
+   ((<= (~ q 'num) 0)
+    (~ q 'init))
+   (else
+    (let1 ret (~ q 'buf (~ q 'last))
+      (set! (~ q 'last) (mod (+ (~ q 'last) 1) (~ q 'size)))
+      (dec! (~ q 'num))
+      ret))))
+;; データの参照
+(define-method quedata-ref ((q <quedata>) (index <integer>))
+  (cond
+   ((<= (~ q 'num) index)
+    (~ q 'init))
+   (else
+    (let1 i (mod (- (~ q 'next) index 1) (~ q 'size))
+      (~ q 'buf i)))))
+;; データの設定
+(define-method quedata-set ((q <quedata>) (index <integer>) data)
+  (cond
+   ((<= (~ q 'num) index))
+   (else
+    (let1 i (mod (- (~ q 'next) index 1) (~ q 'size))
+      (set! (~ q 'buf i) data)))))
+;; データ数の取得
+(define-method quedata-count ((q <quedata>))
+  (~ q 'num))
+;; キューデータのテスト(デバッグ用)
+(define (quedata-test)
+  (let1 q (make <quedata>)
+    (quedata-init q 3 -1)
+    (quedata-push q 1)
+    (quedata-push q 2)
+    (quedata-push q 3)
+    (print "quedata-pop:   " (if (= (quedata-pop q)      3) "OK" "NG"))
+    (print "quedata-shift: " (if (= (quedata-shift q)    1) "OK" "NG"))
+    (print "quedata-ref 1: " (if (= (quedata-ref q 0)    2) "OK" "NG"))
+    (print "quedata-ref 2: " (if (= (quedata-ref q 1)   -1) "OK" "NG"))
+    (quedata-set q 0 1000)
+    (print "quedata-ref 3: " (if (= (quedata-ref q 0) 1000) "OK" "NG"))
+    (print "quedata-count: " (if (= (quedata-count q)    1) "OK" "NG"))
     ))
 
 
