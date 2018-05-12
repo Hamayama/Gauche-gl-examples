@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2018-5-12 v1.60
+;; 2018-5-12 v1.61
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -388,6 +388,8 @@
 
 
 ;; キューデータクラス
+;;   ・サイズの途中変更不可
+;;   ・サイズを超えてデータを追加した場合、最古データが削除される
 (define-class <quedata> ()
   ((size :init-value 1) ; サイズ(格納可能なデータの数)(1以上)
    (init :init-value 0) ; データの初期値
@@ -405,7 +407,6 @@
   (set! (~ q 'last) 0)
   (set! (~ q 'num)  0))
 ;; データの追加
-;; (サイズを超えて追加した場合、最古データが削除される)
 (define-method quedata-push ((q <quedata>) data)
   (set! (~ q 'buf (~ q 'next)) data)
   (set! (~ q 'next) (mod (+ (~ q 'next) 1) (~ q 'size)))
