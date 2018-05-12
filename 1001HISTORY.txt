@@ -239,7 +239,7 @@ shooting0101.scm
   2017-8-18  v2.03  待ち処理変更
   2018-2-11  v2.10  gltextscrn.scm v2.00 対応
 
-shooting0102.scm
+shooting0201.scm
   2016-11-17 v1.00  初版
   2016-11-17 v1.01  ビーム処理修正
   2016-11-18 v1.02  不要変数削除等
@@ -271,6 +271,7 @@ shooting0102.scm
   2017-8-17  v1.52  変数名変更等
   2017-8-18  v1.53  待ち処理変更
   2018-2-11  v1.60  gltextscrn.scm v2.00 対応
+  2018-5-12  v1.61  ファイル名変更(shooting0102.scm → shooting0201.scm)
 
 drive.scm
   2016-7-16  v1.00  初版
@@ -444,8 +445,9 @@ worm0101.scm
   2018-5-12  v1.16  ファイル名変更(worm.scm → worm0101.scm)
                     glmintool.scm v1.60 対応(マウス状態管理クラス使用)
 
-worm0102.scm
+worm0201.scm
   2018-5-12  v1.00  初版
+  2018-5-12  v1.01  ファイル名変更(worm0102.scm → worm0201.scm)
 
 
 glmintool.scm

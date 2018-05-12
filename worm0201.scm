@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
-;; worm0102.scm
-;; 2018-5-12 v1.00
+;; worm0201.scm
+;; 2018-5-12 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -21,7 +21,7 @@
 (use glmodelkit)
 
 (define *wait*      20) ; ウェイト(msec)
-(define *title* "worm0102") ; ウィンドウのタイトル
+(define *title* "worm0201") ; ウィンドウのタイトル
 (define *width*    624) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    45) ; 視野角(度)

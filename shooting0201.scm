@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
-;; shooting0102.scm
-;; 2018-2-11 v1.60
+;; shooting0201.scm
+;; 2018-5-12 v1.61
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -25,7 +25,7 @@
 (use alauddata)
 
 (define *wait*      20) ; ウェイト(msec)
-(define *title* "shooting0102") ; ウィンドウのタイトル
+(define *title* "shooting0201") ; ウィンドウのタイトル
 (define *width*    624) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *aratio*     (/. *width* *height*)) ; アスペクト比(計算用)
