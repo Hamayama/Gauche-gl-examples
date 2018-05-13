@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm0101.scm
-;; 2018-5-12 v1.16
+;; 2018-5-14 v1.17
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -295,14 +295,19 @@
 
 ;; カーソルの移動
 (define (move-cursor)
-  (let ((vx 0) (vy 0))
-    (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx (- vx *cd*)))
-    (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx (+ vx *cd*)))
-    (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! vy (- vy *cd*)))
-    (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy (+ vy *cd*)))
-    (unless (= vx 0) (set! *cx* (wrap-range (+ *cx* vx) (- *wd/2*) *wd/2*)))
-    (unless (= vy 0) (set! *cy* (wrap-range (+ *cy* vy) (- *ht/2*) *ht/2*)))
-    ))
+  (cond
+   ((mouse-button? *msinfo* GLUT_LEFT_BUTTON)
+    (set! *cx* (clamp (win-gl-x *win* (mouse-x *msinfo*)) (- *wd/2*) *wd/2*))
+    (set! *cy* (clamp (win-gl-y *win* (mouse-y *msinfo*)) (- *ht/2*) *ht/2*)))
+   (else
+    (let ((vx 0) (vy 0))
+      (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx (- vx *cd*)))
+      (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx (+ vx *cd*)))
+      (if (spkey-on? *ksinfo* GLUT_KEY_DOWN)  (set! vy (- vy *cd*)))
+      (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy (+ vy *cd*)))
+      (unless (= vx 0) (set! *cx* (wrap-range (+ *cx* vx) (- *wd/2*) *wd/2*)))
+      (unless (= vy 0) (set! *cy* (wrap-range (+ *cy* vy) (- *ht/2*) *ht/2*))))
+    )))
 
 
 ;; 初期化
@@ -377,13 +382,11 @@
 ;; マウスボタン
 (define (mouse button state x y)
   (mouse-button *msinfo* button state)
-  (mousedrag x y))
+  (mouse-move *msinfo* x y))
 
 ;; マウスドラッグ
 (define (mousedrag x y)
-  (when (mouse-button? *msinfo* GLUT_LEFT_BUTTON)
-    (set! *cx* (clamp (win-gl-x *win* (mouse-x *msinfo* x)) (- *wd/2*) *wd/2*))
-    (set! *cy* (clamp (win-gl-y *win* (mouse-y *msinfo* y)) (- *ht/2*) *ht/2*))))
+  (mouse-move *msinfo* x y))
 
 ;; タイマー
 (define (timer val)

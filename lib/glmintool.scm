@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2018-5-12 v1.61
+;; 2018-5-14 v1.70
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -15,7 +15,7 @@
     randint sign-value sign-value2 round-n truncate-n wrap-range remap-range recthit?
     make-fpath make-vector-of-class make-time-text
     <wininfo> win-init win-update-size win-x win-y win-w win-h win-w-r win-h-r win-gl-x win-gl-y
-    <mousestateinfo> mouse-button mouse-button? mouse-x mouse-y mouse-update-offset
+    <mousestateinfo> mouse-update-offset mouse-move mouse-x mouse-y mouse-button mouse-button?
     <keystateinfo> key-on key-off spkey-on spkey-off key-on? spkey-on? mdkey-on?
     <keywaitinfo>  keywait keywait-timer keywait-clear keywait-waiting? keywait-finished?
     <timewaitinfo> timewait timewait-timer timewait-clear timewait-waiting? timewait-finished?
@@ -172,23 +172,28 @@
 
 
 ;; マウス状態管理クラス
-;;   ・マウスのボタン状態とカーソル位置を管理する
+;;   ・マウスのカーソル位置とボタン状態を管理する
 ;;   ・glut-mouse-func, glut-motion-func と組み合わせて使用する
 ;;   ・カーソル位置のオフセットを使用する場合、ウィンドウのサイズ変更に追従する必要がある。
 ;;     このときは、glut-reshape-func のコールバックで mouse-update-offset を呼び出して、
 ;;     カーソル位置のオフセットを更新すること
 (define-class <mousestateinfo> ()
   ((buttonstate :init-form (make-hash-table 'eqv?)) ; ボタン状態(ハッシュテーブル)
+   (x           :init-value 0) ; カーソル位置のX座標
+   (y           :init-value 0) ; カーソル位置のY座標
    (xoffset     :init-value 0) ; カーソル位置のX座標のオフセット
    (yoffset     :init-value 0) ; カーソル位置のY座標のオフセット
    ))
 (define-method mouse-update-offset ((m <mousestateinfo>) (xoffset <real>) (yoffset <real>))
   (set! (~ m 'xoffset) xoffset)
   (set! (~ m 'yoffset) yoffset))
-(define-method mouse-x ((m <mousestateinfo>) (x <real>))
-  (- x (~ m 'xoffset)))
-(define-method mouse-y ((m <mousestateinfo>) (y <real>))
-  (- y (~ m 'yoffset)))
+(define-method mouse-move ((m <mousestateinfo>) (x <real>) (y <real>))
+  (set! (~ m 'x) x)
+  (set! (~ m 'y) y))
+(define-method mouse-x ((m <mousestateinfo>))
+  (- (~ m 'x) (~ m 'xoffset)))
+(define-method mouse-y ((m <mousestateinfo>))
+  (- (~ m 'y) (~ m 'yoffset)))
 (define-method mouse-button ((m <mousestateinfo>) (button <integer>) (state <integer>))
   (hash-table-put! (~ m 'buttonstate) button state))
 (define-method mouse-button? ((m <mousestateinfo>) (button <integer>))
@@ -415,38 +420,32 @@
     (set! (~ q 'last) (mod (+ (~ q 'last) 1) (~ q 'size)))))
 ;; 最新データの取り出し(スタック)
 (define-method quedata-pop ((q <quedata>))
-  (cond
-   ((<= (~ q 'num) 0)
-    (~ q 'init))
-   (else
-    (set! (~ q 'next) (mod (- (~ q 'next) 1) (~ q 'size)))
-    (dec! (~ q 'num))
-    (~ q 'buf (~ q 'next)))))
+  (if (<= (~ q 'num) 0)
+    (~ q 'init)
+    (begin
+      (set! (~ q 'next) (mod (- (~ q 'next) 1) (~ q 'size)))
+      (dec! (~ q 'num))
+      (~ q 'buf (~ q 'next)))))
 ;; 最古データの取り出し(キュー)
 (define-method quedata-shift ((q <quedata>))
-  (cond
-   ((<= (~ q 'num) 0)
-    (~ q 'init))
-   (else
+  (if (<= (~ q 'num) 0)
+    (~ q 'init)
     (let1 ret (~ q 'buf (~ q 'last))
       (set! (~ q 'last) (mod (+ (~ q 'last) 1) (~ q 'size)))
       (dec! (~ q 'num))
-      ret))))
+      ret)))
 ;; データの参照
 (define-method quedata-ref ((q <quedata>) (index <integer>))
-  (cond
-   ((<= (~ q 'num) index)
-    (~ q 'init))
-   (else
+  (if (<= (~ q 'num) index)
+    (~ q 'init)
     (let1 i (mod (- (~ q 'next) index 1) (~ q 'size))
-      (~ q 'buf i)))))
+      (~ q 'buf i))))
 ;; データの設定
 (define-method quedata-set ((q <quedata>) (index <integer>) data)
-  (cond
-   ((<= (~ q 'num) index))
-   (else
+  (if (<= (~ q 'num) index)
+    (undefined)
     (let1 i (mod (- (~ q 'next) index 1) (~ q 'size))
-      (set! (~ q 'buf i) data)))))
+      (set! (~ q 'buf i) data))))
 ;; データ数の取得
 (define-method quedata-count ((q <quedata>))
   (~ q 'num))
