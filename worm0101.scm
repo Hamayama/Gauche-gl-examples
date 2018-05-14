@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm0101.scm
-;; 2018-5-14 v1.17
+;; 2018-5-14 v1.18
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -127,8 +127,7 @@
       (else
        (%worm-move-tail w1)))
      (%worm-calc-point w1)
-     ;; 3分で強制移行
-     ;; (たまにS字になって回り続けるケースがあるため)
+     ;; 3分で強制移行(永久パターン防止のため)
      (set! count2 (+ count2 *wait*))
      (when (>= count2 180000)
        (set! state 2))

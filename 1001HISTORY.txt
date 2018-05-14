@@ -445,11 +445,13 @@ worm0101.scm
   2018-5-12  v1.16  ファイル名変更(worm.scm → worm0101.scm)
                     glmintool.scm v1.60 対応(マウス状態管理クラス使用)
   2018-5-14  v1.17  glmintool.scm v1.70 対応
+  2018-5-14  v1.18  コメント修正のみ
 
 worm0201.scm
   2018-5-12  v1.00  初版
   2018-5-12  v1.01  ファイル名変更(worm0102.scm → worm0201.scm)
   2018-5-14  v1.02  glmintool.scm v1.70 対応
+  2018-5-14  v1.03  コメント修正のみ
 
 
 glmintool.scm
