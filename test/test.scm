@@ -1,5 +1,5 @@
 ;;
-;; testing alaudplay, glmintool, gltextscrn and glmodelkit
+;; testing libraries
 ;;
 
 (add-load-path "../lib" :relative)
