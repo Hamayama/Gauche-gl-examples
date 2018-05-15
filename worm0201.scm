@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm0201.scm
-;; 2018-5-14 v1.03
+;; 2018-5-16 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -164,9 +164,12 @@
   (define fcv   (~ w1 'fcv))
   ;; 先端の角度を目標に近づける
   (let* ((c1    (* (atan (- gy fy) (- gx fx)) 180/pi))
-         (diffc (clamp
-                 (wrap-range (- c1 (~ w1 'fc)) -180 180)
-                 (- fcv) fcv)))
+         (diffc (wrap-range (- c1 (~ w1 'fc)) -180 180)))
+    (when (> (abs diffc) fcv)
+      (set! diffc (clamp diffc (- fcv) fcv))
+      ;; 追跡中に10秒経過したら乱数を加算
+      (when (and (= (~ w1 'state) 0) (>= (~ w1 'count2) 10000))
+        (set! diffc (+ diffc (randint (- fcv) fcv)))))
     (set! (~ w1 'fc) (wrap-range (+ (~ w1 'fc) diffc) -180 180))
     ;; 先端の座標を計算
     (set! (~ w1 'fx) (wrap-range (+ fx (* fv (cos (* (~ w1 'fc) pi/180))))
