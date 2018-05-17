@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm0201.scm
-;; 2018-5-16 v1.04
+;; 2018-5-17 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -72,16 +72,16 @@
    (fx     :init-value     0)  ; 先端のX座標
    (fy     :init-value     0)  ; 先端のY座標
    (fr     :init-value  2500)  ; 先端の半径
-   (fl     :init-value  4000)  ; 先端と関節の距離
    (fv     :init-value   700)  ; 先端の速度
    (fc     :init-value     0)  ; 先端の角度(度)
    (fcv    :init-value     5)  ; 先端の角速度(度)
    (anum   :init-value     9)  ; 関節の数(末尾も含む)
    (ar     :init-value  1000)  ; 関節の半径
-   (rr     :init-value  2000)  ; 末尾の半径
+   (al     :init-value  4000)  ; 関節の距離
    (adf    :init-value     #f) ; 関節の遅延フレーム係数
    (axque  :init-value     #f) ; 関節のX座標の遅延キュー
    (ayque  :init-value     #f) ; 関節のY座標の遅延キュー
+   (rr     :init-value  2000)  ; 末尾の半径
    ))
 ;; ワームの初期化
 ;;   anum  関節の数
@@ -93,7 +93,7 @@
   (set! (~ w1 'fx)    fx)
   (set! (~ w1 'fy)    fy)
   (set! (~ w1 'fc)    fc)
-  (set! (~ w1 'adf)   (round->exact (/. (~ w1 'fl) (~ w1 'fv))))
+  (set! (~ w1 'adf)   (round->exact (/. (~ w1 'al) (~ w1 'fv))))
   (set! (~ w1 'axque) (make <quedata>))
   (set! (~ w1 'ayque) (make <quedata>))
   (quedata-init (~ w1 'axque) (+ (* (~ w1 'anum) (~ w1 'adf)) 1) fx)
@@ -201,7 +201,7 @@
                ((1) (randint 0 90))
                ((2) 70)))
   (gl-pop-matrix)
-  ;; 関節
+  ;; 関節(末尾も含む)
   (do ((i 1 (+ i 1)))
       ((> i anum) #f)
     (gl-push-matrix)
