@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2018-5-14 v1.70
+;; 2018-5-19 v1.71
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -197,8 +197,7 @@
 (define-method mouse-button ((m <mousestateinfo>) (button <integer>) (state <integer>))
   (hash-table-put! (~ m 'buttonstate) button state))
 (define-method mouse-button? ((m <mousestateinfo>) (button <integer>))
-  (if (= (hash-table-get (~ m 'buttonstate) button GLUT_UP) GLUT_UP)
-    #f #t))
+  (= (hash-table-get (~ m 'buttonstate) button GLUT_UP) GLUT_DOWN))
 
 
 ;; キー入力状態管理クラス
