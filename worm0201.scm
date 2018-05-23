@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm0201.scm
-;; 2018-5-17 v1.05
+;; 2018-5-24 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -11,6 +11,7 @@
 ;;   ESCキーを押すと終了します。
 ;;
 (add-load-path "lib" :relative)
+(add-load-path "model" :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
@@ -19,6 +20,7 @@
 (use glmintool)
 (use gltextscrn)
 (use glmodelkit)
+(use model0501)
 
 (define *wait*      20) ; ウェイト(msec)
 (define *title* "worm0201") ; ウィンドウのタイトル
@@ -228,7 +230,6 @@
 ;;   stack  y軸に垂直な分割数
 ;;   wedge  欠けの大きさ(角度)
 ;; (define (model0501 r slice stack wedge) ...)
-(load (make-fpath *app-dpath* "model/model0501.scm"))
 
 ;; カーソルの表示
 (define (disp-cursor)

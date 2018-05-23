@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; flight.scm
-;; 2017-8-18 v1.52
+;; 2018-5-24 v1.60
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なフライトゲームです。
@@ -17,6 +17,7 @@
 ;;   ESCキーを押すと終了します。
 ;;
 (add-load-path "lib" :relative)
+(add-load-path "model" :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
@@ -26,6 +27,7 @@
 (use alaudplay)
 (use alauddata)
 (use glmodelkit)
+(use model0301)
 
 (define *wait*      20) ; ウェイト(msec)
 (define *title* "flight") ; ウィンドウのタイトル
@@ -90,7 +92,6 @@
 ;; モデル0301(簡易飛行機)(胴体と羽の交点に原点あり)(胴体の長さ80)
 ;;   smoke  煙状態(=0:OFF,=1:ON)
 ;; (define (model0301 smoke) ...)
-(load (make-fpath *app-dpath* "model/model0301.scm"))
 
 ;; 自機の表示
 (define (disp-mychr)

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2017-8-18 2.13
+;; 2018-5-24 2.20
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -14,6 +14,7 @@
 ;;   ESCキーを押すと終了します。
 ;;
 (add-load-path "lib" :relative)
+(add-load-path "model" :relative)
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
@@ -23,6 +24,7 @@
 (use alaudplay)
 (use alauddata)
 (use glmodelkit)
+(use model0101)
 
 (define *wait*      28) ; ウェイト(msec)
 (define *title* "fighter") ; ウィンドウのタイトル
@@ -284,7 +286,6 @@
 ;;   type  タイプ(=0:自分,=1:敵)
 ;;   pose  ポーズ(=0:通常,=1:前進,=2:後退,=3:やられ,=4:パンチ,=5:キック)
 ;; (define (model0101 type pose) ...)
-(load (make-fpath *app-dpath* "model/model0101.scm"))
 
 ;; 地面(上面に原点あり)
 (define (ground)

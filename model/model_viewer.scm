@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデルビューワー
-;; 2018-3-3
+;; 2018-5-24
 ;;
 ;; ＜使い方＞
 ;;   gosh  model_viewer.scm  [modelXXXX.scm]
@@ -9,6 +9,7 @@
 ;; ＜注意事項＞
 ;; ・モデルのサイズは一辺が100程度であることを想定しています
 ;;
+(add-load-path "." :relative)
 (add-load-path "../lib" :relative)
 (use gl)
 (use gl.glut)
@@ -17,7 +18,6 @@
 (use math.const)
 (use glmintool)
 (use gltextscrn)
-(use glmodelkit)
 
 (define *wait*      20) ; ウェイト(msec)
 (define *title* "model-viewer") ; ウィンドウのタイトル
@@ -37,9 +37,6 @@
 (define *drot2*     45) ; 回転角の増分2(度)
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 
-;; アプリのディレクトリのパス名
-(define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
-
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
 (win-init *win* *width* *height* (* *wd/2* 4) (* *ht/2* 2))
@@ -50,19 +47,28 @@
 ;; ウェイト時間調整クラスのインスタンス生成
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
-;; カスタマイズ用
-(define *model-name*          "")
-(define *model-text-vec-A*    (make-vector  5 ""))
-(define *model-text-vec-B*    (make-vector  5 ""))
-(define *model-para-vec*      (make-vector 10 0))
-(define (viewer-init)         #f)
-(define (viewer-disp)         #f)
-(define (viewer-reshape)      #f)
-(define (viewer-keyboard)     #f)
-(define (viewer-keyboardup)   #f)
-(define (viewer-specialkey)   #f)
-(define (viewer-specialkeyup) #f)
-(define (viewer-timer)        #f)
+;; モデルビューワー情報クラス
+(define-class <model-viewer-info> ()
+  (;; モデル名
+   (model-name :init-value "")
+   ;; 画面上部に表示するテキストのベクタ(5行まで)
+   (text-vec-A :init-form  (make-vector  5 ""))
+   ;; 画面下部に表示するテキストのベクタ(5行まで)
+   (text-vec-B :init-form  (make-vector  5 ""))
+   ;; モデル表示用
+   (viewer-init         :init-form (lambda (vwinfo)))
+   (viewer-disp         :init-form (lambda (vwinfo)))
+   (viewer-reshape      :init-form (lambda (vwinfo)))
+   (viewer-keyboard     :init-form (lambda (vwinfo)))
+   (viewer-keyboardup   :init-form (lambda (vwinfo)))
+   (viewer-specialkey   :init-form (lambda (vwinfo)))
+   (viewer-specialkeyup :init-form (lambda (vwinfo)))
+   (viewer-timer        :init-form (lambda (vwinfo)))
+   ;; キー入力状態取得用
+   (ksinfo :init-keyword :ksinfo :init-value #f)
+   ))
+;; モデルビューワー情報クラスのインスタンス生成
+(define *vwinfo* (make <model-viewer-info> :ksinfo *ksinfo*))
 
 
 ;; 初期化
@@ -78,7 +84,7 @@
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
   ;; カスタマイズ用
-  (viewer-init))
+  ((~ *vwinfo* 'viewer-init) *vwinfo*))
 
 ;; 画面表示
 (define (disp)
@@ -91,12 +97,12 @@
     (define (next-line) (set! y1 (+ y1 30)))
 
     (gl-color 1.0 1.0 1.0 1.0)
-    (draw-bitmap-text *model-name* x1 y1 *width* *height*)
+    (draw-bitmap-text (~ *vwinfo* 'model-name) x1 y1 *width* *height*)
     (next-line)
     (for-each (lambda (str)
                 (draw-bitmap-text str x1 y1 *width* *height*)
                 (next-line))
-              *model-text-vec-A*)
+              (~ *vwinfo* 'text-vec-A))
     (next-line)
     (draw-bitmap-text "[esc] : exit" x1 y1 *width* *height*)
     (next-line)
@@ -105,14 +111,14 @@
     (for-each (lambda (str)
                 (draw-bitmap-text str x1 y1 *width* *height*)
                 (next-line))
-              *model-text-vec-B*)
+              (~ *vwinfo* 'text-vec-B))
     )
   ;; モデルの表示
   (gl-push-matrix)
   (gl-rotate *zrot* 0 0 1) ; Z軸を軸とする回転
   (gl-rotate *yrot* 0 1 0) ; Y軸を軸とする回転
   (gl-rotate *xrot* 1 0 0) ; X軸を軸とする回転
-  (viewer-disp)
+  ((~ *vwinfo* 'viewer-disp) *vwinfo*)
   (gl-pop-matrix)
   ;; 背景の表示
   (gl-color 0.5 0.5 0.5 1.0)
@@ -140,7 +146,7 @@
     (glu-look-at 0 0 (+ z1 *zd/2*) 0 0 0 0 1 0)
     )
   ;; カスタマイズ用
-  (viewer-reshape))
+  ((~ *vwinfo* 'viewer-reshape) *vwinfo*))
 
 ;; キー入力ON
 (define (keyboard key x y)
@@ -161,25 +167,25 @@
     (set! *zrot* 0))
    )
   ;; カスタマイズ用
-  (viewer-keyboard))
+  ((~ *vwinfo* 'viewer-keyboard) *vwinfo*))
 
 ;; キー入力OFF
 (define (keyboardup key x y)
   (key-off *ksinfo* key)
   ;; カスタマイズ用
-  (viewer-keyboardup))
+  ((~ *vwinfo* 'viewer-keyboardup) *vwinfo*))
 
 ;; 特殊キー入力ON
 (define (specialkey key x y)
   (spkey-on *ksinfo* key)
   ;; カスタマイズ用
-  (viewer-specialkey))
+  ((~ *vwinfo* 'viewer-specialkey) *vwinfo*))
 
 ;; 特殊キー入力OFF
 (define (specialkeyup key x y)
   (spkey-off *ksinfo* key)
   ;; カスタマイズ用
-  (viewer-specialkeyup))
+  ((~ *vwinfo* 'viewer-specialkeyup) *vwinfo*))
 
 ;; タイマー
 (define (timer val)
@@ -192,7 +198,7 @@
   (set! *yrot* (wrap-range *yrot* 0 360))
   (set! *zrot* (wrap-range *zrot* 0 360))
   ;; カスタマイズ用
-  (viewer-timer)
+  ((~ *vwinfo* 'viewer-timer) *vwinfo*)
   ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整
@@ -200,9 +206,14 @@
 
 ;; メイン処理
 (define (main args)
+  (define fname (x->string (list-ref args 1 "model0101.scm")))
+  (define mname (or (string-scan fname "." 'before) fname))
 
   ;; モデルのロード
-  (load (make-fpath *app-dpath* (x->string (list-ref args 1 "model0101.scm"))))
+  (eval `(begin
+           (use ,(string->symbol mname))
+           (,(string->symbol (string-append mname "-viewer-init")) *vwinfo*))
+        (interaction-environment))
 
   (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))

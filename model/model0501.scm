@@ -1,8 +1,21 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0501(欠けた球)
-;; 2018-5-5
+;; 2018-5-24
 ;;
+(define-module model0501
+  (use gl)
+  (use gl.glut)
+  (use gauche.uvector)
+  (use gauche.collection)
+  (use math.const)
+  ;(use glmintool)
+  ;(use glmodelkit)
+  (export
+    model0501
+    model0501-viewer-init
+    ))
+(select-module model0501)
 
 ;; モデル0501(欠けた球)(中心に原点あり)
 ;;   r      半径
@@ -82,10 +95,14 @@
 ;; 以下はモデルビューワー用
 ;;
 
-(define *model-name* "model0501")
+;; モデルビューワー情報の初期化
+(define (model0501-viewer-init vwinfo)
+  (set! (~ vwinfo 'model-name)  "model0501")
+  (set! (~ vwinfo 'viewer-disp) viewer-disp)
+  )
 
 ;; モデルの表示
-(define (viewer-disp)
+(define (viewer-disp vwinfo)
   ;(glut-wire-sphere 50 5 10)
   ;(glut-solid-sphere 50 5 10)
   ;(model0501 50 20 20 90)

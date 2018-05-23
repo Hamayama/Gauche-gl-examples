@@ -1,10 +1,21 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0101(人形)
-;; 2017-8-10
+;; 2018-5-24
 ;;
-;(add-load-path "../lib" :relative)
-;(use glmodelkit) ; box-model,cylinder用
+(define-module model0101
+  (use gl)
+  (use gl.glut)
+  (use gauche.uvector)
+  (use gauche.collection)
+  (use math.const)
+  (use glmintool)
+  (use glmodelkit)
+  (export
+    model0101
+    model0101-viewer-init
+    ))
+(select-module model0101)
 
 ;; モデル0101(人形)(頭に原点あり)(高さ100)
 ;;   type  タイプ(=0:自分,=1:敵)
@@ -78,40 +89,40 @@
 ;; 以下はモデルビューワー用
 ;;
 
-(define *model-name*           "model0101")
-(define *model-text-vec-A*     (make-vector  5 ""))
-(define *model-text-vec-B*     (make-vector  5 ""))
-(define *model-para-vec*       (make-vector 10 0))
-(set! (~ *model-text-vec-A* 0) "  type : 0")
-(set! (~ *model-text-vec-A* 1) "  pose : 0 (normal)")
-(set! (~ *model-text-vec-B* 0) "[z] : change type")
-(set! (~ *model-text-vec-B* 1) "[space] : change pose")
-(set! (~ *model-para-vec*   0) 0) ; type
-(set! (~ *model-para-vec*   1) 0) ; pose
+(define *type* 0)
+(define *pose* 0)
+
+;; モデルビューワー情報の初期化
+(define (model0101-viewer-init vwinfo)
+  (set! (~ vwinfo 'model-name)      "model0101")
+  (set! (~ vwinfo 'text-vec-A 0)    "  type : 0")
+  (set! (~ vwinfo 'text-vec-A 1)    "  pose : 0 (normal)")
+  (set! (~ vwinfo 'text-vec-B 0)    "[z] : change type")
+  (set! (~ vwinfo 'text-vec-B 1)    "[space] : change pose")
+  (set! (~ vwinfo 'viewer-disp)     viewer-disp)
+  (set! (~ vwinfo 'viewer-keyboard) viewer-keyboard)
+  )
 
 ;; モデルの表示
-(define (viewer-disp)
-  (model0101 (~ *model-para-vec* 0) (~ *model-para-vec* 1)))
+(define (viewer-disp vwinfo)
+  (model0101 *type* *pose*))
 
 ;; キー入力ON
-(define (viewer-keyboard)
-  (when (key-on? *ksinfo* '(#\z #\Z))
-    (inc! (~ *model-para-vec* 0))
-    (if (> (~ *model-para-vec* 0) 1) (set! (~ *model-para-vec* 0) 0))
-    (set! (~ *model-text-vec-A* 0)
-          (format "  type : ~d" (~ *model-para-vec* 0)))
-    )
-  (when (key-on? *ksinfo* #\space)
-    (inc! (~ *model-para-vec* 1))
-    (if (> (~ *model-para-vec* 1) 5) (set! (~ *model-para-vec* 1) 0))
-    (set! (~ *model-text-vec-A* 1)
-          (format "  pose : ~a" (case (~ *model-para-vec* 1)
+(define (viewer-keyboard vwinfo)
+  (when (key-on? (~ vwinfo 'ksinfo) '(#\z #\Z))
+    (inc! *type*)
+    (if (> *type* 1) (set! *type* 0))
+    (set! (~ vwinfo 'text-vec-A 0) (format "  type : ~d" *type*)))
+  (when (key-on? (~ vwinfo 'ksinfo) #\space)
+    (inc! *pose*)
+    (if (> *pose* 5) (set! *pose* 0))
+    (set! (~ vwinfo 'text-vec-A 1)
+          (format "  pose : ~a" (case *pose*
                                   ((0) "0 (normal)")
                                   ((1) "1 (foreward)")
                                   ((2) "2 (backword)")
                                   ((3) "3 (down)")
                                   ((4) "4 (punch)")
-                                  ((5) "5 (kick)"))))
-    )
+                                  ((5) "5 (kick)")))))
   )
 

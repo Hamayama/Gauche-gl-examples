@@ -1,10 +1,21 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0301(簡易飛行機)
-;; 2017-8-10
+;; 2018-5-24
 ;;
-;(add-load-path "../lib" :relative)
-;(use glmodelkit) ; box-model用
+(define-module model0301
+  (use gl)
+  (use gl.glut)
+  (use gauche.uvector)
+  (use gauche.collection)
+  (use math.const)
+  (use glmintool)
+  (use glmodelkit)
+  (export
+    model0301
+    model0301-viewer-init
+    ))
+(select-module model0301)
 
 ;; モデル0301(簡易飛行機)(胴体と羽の交点に原点あり)(胴体の長さ80)
 ;;   smoke  煙状態(=0:OFF,=1:ON)
@@ -39,25 +50,26 @@
 ;; 以下はモデルビューワー用
 ;;
 
-(define *model-name* "model0301")
-(define *model-text-vec-A*     (make-vector  5 ""))
-(define *model-text-vec-B*     (make-vector  5 ""))
-(define *model-para-vec*       (make-vector 10 0))
-(set! (~ *model-text-vec-A* 0) "  smoke : 0")
-(set! (~ *model-text-vec-B* 0) "[space] : change smoke")
-(set! (~ *model-para-vec*   0) 0) ; smoke
+(define *smoke* 0)
+
+;; モデルビューワー情報の初期化
+(define (model0301-viewer-init vwinfo)
+  (set! (~ vwinfo 'model-name)      "model0301")
+  (set! (~ vwinfo 'text-vec-A 0)    "  smoke : 0")
+  (set! (~ vwinfo 'text-vec-B 0)    "[space] : change smoke")
+  (set! (~ vwinfo 'viewer-disp)     viewer-disp)
+  (set! (~ vwinfo 'viewer-keyboard) viewer-keyboard)
+  )
 
 ;; モデルの表示
-(define (viewer-disp)
-  (model0301 (~ *model-para-vec* 0)))
+(define (viewer-disp vwinfo)
+  (model0301 *smoke*))
 
 ;; キー入力ON
-(define (viewer-keyboard)
-  (when (key-on? *ksinfo* '#\space)
-    (inc! (~ *model-para-vec* 0))
-    (if (> (~ *model-para-vec* 0) 1) (set! (~ *model-para-vec* 0) 0))
-    (set! (~ *model-text-vec-A* 0)
-          (format "  smoke : ~d" (~ *model-para-vec* 0)))
-    )
+(define (viewer-keyboard vwinfo)
+  (when (key-on? (~ vwinfo 'ksinfo) #\space)
+    (inc! *smoke*)
+    (if (> *smoke* 1) (set! *smoke* 0))
+    (set! (~ vwinfo 'text-vec-A 0) (format "  smoke : ~d" *smoke*)))
   )
 

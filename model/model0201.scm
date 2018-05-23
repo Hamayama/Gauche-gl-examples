@@ -1,10 +1,21 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0201(人形)
-;; 2017-8-10
+;; 2018-5-24
 ;;
-;(add-load-path "../lib" :relative)
-;(use glmodelkit) ; box-model,cylinder用
+(define-module model0201
+  (use gl)
+  (use gl.glut)
+  (use gauche.uvector)
+  (use gauche.collection)
+  (use math.const)
+  (use glmintool)
+  (use glmodelkit)
+  (export
+    model0201
+    model0201-viewer-init
+    ))
+(select-module model0201)
 
 ;; モデル0201(人形)(頭に原点あり)(高さ100)
 ;;   pose  ポーズ(=0-7:はばたき)
@@ -67,25 +78,26 @@
 ;; 以下はモデルビューワー用
 ;;
 
-(define *model-name*           "model0201")
-(define *model-text-vec-A*     (make-vector  5 ""))
-(define *model-text-vec-B*     (make-vector  5 ""))
-(define *model-para-vec*       (make-vector 10 0))
-(set! (~ *model-text-vec-A* 0) "  pose : 0")
-(set! (~ *model-text-vec-B* 0) "[space] : change pose")
-(set! (~ *model-para-vec*   0) 0) ; pose
+(define *pose* 0)
+
+;; モデルビューワー情報の初期化
+(define (model0201-viewer-init vwinfo)
+  (set! (~ vwinfo 'model-name)      "model0201")
+  (set! (~ vwinfo 'text-vec-A 0)    "  pose : 0")
+  (set! (~ vwinfo 'text-vec-B 0)    "[space] : change pose")
+  (set! (~ vwinfo 'viewer-disp)     viewer-disp)
+  (set! (~ vwinfo 'viewer-keyboard) viewer-keyboard)
+  )
 
 ;; モデルの表示
-(define (viewer-disp)
-  (model0201 (~ *model-para-vec* 0)))
+(define (viewer-disp vwinfo)
+  (model0201 *pose*))
 
 ;; キー入力ON
-(define (viewer-keyboard)
-  (when (key-on? *ksinfo* '#\space)
-    (inc! (~ *model-para-vec* 0))
-    (if (> (~ *model-para-vec* 0) 7) (set! (~ *model-para-vec* 0) 0))
-    (set! (~ *model-text-vec-A* 0)
-          (format "  pose : ~d" (~ *model-para-vec* 0)))
-    )
+(define (viewer-keyboard vwinfo)
+  (when (key-on? (~ vwinfo 'ksinfo) #\space)
+    (inc! *pose*)
+    (if (> *pose* 7) (set! *pose* 0))
+    (set! (~ vwinfo 'text-vec-A 0) (format "  pose : ~d" *pose*)))
   )
 
