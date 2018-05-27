@@ -114,7 +114,7 @@
    (maxy    :init-value 0)  ; Y座標の最大値
    (worm    :init-value #f) ; 現在使用中のインスタンス
    (worm1   :init-value #f) ; ワーム0101のインスタンス
-   (worm2   :init-value #f) ; ワーム0202のインスタンス
+   (worm2   :init-value #f) ; ワーム0201のインスタンス
    (count1  :init-value 0)  ; 動作カウンタ1
    (count2  :init-value 0)  ; 動作カウンタ2
    (boss    :init-value #f) ; ボスフラグ
