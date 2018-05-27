@@ -1,13 +1,12 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0301(簡易飛行機)
-;; 2018-5-24
+;; 2018-5-25
 ;;
 (define-module model0301
   (use gl)
   (use gl.glut)
   (use gauche.uvector)
-  (use gauche.collection)
   (use math.const)
   (use glmintool)
   (use glmodelkit)

@@ -5,7 +5,7 @@
 |![image](image/image0101.png)|![image](image/image0201.png)|![image](image/image0301.png)|![image](image/image0401.png)|
 |![image](image/image0501.png)|![image](image/image0601.png)|![image](image/image0701.png)|![image](image/image0801.png)|
 |![image](image/image0901.png)|![image](image/image1001.png)|![image](image/image1101.png)|![image](image/image1201.png)|
-|![image](image/image1301.png)|
+|![image](image/image1301.png)|![image](image/image1401.png)|
 
 ## 概要
 - Gauche-gl を使用したサンプルプログラム等です。  
@@ -124,6 +124,16 @@
     worm0101.scm は末尾から移動するタイプで、  
     worm0201.scm は先端から移動するタイプです。
 
+14. シューティングゲーム3 ( shooting0301.scm )  
+    Gauche-gl を使用した、簡単なシューティングゲームです。  
+    矢印キーで上下左右移動。  
+    [Ctrl]/[Space]/[a]/[z]キーのいずれかでビーム発射です(押し続けると発射し続けます)。  
+    敵は、頭の部分にのみダメージを与えられます。  
+    (かなり固いため、しばらくビームを当て続ける必要があります)  
+    画面右上のレベル表示は、出現する敵の数の目安になります。  
+    また、スタート画面でしばらく待つとデモになります。  
+    ESCキーを押すと終了します。
+
 
 ## その他 注意事項等
 1. 一部のサンプルは、以下のモジュールを使用しています。これらは、lib フォルダに格納しています。
@@ -136,6 +146,7 @@
    |alauddata.scm |alaudplay 用の音楽データをいくつか設定するためのモジュールです。  |
    |glmodelkit.scm|Gauche-gl を使って基本的なモデルの生成を行うためのモジュールです。|
    |glmazekit.scm |迷路の生成と探索を行うためのモジュールです。                      |
+   |glwormkit.scm |ワームシミュレータ用のモジュールです。                            |
 
 2. シューティングゲームについて、キーボードによっては キーの同時押しの制限が存在し、  
    斜め移動とスペースキーの同時押しが効かない場合があります。  
@@ -166,7 +177,7 @@
 - OS
   - Windows 8.1 (64bit)
 - 言語
-  - Gauche v0.9.6_pre6
+  - Gauche v0.9.6_pre7
   - Gauche v0.9.5
   - Gauche v0.9.4
 - 拡張ライブラリ
@@ -179,4 +190,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2018-5-12)
+(2018-5-27)

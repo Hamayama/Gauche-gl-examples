@@ -1,16 +1,14 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0401(標準のティーポット)
-;; 2018-5-24
+;; 2018-5-25
 ;;
 (define-module model0401
   (use gl)
   (use gl.glut)
   (use gauche.uvector)
-  (use gauche.collection)
   (use math.const)
   (use glmintool)
-  ;(use glmodelkit)
   (export
     model0401
     model0401-viewer-init

@@ -1,16 +1,14 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0501(欠けた球)
-;; 2018-5-24
+;; 2018-5-25
 ;;
 (define-module model0501
   (use gl)
   (use gl.glut)
   (use gauche.uvector)
-  (use gauche.collection)
   (use math.const)
-  ;(use glmintool)
-  ;(use glmodelkit)
+  (use glmintool)
   (export
     model0501
     model0501-viewer-init
