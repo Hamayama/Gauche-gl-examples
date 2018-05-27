@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0201.scm
-;; 2018-5-12 v1.61
+;; 2018-5-28 v1.62
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -136,7 +136,7 @@
 
 ;; デモ用パラメータクラス
 (define-class <demoparam> ()
-  ((p1 :init-value 8.0) ; デモ用パラメータ1(敵との距離のしきい値)
+  ((p1 :init-value 6.0) ; デモ用パラメータ1(敵との距離のしきい値)
    (p2 :init-value  50) ; デモ用パラメータ2(中央に戻る確率)
    ))
 (define-method demoparam-copy ((d1 <demoparam>) (d2 <demoparam>))
@@ -160,18 +160,29 @@
    ;; デモのとき
    (*demoflag*
     ;; 自機の移動
-    (let* ((nes (get-near-enemies 1))
-           (rr1 (car (~ nes 0)))
-           (e1  (cdr (~ nes 0)))
-           (vy  0))
+    (let* ((nes1 (get-near-enemies 1))
+           (rr1  (car (~ nes1 0)))
+           (e1   (cdr (~ nes1 0)))
+           (nes2 (get-near-enemies 1 #t))
+           (rr2  (car (~ nes2 0)))
+           (e2   (cdr (~ nes2 0)))
+           (vy   0)
+           (y0   (- *y* *chh*))
+           (y1   (if e1 (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)) 0))
+           (y2   (if e2 (- (~ e2 'y) (/. (* (~ e2 'tscrn 'height) *chh*) 2)) 0)))
       (cond
        ;; 一番近い敵/敵ミサイルを避ける
        ((and e1 (< rr1 (* *chh* *chh* (~ *dparam* 'p1) (~ *dparam* 'p1))))
-        (set! vy (if (< *y* (~ e1 'y)) (- *v*) *v*)))
+        (set! vy (if (< y0 y1) (- *v*) *v*)))
+       ;; 一番近い敵に近づく
+       ((and e2 (> rr2 (* *chh* *chh* (~ *dparam* 'p1) (~ *dparam* 'p1) 4.0))
+             (<= (- *ht/2*) y2 *ht/2*))
+        (if (<= (- y0 y2) (- *v*)) (set! vy    *v*))
+        (if (>= (- y0 y2)    *v*)  (set! vy (- *v*))))
        ;; 中央に戻る
        ((<= (randint 1 100) (~ *dparam* 'p2))
-        (if (<= *y* (- *v*)) (set! vy    *v*))
-        (if (>= *y*    *v*)  (set! vy (- *v*)))))
+        (if (<= y0 (- *v*)) (set! vy    *v*))
+        (if (>= y0    *v*)  (set! vy (- *v*)))))
       (set! *y* (clamp (+ *y* vy) *miny* *maxy*)))
     ;; 自機ビーム発射
     (cond
@@ -481,14 +492,18 @@
 ;; 自機に近い敵/敵ミサイルを、近い順にn個だけ取得する(デモ用)
 ;;   ・戻り値は #((距離の2乗 . 敵) ...) というベクタを返す
 ;;   ・有効な敵がいなければ #((1000000 . #f) ...) というベクタを返す
-(define (get-near-enemies n)
+(define (get-near-enemies n :optional (enemy-only #f))
   (let1 ret (make-vector n '(1000000 . #f))
     (define (%search-near-enemies enemies)
       (for-each
        (lambda (e1)
          (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
-           (let* ((xdiff (- (~ e1 'x) *x*))
-                  (ydiff (- (~ e1 'y) *y*))
+           (let* ((x1    *x*)
+                  (y1    (- *y* *chh*))
+                  (x2    (~ e1 'x))
+                  (y2    (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                  (xdiff (- x2 x1))
+                  (ydiff (- y2 y1))
                   (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
              (when (< rr (car (~ ret (- n 1))))
                (set! (~ ret (- n 1)) (cons rr e1))
@@ -496,19 +511,22 @@
            ))
        enemies))
     (%search-near-enemies *enemies*)
-    (%search-near-enemies *missiles*)
+    (unless enemy-only
+      (%search-near-enemies *missiles*))
     ;(print ret)
     ret))
 
 ;; 自機の敵への攻撃チェック(デモ用)
 (define (attack-enemies?)
   (let ((ret #f)
-        (y1  (- *y* (* *chh* 10)))
-        (y2  (+ *y* (* *chh* 10))))
+        (y0  (- *y* *chh*)))
     (for-each
      (lambda (e1)
-       (if (and (~ e1 'useflag) (= (~ e1 'state) 0) (<= y1 (~ e1 'y) y2))
-         (set! ret #t)))
+       (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
+         (let ((y1 (- (~ e1 'y) (* (~ e1 'tscrn 'height) *chh*) *chh*))
+               (y2 (+ (~ e1 'y) *chh*)))
+           (if (<= y1 y0 y2)
+             (set! ret #t)))))
      *enemies*)
     ret))
 
@@ -747,7 +765,7 @@
                (demoparam-copy *dparam-old* *dparam*))
              (set! (~ *dparam* 'p1)
                    (clamp (round-n (+ (~ *dparam* 'p1) (* (randint -1 1) 0.1)) 1)
-                          5 50))
+                          3 50))
              (set! (~ *dparam* 'p2)
                    (clamp (+ (~ *dparam* 'p2) (randint -1 1))
                           1 100))

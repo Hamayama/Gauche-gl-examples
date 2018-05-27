@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-5-27 v1.02
+;; 2018-5-28 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -154,15 +154,18 @@
            (index (~ (~ nes1 0) 2))
            (nes2  (get-near-enemies 1 #t))
            (e2    (~ (~ nes2 0) 1))
-           (vx    0))
+           (vx    0)
+           (x1    (if e1 (~ e1 'worm 'axvec index) 0))
+           (x2    (if e2 (~ e2 'worm 'axvec 0) 0))
+           (y2    (if e2 (~ e2 'worm 'ayvec 0) 0)))
       (cond
        ;; 一番近い敵を避ける
        ((and e1 (< rr1 (* *chw* *chw* (~ *dparam* 'p1) (~ *dparam* 'p1))))
-        (set! vx (if (< *x* (~ e1 'worm 'axvec index)) (- *v*) *v*)))
+        (set! vx (if (< *x* x1) (- *v*) *v*)))
        ;; 一番近い敵の先端に近づく
-       (e2
-        (if (<= (- *x* (~ e2 'worm 'axvec 0)) (- *v*)) (set! vx    *v*))
-        (if (>= (- *x* (~ e2 'worm 'axvec 0))    *v*)  (set! vx (- *v*))))
+       ((and e2 (<= (- *wd/2*) x2 *wd/2*) (<= (- *ht/2*) y2 *ht/2*))
+        (if (<= (- *x* x2) (- *v*)) (set! vx    *v*))
+        (if (>= (- *x* x2)    *v*)  (set! vx (- *v*))))
        ;; 中央に戻る
        ((<= (randint 1 100) (~ *dparam* 'p2))
         (if (<= *x* (- *v*)) (set! vx    *v*))
@@ -415,15 +418,16 @@
 
 ;; 自機の敵への攻撃チェック(デモ用)
 (define (attack-enemies?)
-  (let ((ret #f)
-        (x1  (- *x* (* *chw* 2)))
-        (x2  (+ *x* (* *chw* 2))))
+  (let1 ret #f
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
          ;; ワームの先端のみチェックする
-         (if (<= x1 (~ e1 'worm 'axvec 0) x2)
-           (set! ret #t))))
+         (let ((x1 (- (~ e1 'worm 'axvec 0) (~ e1 'worm 'arvec 0) *chw*))
+               (x2 (+ (~ e1 'worm 'axvec 0) (~ e1 'worm 'arvec 0) *chw*))
+               (y1    (~ e1 'worm 'ayvec 0)))
+           (if (and (<= x1 *x* x2) (<= (- *ht/2*) y1 *ht/2*))
+             (set! ret #t)))))
      *enemies*)
     ret))
 
