@@ -3,6 +3,7 @@
 ;;
 
 (add-load-path "../lib" :relative)
+(add-load-path "../model" :relative)
 (display #\cr)(flush) ; allocate console for windows
 (use gauche.test)
 
@@ -44,6 +45,11 @@
 (test-start "glmazekit")
 (use glmazekit)
 (test-module 'glmazekit)
+(test-end)
+
+(test-start "glwormkit")
+(use glwormkit)
+(test-module 'glwormkit)
 (test-end)
 
 (print "HIT ENTER KEY!")

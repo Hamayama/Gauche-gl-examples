@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-5-27 v1.01
+;; 2018-5-27 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -106,7 +106,7 @@
 (define-class <enemy> ()
   ((useflag :init-value #f) ; 使用フラグ
    (kind    :init-value 0)  ; 種別(=0:ワーム0101,=1:ワーム0201)
-   (state   :init-value 0)  ; 状態(=0:通常,=1,被弾,=10-30:やられ)
+   (state   :init-value 0)  ; 状態(=0:通常,=1:被弾,=10-30:やられ)
    (life    :init-value 0)  ; 耐久力
    (minx    :init-value 0)  ; X座標の最小値
    (maxx    :init-value 0)  ; X座標の最大値
@@ -202,7 +202,6 @@
 
 ;; 敵の生成
 (define (make-enemies enemies :optional (missiles #f))
-  ;; 敵の生成
   (let1 i (find-index (lambda (e1) (not (~ e1 'useflag))) enemies)
     (if (and i (< i *mr*))
       (let* ((e1     (~ enemies i))
@@ -269,6 +268,7 @@
      (if (~ e1 'useflag)
        (case (~ e1 'state)
          ((0 1)
+          ;; 被弾の解除
           (if (= (~ e1 'state) 1) (set! (~ e1 'state) 0))
           ;; 敵の移動
           (let ((w1   (~ e1 'worm))
@@ -283,7 +283,7 @@
                       (>= (~ e1 'count1) 10000))
               (set! (~ e1 'count1) 0)
               (inc! (~ e1 'count2))
-              ;; ワームの種類を切り換える
+              ;; ワームの種別を切り換える
               (case (~ e1 'kind)
                 ((0)
                  (set! (~ e1 'kind) 1)
@@ -386,7 +386,9 @@
 
 ;; 自機に近い敵を、近い順にn個だけ取得する(デモ用)
 ;;   ・戻り値は #((距離の2乗 敵 index) ...) というベクタを返す
+;;     (ここで index は、ワームの関節の番号)
 ;;   ・有効な敵がいなければ #((1000000 #f 0) ...) というベクタを返す
+;;   ・front-only が #t のときは、ワームの先端のみチェックする
 (define (get-near-enemies n :optional (front-only #f))
   (let1 ret (make-vector n '(1000000 #f 0))
     (define (%search-near-enemies enemies)
@@ -394,6 +396,7 @@
        (lambda (e1)
          (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
            ;; ワームの全関節をチェックする
+           ;; (ただし、front-only が #t のときは、ワームの先端のみチェックする)
            (let1 w1 (~ e1 'worm)
              (for-each-with-index
               (lambda (i ax ay ar)
