@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glwormkit.scm
-;; 2018-5-27 v1.00
+;; 2018-5-27 v1.01
 ;;
 ;; ＜内容＞
 ;;   ワームシミュレータ用のモジュールです。
@@ -10,6 +10,7 @@
   (use gl)
   (use gl.glut)
   (use gauche.uvector)
+  (use gauche.version)
   (use math.const)
   (use glmintool)
   (use glmodelkit)
@@ -22,6 +23,10 @@
     worm-convert
     ))
 (select-module glwormkit)
+
+;; Gauche v0.9.4 で、vector-copy! を使用可能にする
+(if (version<=? (gauche-version) "0.9.4")
+  (eval '(use srfi-43) (current-module)))
 
 ;; ワーム0101クラス
 ;; (末尾から移動していくタイプ)

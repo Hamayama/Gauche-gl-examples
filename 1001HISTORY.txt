@@ -622,6 +622,7 @@ glmazekit.scm
 
 glwormkit.scm
   2018-5-27  v1.00  初版
+  2018-5-27  v1.01  Gauche v0.9.4 対応(vector-copy!)
 
 
 (2018-5-27)
