@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glwormkit.scm
-;; 2018-5-27 v1.01
+;; 2018-5-29 v1.02
 ;;
 ;; ＜内容＞
 ;;   ワームシミュレータ用のモジュールです。
@@ -323,13 +323,14 @@
 
 
 ;; ワーム0101からワーム0201へのコンバート
+;; (座標と角度の情報のみ変換する)
 (define-method worm-convert ((w1 <worm0101>) (w2 <worm0201>))
   (define anum  (~ w1 'anum))
   (define adf   (~ w2 'adf))
   (set! (~ w2 'anum)  anum)
   (vector-copy! (~ w2 'axvec) 0 (~ w1 'axvec))
   (vector-copy! (~ w2 'ayvec) 0 (~ w1 'ayvec))
-  (vector-copy! (~ w2 'arvec) 0 (~ w1 'arvec))
+  ;(vector-copy! (~ w2 'arvec) 0 (~ w1 'arvec))
   (set! (~ w2 'gx)    (~ w1 'gx))
   (set! (~ w2 'gy)    (~ w1 'gy))
   (set! (~ w2 'fx)    (~ w1 'axvec 0))
@@ -355,13 +356,14 @@
 
 
 ;; ワーム0201からワーム0101へのコンバート
+;; (座標と角度の情報のみ変換する)
 (define-method worm-convert ((w1 <worm0201>) (w2 <worm0101>))
   (define anum  (~ w1 'anum))
   (define acsum -90)
   (set! (~ w2 'anum)  anum)
   (vector-copy! (~ w2 'axvec) 0 (~ w1 'axvec))
   (vector-copy! (~ w2 'ayvec) 0 (~ w1 'ayvec))
-  (vector-copy! (~ w2 'arvec) 0 (~ w1 'arvec))
+  ;(vector-copy! (~ w2 'arvec) 0 (~ w1 'arvec))
   (set! (~ w2 'gx)    (~ w1 'gx))
   (set! (~ w2 'gy)    (~ w1 'gy))
   (set! (~ w2 'rx)    (~ w1 'axvec (+ anum 1)))
@@ -382,7 +384,7 @@
       (set! acsum c1)))
   (set! (~ w2 'fx)    (~ w1 'axvec 0))
   (set! (~ w2 'fy)    (~ w1 'ayvec 0))
-  (set! (~ w2 'fc)    (~ w1 'fc)))
+  (set! (~ w2 'fc)    acsum))
 
 
 ;; モデル0501(欠けた球)(中心に原点あり)
