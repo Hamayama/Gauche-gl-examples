@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-5-28 v1.04
+;; 2018-5-28 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -258,8 +258,8 @@
                       ((1)  #f32(0.5 0.0 0.0 1.0))
                       (else #f32(1.0 1.0 0.0 1.0))))
              (wedge (case (~ e1 'state)
-                      ((0)   70)
-                      ((1)  100)
+                      ((0)  (if (= (~ e1 'kind) 0) 70 90))
+                      ((1)  110)
                       (else 130))))
          (worm-disp w1 color wedge))))
    enemies))
@@ -281,7 +281,7 @@
                 (maxy (~ e1 'maxy)))
             (worm-move w1)
             (set! (~ e1 'count1) (+ (~ e1 'count1) *wait*))
-            ;; 目標に到達したか
+            ;; 目標に到達したか、または、10秒経過したとき
             (when (or (worm-goal? w1 *waku*)
                       (>= (~ e1 'count1) 10000))
               (set! (~ e1 'count1) 0)
