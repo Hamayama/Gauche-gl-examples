@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2018-5-28 v2.11
+;; 2018-5-28 v2.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -115,6 +115,8 @@
    (kind    :init-value 0)  ; 種別(=0:敵,=1000:敵ミサイル)
    (state   :init-value 0)  ; 状態(=0:通常,=1-10:爆発)
    (life    :init-value 0)  ; 耐久力
+   (w/2     :init-value 0)  ; 幅/2
+   (h/2     :init-value 0)  ; 高さ/2
    (x       :init-value 0)  ; X座標
    (y       :init-value 0)  ; Y座標
    (degree  :init-value 0)  ; 角度(度)
@@ -221,6 +223,8 @@
           (set! (~ e1 'kind)    0)
           (set! (~ e1 'state)   0)
           (set! (~ e1 'life)    6)
+          (set! (~ e1 'w/2)     (/. (* (~ *tscrn-enemy1* 'width)  *chw*) 2))
+          (set! (~ e1 'h/2)     (/. (* (~ *tscrn-enemy1* 'height) *chh*) 2))
           (set! (~ e1 'x)       (randint (- *wd/2*) *wd/2*))
           (set! (~ e1 'y)       *ht/2*)
           (set! (~ e1 'degree)  (randint -60 -120))
@@ -246,6 +250,9 @@
               (set! (~ m1 'kind)    1000)
               (set! (~ m1 'state)   0)
               (set! (~ m1 'life)    0)
+              (set! (~ m1 'w/2)     (/. (* (~ *tscrn-missile1* 'width)  *chw*) 2))
+              ;(set! (~ m1 'h/2)     (/. (* (~ *tscrn-missile1* 'height) *chh*) 2))
+              (set! (~ m1 'h/2)     (* *chh* 1.5)) ; 調整
               (set! (~ m1 'x)       (~ e1 'x))
               (set! (~ m1 'y)       (~ e1 'y))
               (set! (~ m1 'degree)  (* (atan (- *y* (~ m1 'y)) (- *x* (~ m1 'x))) 180/pi))
@@ -364,7 +371,7 @@
      (when (and (~ e1 'useflag) (> (~ e1 'state) 0))
        ;; (表示は半分のサイズにする)
        (draw-win-circle (win-x *win* (~ e1 'x))
-                        (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                        (win-y *win* (- (~ e1 'y) (~ e1 'h/2)))
                         (win-w *win* (/. *bsize* 2)) *width* *height* 1 1 'center 0.1)
        ))
    *enemies*))
@@ -379,8 +386,12 @@
          (for-each
           (lambda (e2)
             (if (and (~ e2 'useflag) (= (~ e2 'state) 0))
-              (let ((xdiff (- (~ e2 'x) (~ e1 'x)))
-                    (ydiff (- (~ e2 'y) (~ e1 'y))))
+              (let* ((x1    (~ e1 'x))
+                     (y1    (- (~ e1 'y) (~ e1 'h/2)))
+                     (x2    (~ e2 'x))
+                     (y2    (- (~ e2 'y) (~ e2 'h/2)))
+                     (xdiff (- x2 x1))
+                     (ydiff (- y2 y1)))
                 (when (< (+ (* xdiff xdiff) (* ydiff ydiff)) rr)
                   (set! ret #t)
                   (dec! (~ e2 'life))
@@ -396,8 +407,9 @@
     ret))
 
 ;; 自機に近い敵/敵ミサイルを、近い順にn個だけ取得する(デモ用)
-;;   ・戻り値は #((距離の2乗 . 敵) ...) というベクタを返す
-;;   ・有効な敵がいなければ #((1000000 . #f) ...) というベクタを返す
+;;   ・戻り値は #((距離の2乗 . 敵/敵ミサイル) ...) というベクタを返す
+;;   ・有効な敵/敵ミサイルがいなければ #((1000000 . #f) ...) というベクタを返す
+;;   ・enemy-only が #t のときは、敵のみをチェックする
 (define (get-near-enemies n :optional (enemy-only #f))
   (let1 ret (make-vector n '(1000000 . #f))
     (define (%search-near-enemies enemies)
@@ -407,10 +419,7 @@
            (let* ((x1    *x*)
                   (y1    (- *y* (* *chh* 1.5)))
                   (x2    (~ e1 'x))
-                  (y2    (- (~ e1 'y)
-                            (if (= (~ e1 'kind) 1000)
-                              (* *chh* 1.5)
-                              (/. (* (~ e1 'tscrn 'height) *chh*) 2))))
+                  (y2    (- (~ e1 'y) (~ e1 'h/2)))
                   (xdiff (- x2 x1))
                   (ydiff (- y2 y1))
                   (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
@@ -431,8 +440,8 @@
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
-         (let ((x1 (- (~ e1 'x) (/. (* (~ e1 'tscrn 'width) *chw*) 2) *chw*))
-               (x2 (+ (~ e1 'x) (/. (* (~ e1 'tscrn 'width) *chw*) 2) *chw*)))
+         (let ((x1 (- (~ e1 'x) (~ e1 'w/2) *chw*))
+               (x2 (+ (~ e1 'x) (~ e1 'w/2) *chw*)))
            (if (<= x1 *x* x2)
              (set! ret #t)))))
      *enemies*)

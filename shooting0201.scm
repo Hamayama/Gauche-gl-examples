@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0201.scm
-;; 2018-5-28 v1.62
+;; 2018-5-28 v1.63
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -113,6 +113,8 @@
    (kind    :init-value 0)  ; 種別(=0:敵,=1000:敵ミサイル)
    (state   :init-value 0)  ; 状態(=0:通常,=1-10:爆発)
    (life    :init-value 0)  ; 耐久力
+   (w/2     :init-value 0)  ; 幅/2
+   (h/2     :init-value 0)  ; 高さ/2
    (x       :init-value 0)  ; X座標
    (y       :init-value 0)  ; Y座標
    (degree  :init-value 0)  ; 角度(度)
@@ -168,8 +170,8 @@
            (e2   (cdr (~ nes2 0)))
            (vy   0)
            (y0   (- *y* *chh*))
-           (y1   (if e1 (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)) 0))
-           (y2   (if e2 (- (~ e2 'y) (/. (* (~ e2 'tscrn 'height) *chh*) 2)) 0)))
+           (y1   (if e1 (- (~ e1 'y) (~ e1 'h/2)) 0))
+           (y2   (if e2 (- (~ e2 'y) (~ e2 'h/2)) 0)))
       (cond
        ;; 一番近い敵/敵ミサイルを避ける
        ((and e1 (< rr1 (* *chh* *chh* (~ *dparam* 'p1) (~ *dparam* 'p1))))
@@ -228,16 +230,18 @@
           (set! (~ e1 'kind)    0)
           (set! (~ e1 'state)   0)
           (set! (~ e1 'life)    6)
-          (set! (~ e1 'x)       (+ *wd/2* (* *chw* *rsize* 0.5)))
-          (set! (~ e1 'y)       (+ (randint (- *ht/2*) *ht/2*) (* *chh* *rsize* 0.5)))
+          (set! (~ e1 'w/2)     (/. (* *rsize* *chw*) 2))
+          (set! (~ e1 'h/2)     (/. (* *rsize* *chh*) 2))
+          (set! (~ e1 'x)       (+ *wd/2* (~ e1 'w/2)))
+          (set! (~ e1 'y)       (+ (randint (- *ht/2*) *ht/2*) (~ e1 'h/2)))
           (set! (~ e1 'degree)  (randint 150 210))
           (set! (~ e1 'speed)   (* (min (+ 4 (- *mmr* 10)) 10) 1.5 0.7))
           ;(set! (~ e1 'tscrn)   *tscrn-enemy1*)
           (set! (~ e1 'hitstr)  "#+")
-          (set! (~ e1 'minx)    (- (+ *wd/2* (* *chw* *rsize* 0.5))))
-          (set! (~ e1 'maxx)       (+ *wd/2* (* *chw* *rsize* 0.5)))
+          (set! (~ e1 'minx)    (- (+ *wd/2* (~ e1 'w/2))))
+          (set! (~ e1 'maxx)       (+ *wd/2* (~ e1 'w/2)))
           (set! (~ e1 'miny)    (- *ht/2*))
-          (set! (~ e1 'maxy)    (+ *ht/2* (* *chh* *rsize*)))
+          (set! (~ e1 'maxy)    (+ *ht/2* (* (~ e1 'h/2) 2)))
           (set! (~ e1 'contact) #f)
           ;; テキスト画面クラスの上書き(削れた部分の復旧)
           (textscrn-fcircle (~ e1 'tscrn) 8 8 9 1 1 "+")
@@ -267,16 +271,18 @@
               (set! (~ m1 'kind)    1000)
               (set! (~ m1 'state)   0)
               (set! (~ m1 'life)    0)
-              (set! (~ m1 'x)       (+ (~ e1 'x) (* *chw* (randint -3 3))))
-              (set! (~ m1 'y)       (+ (~ e1 'y) (* *chh* (randint -3 3)) (* *chh* *rsize* -0.5)))
+              (set! (~ m1 'w/2)     (/. (* (~ *tscrn-missile1* 'width)  *chw*) 2))
+              (set! (~ m1 'h/2)     (/. (* (~ *tscrn-missile1* 'height) *chh*) 2))
+              (set! (~ m1 'x)       (+    (~ e1 'x)              (* *chw* (randint -3 3))))
+              (set! (~ m1 'y)       (+ (- (~ e1 'y) (~ e1 'h/2)) (* *chh* (randint -3 3))))
               (set! (~ m1 'degree)  (* (atan (- (- *y* *chh*) (~ m1 'y)) (- *x* (~ m1 'x))) 180/pi))
               (set! (~ m1 'speed)   (* (min (+ 6 (- *mmr* 10)) 14) 1.5 0.75))
               (set! (~ m1 'tscrn)   *tscrn-missile1*)
               (set! (~ m1 'hitstr)  "O")
-              (set! (~ m1 'minx)    (- (+ *wd/2* (* *chw* *rsize* 0.5))))
-              (set! (~ m1 'maxx)       (+ *wd/2* (* *chw* *rsize* 0.5)))
-              (set! (~ m1 'miny)    (- *ht/2*))
-              (set! (~ m1 'maxy)    (+ *ht/2* *chh*))
+              (set! (~ m1 'minx)    (~ e1 'minx))
+              (set! (~ m1 'maxx)    (~ e1 'maxx))
+              (set! (~ m1 'miny)    (~ e1 'miny))
+              (set! (~ m1 'maxy)    (~ e1 'maxy))
               (set! (~ m1 'contact) #f)
               ))))))
    ))
@@ -298,12 +304,12 @@
     ;; (コア)
     (gl-color 0.7 0.7 0.7 1.0)
     (draw-win-circle (win-x *win* (~ e1 'x))
-                     (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                     (win-y *win* (- (~ e1 'y) (~ e1 'h/2)))
                      (win-w *win* (/. (* 9 *chh*) 2)) *width* *height* 1 1 'center z)
     ;; (外周)
     (gl-color 0.5 0.5 0.5 1.0)
     (draw-win-circle (win-x *win* (~ e1 'x))
-                     (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                     (win-y *win* (- (~ e1 'y) (~ e1 'h/2)))
                      (win-w *win* (/. (* (+ 17 1) *chh*) 2)) *width* *height* 1 1 'center z)
     )
   ;; 透過のない敵 (= 削れた部分のない敵) を、先にすべて表示する
@@ -333,13 +339,13 @@
        ;; (内側)
        (gl-color 0.6 0.6 0.6 1.0)
        (draw-win-circle (win-x *win* (~ e1 'x))
-                        (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                        (win-w *win* (/. (* 1 *chh*) 4)) *width* *height*)
+                        (win-y *win* (- (~ e1 'y) (~ e1 'h/2)))
+                        (win-w *win* (/. *chh* 4)) *width* *height*)
        ;; (外側)
        (gl-color 0.9 0.9 0.9 1.0)
        (draw-win-circle (win-x *win* (~ e1 'x))
-                        (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
-                        (win-w *win* (/. (* 1 *chh*) 2)) *width* *height*)
+                        (win-y *win* (- (~ e1 'y) (~ e1 'h/2)))
+                        (win-w *win* (/. *chh* 2)) *width* *height*)
        ))
    *missiles*))
 
@@ -404,7 +410,7 @@
         (y1      (win-y *win* (+ *y* (* *chh* -1.0) (- *waku*))))
         (x2      (win-x *win* (+ *wd/2*             (- *waku*))))
         (y2      (win-y *win* (+ *y* (* *chh* -2.0)    *waku*)))
-        (minbx   (+ *wd/2* (* *chw* *rsize* 0.5)))
+        (minbx   (+ *wd/2* (/. (* *rsize* *chw*) 2)))
         (e2      #f))
     (for-each
      (lambda (e1)
@@ -444,7 +450,7 @@
                             ((= hity 0)                           ",")
                             ((= hity (- (~ e2 'tscrn 'height) 1)) "'")
                             (else                                 ".")))
-            (set! minbx (+ minbx (* *chw* (- hitx (* *rsize* 0.5))))))
+            (set! minbx (+ minbx (* (- hitx (/. *rsize* 2)) *chw*))))
            ))
         ))
     (set! *bc* (max (- (floor->exact (/. (- minbx *x*) *chw*)) 1) 1))
@@ -458,7 +464,7 @@
      (when (and (~ e1 'useflag) (> (~ e1 'state) 0))
        ;; (表示は半分のサイズにする)
        (draw-win-circle (win-x *win* (~ e1 'x))
-                        (win-y *win* (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                        (win-y *win* (- (~ e1 'y) (~ e1 'h/2)))
                         (win-w *win* (/. *bsize* 2)) *width* *height* 1 1 'center 0.1)
        ))
    *enemies*))
@@ -473,8 +479,12 @@
          (for-each
           (lambda (e2)
             (if (and (~ e2 'useflag) (= (~ e2 'state) 0))
-              (let ((xdiff (- (~ e2 'x) (~ e1 'x)))
-                    (ydiff (- (~ e2 'y) (~ e1 'y))))
+              (let* ((x1    (~ e1 'x))
+                     (y1    (- (~ e1 'y) (~ e1 'h/2)))
+                     (x2    (~ e2 'x))
+                     (y2    (- (~ e2 'y) (~ e2 'h/2)))
+                     (xdiff (- x2 x1))
+                     (ydiff (- y2 y1)))
                 (when (< (+ (* xdiff xdiff) (* ydiff ydiff)) rr)
                   (set! ret #t)
                   (dec! (~ e2 'life))
@@ -490,8 +500,9 @@
     ret))
 
 ;; 自機に近い敵/敵ミサイルを、近い順にn個だけ取得する(デモ用)
-;;   ・戻り値は #((距離の2乗 . 敵) ...) というベクタを返す
-;;   ・有効な敵がいなければ #((1000000 . #f) ...) というベクタを返す
+;;   ・戻り値は #((距離の2乗 . 敵/敵ミサイル) ...) というベクタを返す
+;;   ・有効な敵/敵ミサイルがいなければ #((1000000 . #f) ...) というベクタを返す
+;;   ・enemy-only が #t のときは、敵のみをチェックする
 (define (get-near-enemies n :optional (enemy-only #f))
   (let1 ret (make-vector n '(1000000 . #f))
     (define (%search-near-enemies enemies)
@@ -501,7 +512,7 @@
            (let* ((x1    *x*)
                   (y1    (- *y* *chh*))
                   (x2    (~ e1 'x))
-                  (y2    (- (~ e1 'y) (/. (* (~ e1 'tscrn 'height) *chh*) 2)))
+                  (y2    (- (~ e1 'y) (~ e1 'h/2)))
                   (xdiff (- x2 x1))
                   (ydiff (- y2 y1))
                   (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
@@ -523,7 +534,7 @@
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
-         (let ((y1 (- (~ e1 'y) (* (~ e1 'tscrn 'height) *chh*) *chh*))
+         (let ((y1 (- (~ e1 'y) (* (~ e1 'h/2) 2) *chh*))
                (y2 (+ (~ e1 'y) *chh*)))
            (if (<= y1 y0 y2)
              (set! ret #t)))))
