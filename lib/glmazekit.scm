@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmazekit.scm
-;; 2017-8-17 v1.04
+;; 2018-5-29 v1.05
 ;;
 ;; ＜内容＞
 ;;   迷路の生成と探索を行うためのモジュールです。
@@ -25,18 +25,18 @@
 
 ;; 迷路クラス
 (define-class <maze> ()
-  ((width      :init-value 0) ; 迷路の幅  (=水平方向のブロック数)
-   (height     :init-value 0) ; 迷路の高さ(=垂直方向のブロック数)
-   (data       :init-form (make-vector 0)) ; 迷路データ(ベクタ)
-   ;                                       ; (=1:上側に壁あり,=2:右,=4:下,=8:左,
-   ;                                       ;  =16:移動済み,=32:探索ルート,
-   ;                                       ;  =64:スタート,=128:ゴール)
-   (start-x    :init-value 0) ; スタートのX座標
-   (start-y    :init-value 0) ; スタートのY座標
-   (goal-x     :init-value 0) ; ゴールのX座標
-   (goal-y     :init-value 0) ; ゴールのY座標
-   (goal-state :init-value 0) ; ゴール状態(=0:未ゴール,=1:ゴール)
-   (maze-state :init-value 0) ; 迷路状態(=0:初期状態,=1:生成済み)
+  ((width      :init-value 0)  ; 迷路の幅  (=水平方向のブロック数)
+   (height     :init-value 0)  ; 迷路の高さ(=垂直方向のブロック数)
+   (data       :init-value #f) ; 迷路データ(ベクタ)
+   ;                           ;   (=1:上側に壁あり,=2:右,=4:下,=8:左,
+   ;                           ;    =16:移動済み,=32:探索ルート,
+   ;                           ;    =64:スタート,=128:ゴール)
+   (start-x    :init-value 0)  ; スタートのX座標
+   (start-y    :init-value 0)  ; スタートのY座標
+   (goal-x     :init-value 0)  ; ゴールのX座標
+   (goal-y     :init-value 0)  ; ゴールのY座標
+   (goal-state :init-value 0)  ; ゴール状態(=0:未ゴール,=1:ゴール)
+   (maze-state :init-value 0)  ; 迷路状態(=0:初期状態,=1:生成済み)
    ))
 
 ;; 迷路の初期化
@@ -61,8 +61,8 @@
   (define (pyadd y dy) (wrap-range (+ y dy) 0 mh)) ; Y座標加算(端を超えたら反対側に移動する)
 
   (define pdata (make-vector msize 0))  ; 柱ごとの壁データ
-  ;                                     ; (=1:上方向に伸びる壁あり,=2:右,=4:下,=8:左,
-  ;                                     ;  =128:処理済み)
+  ;                                     ;   (=1:上方向に伸びる壁あり,=2:右,=4:下,=8:左,
+  ;                                     ;    =128:処理済み)
   (define pflag (make-vector msize #f)) ; 柱の処理中フラグ
   (define pnum  0)                      ; 処理中の柱の数
   (define pind  0)                      ; 処理中の柱の注目番号(ここから壁を伸ばす)
@@ -205,14 +205,14 @@
   (define (pxadd x dx) (wrap-range (+ x dx) 0 mw)) ; X座標加算(端を超えたら反対側に移動する)
   (define (pyadd y dy) (wrap-range (+ y dy) 0 mh)) ; Y座標加算(端を超えたら反対側に移動する)
 
-  (define goal   #f) ; ゴールフラグ
-  (define sflag  (make-vector msize #f)) ; 迷路の探索済みフラグ
-  (define snum   0)  ; 探索点の数
-  (define sind  -1)  ; 探索点の注目番号
-  (define spx    (make-vector msize 0)) ; 探索点のX座標
-  (define spy    (make-vector msize 0)) ; 探索点のY座標
-  (define spno   (make-vector msize 0)) ; 探索点の親番号
-  (define (make-one-spoint x y) ; 探索点1個の生成
+  (define goal  #f)                     ; ゴールフラグ
+  (define sflag (make-vector msize #f)) ; 迷路の探索済みフラグ
+  (define snum  0)                      ; 探索点の数
+  (define sind -1)                      ; 探索点の注目番号
+  (define spx   (make-vector msize 0))  ; 探索点のX座標
+  (define spy   (make-vector msize 0))  ; 探索点のY座標
+  (define spno  (make-vector msize 0))  ; 探索点の親番号
+  (define (make-one-spoint x y)  ; 探索点1個の生成
     (set! (~ spx  snum) x)
     (set! (~ spy  snum) y)
     (set! (~ spno snum) sind)
