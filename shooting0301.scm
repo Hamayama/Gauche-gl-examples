@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-5-28 v1.05
+;; 2018-5-30 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -52,7 +52,8 @@
 (define *mmr*        1) ; 敵の最大数
 (define *mmmr*       7) ; 敵の最大数の最大数
 (define *wlen*       8) ; ワームの長さ
-(define *boss*       #f); ボスフラグ
+(define *boss*       #f) ; ボスフラグ
+(define *bosssize* 1.4) ; ボスの大きさ(倍率)
 (define *sc*         0) ; スコア
 (define *hs*         0) ; ハイスコア
 (define *ssc*        0) ; 制御カウンタ
@@ -231,16 +232,15 @@
         ;; ボス出現
         (when *boss*
           (set! *boss* #f)
-          (let1 boss-size 1.4
-            (set! (~ e1 'life) (* (~ e1 'life) boss-size))
-            (set! (~ w1 'fr)   (* (~ w1 'fr)   boss-size))
-            (set! (~ w1 'ar)   (* (~ w1 'ar)   boss-size))
-            (set! (~ w1 'al)   (* (~ w1 'al)   boss-size))
-            (set! (~ w1 'rr)   (* (~ w1 'rr)   boss-size))
-            (set! (~ w2 'fr)   (* (~ w2 'fr)   boss-size))
-            (set! (~ w2 'ar)   (* (~ w2 'ar)   boss-size))
-            (set! (~ w2 'al)   (* (~ w2 'al)   boss-size))
-            (set! (~ w2 'rr)   (* (~ w2 'rr)   boss-size))))
+          (set! (~ e1 'life) (* (~ e1 'life) *bosssize*))
+          (set! (~ w1 'fr)   (* (~ w1 'fr)   *bosssize*))
+          (set! (~ w1 'ar)   (* (~ w1 'ar)   *bosssize*))
+          (set! (~ w1 'al)   (* (~ w1 'al)   *bosssize*))
+          (set! (~ w1 'rr)   (* (~ w1 'rr)   *bosssize*))
+          (set! (~ w2 'fr)   (* (~ w2 'fr)   *bosssize*))
+          (set! (~ w2 'ar)   (* (~ w2 'ar)   *bosssize*))
+          (set! (~ w2 'al)   (* (~ w2 'al)   *bosssize*))
+          (set! (~ w2 'rr)   (* (~ w2 'rr)   *bosssize*)))
         (worm-init w1 *wlen* (randint minx maxx) maxy 0)
         (worm-init w2 *wlen* (randint minx maxx) maxy 0)
         (worm-set-goal w1 (randint minx maxx) (randint (- *ht/2*) *ht/2*))
@@ -330,6 +330,7 @@
          (let1 w1 (~ e1 'worm)
            (for-each
             (lambda (ax ay ar)
+              ;; (円に内接する正方形のサイズで判定)
               (let* ((ar1 (* ar 0.7))
                      (ax1 (- ax ar1))
                      (ay1 (- ay ar1)))
@@ -394,25 +395,23 @@
 ;;   ・front-only が #t のときは、ワームの先端のみチェックする
 (define (get-near-enemies n :optional (front-only #f))
   (let1 ret (make-vector n '(1000000 #f 0))
-    (define (%search-near-enemies enemies)
-      (for-each
-       (lambda (e1)
-         (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
-           ;; ワームの全関節をチェックする
-           ;; (ただし、front-only が #t のときは、ワームの先端のみチェックする)
-           (let1 w1 (~ e1 'worm)
-             (for-each-with-index
-              (lambda (i ax ay ar)
-                (unless (and front-only (> i 0))
-                  (let* ((xdiff (- (~ e1 'worm 'axvec i) *x*))
-                         (ydiff (- (~ e1 'worm 'ayvec i) (- *y* (* *chh* 1.5))))
-                         (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
-                    (when (< rr (car (~ ret (- n 1))))
-                      (set! (~ ret (- n 1)) (list rr e1 i))
-                      (set! ret (sort! ret < car))))))
-              (~ w1 'axvec) (~ w1 'ayvec) (~ w1 'arvec)))))
-       enemies))
-    (%search-near-enemies *enemies*)
+    (for-each
+     (lambda (e1)
+       (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
+         ;; ワームの全関節をチェックする
+         ;; (ただし、front-only が #t のときは、ワームの先端のみチェックする)
+         (let1 w1 (~ e1 'worm)
+           (for-each-with-index
+            (lambda (i ax ay)
+              (unless (and front-only (> i 0))
+                (let* ((xdiff (- ax *x*))
+                       (ydiff (- ay (- *y* (* *chh* 1.5))))
+                       (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
+                  (when (< rr (car (~ ret (- n 1))))
+                    (set! (~ ret (- n 1)) (list rr e1 i))
+                    (set! ret (sort! ret < car))))))
+            (~ w1 'axvec) (~ w1 'ayvec)))))
+     *enemies*)
     ;(print ret)
     ret))
 
@@ -423,9 +422,10 @@
      (lambda (e1)
        (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
          ;; ワームの先端のみチェックする
-         (let ((x1 (- (~ e1 'worm 'axvec 0) (~ e1 'worm 'arvec 0) *chw*))
-               (x2 (+ (~ e1 'worm 'axvec 0) (~ e1 'worm 'arvec 0) *chw*))
-               (y1    (~ e1 'worm 'ayvec 0)))
+         (let* ((w1 (~ e1 'worm))
+                (x1 (- (~ w1 'axvec 0) (~ w1 'arvec 0) *chw*))
+                (x2 (+ (~ w1 'axvec 0) (~ w1 'arvec 0) *chw*))
+                (y1 (~ w1 'ayvec 0)))
            (if (and (<= x1 *x* x2) (<= (- *ht/2*) y1 *ht/2*))
              (set! ret #t)))))
      *enemies*)
@@ -446,9 +446,6 @@
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 30.0)
-  ;; 透過設定
-  (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
-  (gl-enable GL_BLEND)
   ;; 音楽データの初期化
   (init-auddata *app-dpath*))
 
