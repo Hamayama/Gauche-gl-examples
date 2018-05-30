@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-5-30 v1.06
+;; 2018-5-30 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -53,7 +53,7 @@
 (define *mmmr*       7) ; 敵の最大数の最大数
 (define *wlen*       8) ; ワームの長さ
 (define *boss*       #f) ; ボスフラグ
-(define *bosssize* 1.4) ; ボスの大きさ(倍率)
+(define *bosssize* 1.5) ; ボスの大きさ(倍率)
 (define *sc*         0) ; スコア
 (define *hs*         0) ; ハイスコア
 (define *ssc*        0) ; 制御カウンタ
@@ -107,7 +107,7 @@
 (define-class <enemy> ()
   ((useflag :init-value #f) ; 使用フラグ
    (kind    :init-value 0)  ; 種別(=0:ワーム0101,=1:ワーム0201)
-   (state   :init-value 0)  ; 状態(=0:通常,=1:被弾,=10-30:やられ)
+   (state   :init-value 0)  ; 状態(=0:通常,=1:被弾,=10-50:やられ)
    (life    :init-value 0)  ; 耐久力
    (minx    :init-value 0)  ; X座標の最小値
    (maxx    :init-value 0)  ; X座標の最大値
@@ -218,7 +218,7 @@
         (set! (~ e1 'useflag) #t)
         (set! (~ e1 'kind)    1)
         (set! (~ e1 'state)   0)
-        (set! (~ e1 'life)    80)
+        (set! (~ e1 'life)    70)
         (set! (~ e1 'minx)    minx)
         (set! (~ e1 'maxx)    maxx)
         (set! (~ e1 'miny)    miny)
@@ -233,6 +233,8 @@
         (when *boss*
           (set! *boss* #f)
           (set! (~ e1 'life) (* (~ e1 'life) *bosssize*))
+          (set! (~ e1 'miny) (* (~ e1 'miny) *bosssize*))
+          (set! (~ e1 'maxy) (* (~ e1 'maxy) *bosssize*))
           (set! (~ w1 'fr)   (* (~ w1 'fr)   *bosssize*))
           (set! (~ w1 'ar)   (* (~ w1 'ar)   *bosssize*))
           (set! (~ w1 'al)   (* (~ w1 'al)   *bosssize*))
@@ -311,7 +313,7 @@
          (else
           ;; やられ処理
           (inc! (~ e1 'state))
-          (if (>= (~ e1 'state) 30)
+          (if (>= (~ e1 'state) (if (~ e1 'boss) 50 30))
             ;; やられ終了なら未使用にする
             (set! (~ e1 'useflag) #f))))))
    enemies))
