@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2018-5-31 v2.01
+;; 2018-6-1 v2.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -371,12 +371,13 @@
                 (else    x)))
         (y1   (- height y))
         (r1   (if (= a 0) r (/. r a)))
-        (r2   (if (= b 0) r (/. r b))))
+        (r2   (if (= b 0) r (/. r b)))
+        (step (/. 2pi 100)))
     (gl-push-matrix)
     (gl-translate x1 y1 z)
     (gl-begin GL_LINE_LOOP)
     (do ((i   0 (+ i 1))
-         (rad 0 (+ rad (/. |2pi| 100))))
+         (rad 0 (+ rad step)))
         ((>= i 100) #f)
       (gl-vertex (f32vector (* r1 (cos rad)) (* r2 (sin rad)))))
     (gl-end)
