@@ -599,7 +599,8 @@ gltextscrn.scm
                     (set-char-drawer,textscrn-disp-drawerのI/F変更)
                     (過去との互換性なし)
   2018-5-31  v2.01  GL_POLYGON を GL_TRIANGLE_FAN に変更等
-  2018-6-1   v2.02  円の輪郭表示見直し
+  2018-6-1   v2.02  円の輪郭の表示見直し
+  2018-6-1   v2.03  円の輪郭の表示見直し
 
 alaudplay.scm
   2016-3-31  v1.00  初版
@@ -641,6 +642,7 @@ glwormkit.scm
   2018-5-27  v1.01  Gauche v0.9.4 対応(vector-copy!)
   2018-5-29  v1.02  worm-convert見直し
   2018-5-31  v1.03  フラット表示対応
+  2018-6-1   v1.04  フラット表示見直し
 
 
 (2018-6-1)

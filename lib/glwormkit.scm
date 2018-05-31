@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glwormkit.scm
-;; 2018-5-31 v1.03
+;; 2018-6-1 v1.04
 ;;
 ;; ＜内容＞
 ;;   ワームシミュレータ用のモジュールです。
@@ -62,7 +62,6 @@
    (fy    :init-value   0)  ; 先端のY座標
    (fr    :init-value  25)  ; 先端の半径
    (fc    :init-value   0)  ; 先端の角度(度)
-   (vvec  :init-value   #f) ; フラット表示用(ベクタ)
    ))
 ;; ワーム0101の初期化
 ;;   anum  関節の数
@@ -82,9 +81,6 @@
   (set! (~ w1 'arvec) (make-vector (+ anum 2) (~ w1 'ar)))
   (set! (~ w1 'arvec  0)           (~ w1 'fr))
   (set! (~ w1 'arvec  (+ anum 1))  (~ w1 'rr))
-  (let1 slice 100
-    (set! (~ w1 'vvec) (make-vector (+ slice 1) #f))
-    (do ((i 0 (+ i 1))) ((> i slice) #f) (set! (~ w1 'vvec i) (f32vector 0 0))))
   (%worm-calc-point w1))
 ;; ワーム0101の目標設定
 ;;   gx  目標のX座標
@@ -213,25 +209,18 @@
   (define frwin  (win-w win (~ w1 'fr)))
   (define arwin  (win-w win (~ w1 'ar)))
   (define rrwin  (win-w win (~ w1 'rr)))
-  (define slice  100)
-  (define wedge1 (/. (* wedge pi/180) 2))
-  (define step   (/. (* (- pi wedge1) 2) 100))
-  (define fc1    (* (~ w1 'fc) pi/180))
   ;; 色
   (gl-color color)
   ;; 先端
   (%win-ortho-on width height)
-  (set! (~ w1 'vvec 0 0) 0)
-  (set! (~ w1 'vvec 0 1) 0)
-  (do ((i   1 (+ i 1))
-       (rad (- wedge1 fc1) (if (< (+ i 1) slice) (+ rad step) (- 2pi wedge1 fc1))))
-      ((> i slice) #f)
-    (set! (~ w1 'vvec i 0) (* frwin (cos rad)))
-    (set! (~ w1 'vvec i 1) (* frwin (sin rad))))
-  (%draw-win-poly (win-x win (~ w1 'fx))
-                  (win-y win (~ w1 'fy))
-                  (~ w1 'vvec)
-                  width height z)
+  (let ((x1  (win-x win (~ w1 'fx)))
+        (y1  (- height (win-y win (~ w1 'fy))))
+        (fc1 (- (~ w1 'fc) 90))
+        (q   (make <glu-quadric>)))
+    (gl-push-matrix)
+    (gl-translate x1 y1 z)
+    (glu-partial-disk q 0 frwin 40 1 (- (/. wedge 2) fc1) (- 360 wedge))
+    (gl-pop-matrix))
   ;; 関節と末尾
   (do ((i 1 (+ i 1)))
       ((> i (+ anum 1)) #f)
@@ -273,7 +262,6 @@
    (axque :init-value   #f) ; 関節のX座標の遅延キュー
    (ayque :init-value   #f) ; 関節のY座標の遅延キュー
    (rr    :init-value  20)  ; 末尾の半径
-   (vvec  :init-value   #f) ; フラット表示用(ベクタ)
    ))
 ;; ワーム0201の初期化
 ;;   anum  関節の数
@@ -295,9 +283,6 @@
   (set! (~ w1 'arvec) (make-vector (+ anum 2) (~ w1 'ar)))
   (set! (~ w1 'arvec  0)           (~ w1 'fr))
   (set! (~ w1 'arvec  (+ anum 1))  (~ w1 'rr))
-  (let1 slice 100
-    (set! (~ w1 'vvec) (make-vector (+ slice 1) #f))
-    (do ((i 0 (+ i 1))) ((> i slice) #f) (set! (~ w1 'vvec i) (f32vector 0 0))))
   )
 ;; ワーム0201の目標設定
 ;;   gx  目標のX座標
