@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glwormkit.scm
-;; 2018-5-29 v1.02
+;; 2018-5-31 v1.03
 ;;
 ;; ＜内容＞
 ;;   ワームシミュレータ用のモジュールです。
@@ -13,11 +13,12 @@
   (use gauche.version)
   (use math.const)
   (use glmintool)
+  (use gltextscrn)
   (use glmodelkit)
   (use model0501)
   (export
     <worm0101> <worm0201>
-    worm-init worm-set-goal worm-goal? worm-move worm-disp
+    worm-init worm-set-goal worm-goal? worm-move worm-disp worm-disp-flat
     %worm-calc-angle %worm-move-tail %worm-calc-point
     %worm-move-front
     worm-convert
@@ -61,6 +62,7 @@
    (fy    :init-value   0)  ; 先端のY座標
    (fr    :init-value  25)  ; 先端の半径
    (fc    :init-value   0)  ; 先端の角度(度)
+   (vvec  :init-value   #f) ; フラット表示用(ベクタ)
    ))
 ;; ワーム0101の初期化
 ;;   anum  関節の数
@@ -80,6 +82,9 @@
   (set! (~ w1 'arvec) (make-vector (+ anum 2) (~ w1 'ar)))
   (set! (~ w1 'arvec  0)           (~ w1 'fr))
   (set! (~ w1 'arvec  (+ anum 1))  (~ w1 'rr))
+  (let1 slice 100
+    (set! (~ w1 'vvec) (make-vector (+ slice 1) #f))
+    (do ((i 0 (+ i 1))) ((> i slice) #f) (set! (~ w1 'vvec i) (f32vector 0 0))))
   (%worm-calc-point w1))
 ;; ワーム0101の目標設定
 ;;   gx  目標のX座標
@@ -174,30 +179,72 @@
     (set! (~ w1 'ayvec i) (~ w1 'ay (- (+ anum 1) i)))))
 ;; ワーム0101の表示
 (define-method worm-disp ((w1 <worm0101>) :optional (color #f32(1.0 1.0 1.0 1.0)) (wedge 70))
+  (%worm-disp-sub w1 color wedge))
+(define (%worm-disp-sub w1 color wedge)
   (define anum  (~ w1 'anum))
   (define ar    (~ w1 'ar))
+  (define rr    (~ w1 'rr))
   ;; 色
   (gl-material GL_FRONT GL_DIFFUSE color)
   (gl-material GL_FRONT GL_AMBIENT #f32(0.5 0.5 0.5 1.0))
-  ;; 末尾
-  (gl-push-matrix)
-  (gl-translate (~ w1 'rx) (~ w1 'ry) 0)
-  (glut-solid-sphere (~ w1 'rr) 20 20)
-  (gl-pop-matrix)
-  ;; 関節
-  (do ((i 1 (+ i 1)))
-      ((> i anum) #f)
-    (gl-push-matrix)
-    (gl-translate (~ w1 'ax i) (~ w1 'ay i) 0)
-    (glut-solid-sphere ar 20 20)
-    (gl-pop-matrix))
   ;; 先端
   (gl-push-matrix)
   (gl-translate (~ w1 'fx) (~ w1 'fy) 0)
   (gl-rotate (~ w1 'fc) 0 0 1)
   (gl-rotate -90 1 0 0)
   (model0501 (~ w1 'fr) 15 10 wedge)
-  (gl-pop-matrix))
+  (gl-pop-matrix)
+  ;; 関節と末尾
+  (do ((i 1 (+ i 1)))
+      ((> i (+ anum 1)) #f)
+    (gl-push-matrix)
+    (gl-translate (~ w1 'axvec i) (~ w1 'ayvec i) 0)
+    (glut-solid-sphere (if (< i (+ anum 1)) ar rr) 20 20)
+    (gl-pop-matrix)))
+;; ワーム0101のフラット表示
+(define-method worm-disp-flat ((w1 <worm0101>)
+                               (win <wininfo>)
+                               :optional (color #f32(1.0 1.0 1.0 1.0)) (wedge 70) (z 0))
+  (%worm-disp-flat-sub w1 win color wedge z))
+(define (%worm-disp-flat-sub w1 win color wedge z)
+  (define width  (~ win 'width))
+  (define height (~ win 'height))
+  (define anum   (~ w1  'anum))
+  (define frwin  (win-w win (~ w1 'fr)))
+  (define arwin  (win-w win (~ w1 'ar)))
+  (define rrwin  (win-w win (~ w1 'rr)))
+  (define slice  100)
+  (define wedge1 (/. (* wedge pi/180) 2))
+  (define step   (/. (* (- pi wedge1) 2) 100))
+  (define fc1    (* (~ w1 'fc) pi/180))
+  ;; 色
+  (gl-color color)
+  ;; 先端
+  (%win-ortho-on width height)
+  (set! (~ w1 'vvec 0 0) 0)
+  (set! (~ w1 'vvec 0 1) 0)
+  (do ((i   1 (+ i 1))
+       (rad (- wedge1 fc1) (if (< (+ i 1) slice) (+ rad step) (- 2pi wedge1 fc1))))
+      ((> i slice) #f)
+    (set! (~ w1 'vvec i 0) (* frwin (cos rad)))
+    (set! (~ w1 'vvec i 1) (* frwin (sin rad))))
+  (%draw-win-poly (win-x win (~ w1 'fx))
+                  (win-y win (~ w1 'fy))
+                  (~ w1 'vvec)
+                  width height z)
+  ;; 関節と末尾
+  (do ((i 1 (+ i 1)))
+      ((> i (+ anum 1)) #f)
+    (%draw-win-line   (win-x win (~ w1 'axvec (- i 1)))
+                      (win-y win (~ w1 'ayvec (- i 1)))
+                      (win-x win (~ w1 'axvec i))
+                      (win-y win (~ w1 'ayvec i))
+                      width height z)
+    (%draw-win-circle (win-x win (~ w1 'axvec i))
+                      (win-y win (~ w1 'ayvec i))
+                      (if (< i (+ anum 1)) arwin rrwin)
+                      width height 1 1 'center z))
+  (%win-ortho-off))
 
 
 ;; ワーム0201クラス
@@ -226,6 +273,7 @@
    (axque :init-value   #f) ; 関節のX座標の遅延キュー
    (ayque :init-value   #f) ; 関節のY座標の遅延キュー
    (rr    :init-value  20)  ; 末尾の半径
+   (vvec  :init-value   #f) ; フラット表示用(ベクタ)
    ))
 ;; ワーム0201の初期化
 ;;   anum  関節の数
@@ -246,7 +294,11 @@
   (set! (~ w1 'ayvec) (make-vector (+ anum 2) 0))
   (set! (~ w1 'arvec) (make-vector (+ anum 2) (~ w1 'ar)))
   (set! (~ w1 'arvec  0)           (~ w1 'fr))
-  (set! (~ w1 'arvec  (+ anum 1))  (~ w1 'rr)))
+  (set! (~ w1 'arvec  (+ anum 1))  (~ w1 'rr))
+  (let1 slice 100
+    (set! (~ w1 'vvec) (make-vector (+ slice 1) #f))
+    (do ((i 0 (+ i 1))) ((> i slice) #f) (set! (~ w1 'vvec i) (f32vector 0 0))))
+  )
 ;; ワーム0201の目標設定
 ;;   gx  目標のX座標
 ;;   gy  目標のY座標
@@ -300,26 +352,12 @@
     (set! (~ w1 'ayvec i) (quedata-ref (~ w1 'ayque) (* i (~ w1 'adf))))))
 ;; ワーム0201の表示
 (define-method worm-disp ((w1 <worm0201>) :optional (color #f32(1.0 1.0 1.0 1.0)) (wedge 70))
-  (define anum  (~ w1 'anum))
-  (define ar    (~ w1 'ar))
-  (define rr    (~ w1 'rr))
-  ;; 色
-  (gl-material GL_FRONT GL_DIFFUSE color)
-  (gl-material GL_FRONT GL_AMBIENT #f32(0.5 0.5 0.5 1.0))
-  ;; 先端
-  (gl-push-matrix)
-  (gl-translate (~ w1 'fx) (~ w1 'fy) 0)
-  (gl-rotate (~ w1 'fc) 0 0 1)
-  (gl-rotate -90 1 0 0)
-  (model0501 (~ w1 'fr) 15 10 wedge)
-  (gl-pop-matrix)
-  ;; 関節と末尾
-  (do ((i 1 (+ i 1)))
-      ((> i (+ anum 1)) #f)
-    (gl-push-matrix)
-    (gl-translate (~ w1 'axvec i) (~ w1 'ayvec i) 0)
-    (glut-solid-sphere (if (< i (+ anum 1)) ar rr) 20 20)
-    (gl-pop-matrix)))
+  (%worm-disp-sub w1 color wedge))
+;; ワーム0201のフラット表示
+(define-method worm-disp-flat ((w1 <worm0201>)
+                               (win <wininfo>)
+                               :optional (color #f32(1.0 1.0 1.0 1.0)) (wedge 70) (z 0))
+  (%worm-disp-flat-sub w1 win color wedge z))
 
 
 ;; ワーム0101からワーム0201へのコンバート

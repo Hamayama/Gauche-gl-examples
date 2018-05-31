@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-5-30 v1.07
+;; 2018-5-31 v1.08
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -69,6 +69,8 @@
 (define *demotmax* 0.0) ; デモ生存時間最大値
 (define *demotmin* 0.0) ; デモ生存時間最小値
 (define *demotavg* 0.0) ; デモ生存時間平均値
+
+(define *flatdisp*   0) ; フラット表示(=0:OFF,=1:ON)
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
@@ -257,13 +259,17 @@
        (let ((w1    (~ e1 'worm))
              (color (case (~ e1 'state)
                       ((0)  #f32(1.0 1.0 1.0 1.0))
-                      ((1)  #f32(0.5 0.0 0.0 1.0))
+                      ((1)  (if (= *flatdisp* 0)
+                              #f32(0.5 0.0 0.0 1.0)
+                              #f32(0.9 0.5 0.2 1.0)))
                       (else #f32(1.0 1.0 0.0 1.0))))
              (wedge (case (~ e1 'state)
                       ((0)  (if (= (~ e1 'kind) 0) 70 90))
                       ((1)  110)
                       (else 130))))
-         (worm-disp w1 color wedge))))
+         (if (= *flatdisp* 0)
+           (worm-disp w1 color wedge)
+           (worm-disp-flat w1 *win* color wedge)))))
    enemies))
 
 ;; 敵の移動
@@ -699,6 +705,7 @@
 (define (main args)
   (aud-init (> (x->integer (list-ref args 1 0)) 0))
   (set! *demomode* (x->integer (list-ref args 2 0)))
+  (set! *flatdisp* (x->integer (list-ref args 3 0)))
   (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)

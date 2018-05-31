@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2018-2-11 v2.00
+;; 2018-5-31 v2.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -298,17 +298,17 @@
 ;;   ・円 (x,y,r,a,b) -> (x'-x)*(x'-x)*(a*a)+(y'-y)*(y'-y)*(b*b)=r*r の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
 (define (%draw-win-circle x y r width height :optional (a 1) (b 1) (align 'center) (z 0))
-  (let ((x1 (case align
-              ((left)  (+ x r)) ; 左寄せ
-              ((right) (- x r)) ; 右寄せ
-              (else    x)))
-        (y1 (- height y))
-        (q  (make <glu-quadric>)))
-    (if (= a 0) (set! a 1))
-    (if (= b 0) (set! b 1))
+  (let ((x1  (case align
+               ((left)  (+ x r)) ; 左寄せ
+               ((right) (- x r)) ; 右寄せ
+               (else    x)))
+        (y1  (- height y))
+        (scx (if (= a 0) 1 (/. 1 a)))
+        (scy (if (= b 0) 1 (/. 1 b)))
+        (q   (make <glu-quadric>)))
     (gl-push-matrix)
     (gl-translate x1 y1 z)
-    (gl-scale (/. 1 a) (/. 1 b) 1)
+    (gl-scale scx scy 1)
     (glu-disk q 0 r 40 1)
     (gl-pop-matrix)
     ))
@@ -326,7 +326,7 @@
     (gl-push-matrix)
     (gl-translate x y1 z)
     (gl-scale 1 -1  1)
-    (gl-begin GL_POLYGON)
+    (gl-begin GL_TRIANGLE_FAN)
     (for-each gl-vertex vvec)
     (gl-end)
     (gl-pop-matrix)

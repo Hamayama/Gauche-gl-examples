@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm0101.scm
-;; 2018-5-27 v1.30
+;; 2018-5-31 v1.31
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -46,6 +46,8 @@
 (define *wlen*       8) ; ワームの長さ(関節の数)
 (define *waku*       4) ; 当たり判定調整用
 (define *backcolor*  #f32(0.2 0.2 0.2 1.0)) ; 背景色
+
+(define *flatdisp*   0) ; フラット表示(=0:OFF,=1:ON)
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -139,14 +141,20 @@
 ;; ワームの表示
 (define-method worm-disp ((w1 <worm>))
   (define color (case (~ w1 'state)
-                  ((0) #f32(0.5 0.0 0.0 1.0))
-                  ((1) #f32(0.0 0.7 0.3 1.0))
+                  ((0) (if (= *flatdisp* 0)
+                         #f32(0.5 0.0 0.0 1.0)
+                         #f32(0.9 0.5 0.2 1.0)))
+                  ((1) (if (= *flatdisp* 0)
+                         #f32(0.0 0.7 0.3 1.0)
+                         #f32(0.0 0.8 0.4 1.0)))
                   ((2) #f32(1.0 1.0 1.0 1.0))))
   (define wedge (case (~ w1 'state)
                   ((0) 120)
                   ((1) (randint 0 90))
                   ((2) 70)))
-  (worm-disp w1 color wedge))
+  (if (= *flatdisp* 0)
+    (worm-disp w1 color wedge)
+    (worm-disp-flat w1 *win* color wedge)))
 ;; ワームクラスのインスタンス生成
 (define *worms* (make-vector-of-class *wnum* <worm>))
 (for-each
@@ -276,7 +284,8 @@
 
 ;; メイン処理
 (define (main args)
-  (glut-init args)
+  (set! *flatdisp* (x->integer (list-ref args 1 0)))
+  (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
   (glut-init-window-position 100 100)

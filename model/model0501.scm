@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0501(欠けた球)
-;; 2018-5-25
+;; 2018-5-31
 ;;
 (define-module model0501
   (use gl)
@@ -33,13 +33,13 @@
   ;; 座標計算
   (let ((idx 0) (r1 0) (x1 0) (y1 0) (z1 0))
     (do ((i 0 (+ i 1))
-         (angle1 0 (if (< i s1) (+ angle1 step1) pi)))
+         (angle1 0 (if (< (+ i 1) s1) (+ angle1 step1) pi)))
         ((> i s1) #f)
       (set! y1 (cos angle1))
       (set! r1 (sin angle1))
       (do ((j 0 (+ j 1))
-           ;(angle2 0 (if (< j s2) (+ angle2 step2) 0)))
-           (angle2 w1 (if (< j s2) (+ angle2 step2) (- 2pi w1))))
+           ;(angle2 0 (if (< (+ j 1) s2) (+ angle2 step2) 0)))
+           (angle2 w1 (if (< (+ j 1) s2) (+ angle2 step2) (- 2pi w1))))
           ((> j s2) #f)
         (set! x1 (* r1 (cos angle2)))
         (set! z1 (* r1 (sin angle2)))

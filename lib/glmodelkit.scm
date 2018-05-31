@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmodelkit.scm
-;; 2018-5-2 v1.03
+;; 2018-5-31 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って基本的なモデルの生成を行うためのモジュールです。
@@ -68,7 +68,7 @@
   ;; 側面
   (gl-begin GL_TRIANGLE_STRIP)
   (do ((i 0 (+ i 1))
-       (angle 0 (if (< i s) (+ angle step) 0)))
+       (angle 0 (if (< (+ i 1) s) (+ angle step) 0)))
       ((> i s) #f)
     (let ((x (cos angle))
           (z (sin angle)))
