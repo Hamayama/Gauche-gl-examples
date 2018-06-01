@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-6-1 v1.10
+;; 2018-6-1 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -70,7 +70,7 @@
 (define *demotmin* 0.0) ; デモ生存時間最小値
 (define *demotavg* 0.0) ; デモ生存時間平均値
 
-(define *flatdisp*   0) ; フラット表示(=0:OFF,=1:ON)
+(define *flatdisp*   0) ; フラット表示(=0:OFF,=1:ON,=2:ON+枠線表示(デバッグ用))
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
@@ -264,6 +264,15 @@
   (for-each
    (lambda (e1)
      (when (~ e1 'useflag)
+       (when (= *flatdisp* 2)
+         ;; 枠線表示(デバッグ用)
+         (gl-color #f32(1.0 1.0 0.0 1.0))
+         (let1 r1 (~ e1 'r)
+           (draw-win-rect-line (win-x *win* (- (~ e1 'x) r1))
+                               (win-y *win* (+ (~ e1 'y) r1))
+                               (win-w *win* (* r1 2))
+                               (win-h *win* (* r1 2))
+                               *width* *height*)))
        (let ((w1    (~ e1 'worm))
              (color (case (~ e1 'state)
                       ((0)  #f32(1.0 1.0 1.0 1.0))
