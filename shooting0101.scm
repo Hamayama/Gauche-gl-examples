@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2018-5-28 v2.12
+;; 2018-6-1 v2.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -425,7 +425,7 @@
                   (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
              (when (< rr (car (~ ret (- n 1))))
                (set! (~ ret (- n 1)) (cons rr e1))
-               (set! ret (sort! ret < car))))
+               (when (> n 1) (set! ret (sort! ret < car)))))
            ))
        enemies))
     (%search-near-enemies *enemies*)
