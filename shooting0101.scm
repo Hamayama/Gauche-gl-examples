@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2018-6-1 v2.13
+;; 2018-6-1 v2.14
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -164,16 +164,18 @@
            (nes2 (get-near-enemies 1 #t))
            (rr2  (car (~ nes2 0)))
            (e2   (cdr (~ nes2 0)))
-           (vx   0))
+           (vx   0)
+           (x1   (if e1 (~ e1 'x) 0))
+           (x2   (if e2 (~ e2 'x) 0))
+           (d1   (* *chw* (~ *dparam* 'p1))))
       (cond
        ;; 一番近い敵/敵ミサイルを避ける
-       ((and e1 (< rr1 (* *chw* *chw* (~ *dparam* 'p1) (~ *dparam* 'p1))))
-        (set! vx (if (< *x* (~ e1 'x)) (- *v*) *v*)))
+       ((and e1 (< rr1 (* d1 d1)))
+        (set! vx (if (< *x* x1) (- *v*) *v*)))
        ;; 一番近い敵に近づく
-       ((and e2 (> rr2 (* *chw* *chw* (~ *dparam* 'p1) (~ *dparam* 'p1) 25))
-             (<= (- *wd/2*) (~ e2 'x) *wd/2*))
-        (if (<= (- *x* (~ e2 'x)) (- *v*)) (set! vx    *v*))
-        (if (>= (- *x* (~ e2 'x))    *v*)  (set! vx (- *v*))))
+       ((and e2 (> rr2 (* d1 d1 25)) (<= (- *wd/2*) x2 *wd/2*))
+        (if (<= (- *x* x2) (- *v*)) (set! vx    *v*))
+        (if (>= (- *x* x2)    *v*)  (set! vx (- *v*))))
        ;; 中央に戻る
        ((<= (randint 1 100) (~ *dparam* 'p2))
         (if (<= *x* (- *v*)) (set! vx    *v*))
@@ -191,8 +193,8 @@
     )
    ;; デモでないとき
    (else
+    ;; 自機の移動
     (let ((vx 0) (vy 0))
-      ;; 自機の移動
       (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx (+ vx (- *v*))))
       (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx (+ vx    *v*)))
       (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy (+ vy    *v*)))

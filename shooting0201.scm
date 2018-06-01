@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0201.scm
-;; 2018-6-1 v1.64
+;; 2018-6-1 v1.65
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -171,13 +171,14 @@
            (vy   0)
            (y0   (- *y* *chh*))
            (y1   (if e1 (- (~ e1 'y) (~ e1 'h/2)) 0))
-           (y2   (if e2 (- (~ e2 'y) (~ e2 'h/2)) 0)))
+           (y2   (if e2 (- (~ e2 'y) (~ e2 'h/2)) 0))
+           (d1   (* *chh* (~ *dparam* 'p1))))
       (cond
        ;; 一番近い敵/敵ミサイルを避ける
-       ((and e1 (< rr1 (* *chh* *chh* (~ *dparam* 'p1) (~ *dparam* 'p1))))
+       ((and e1 (< rr1 (* d1 d1)))
         (set! vy (if (< y0 y1) (- *v*) *v*)))
        ;; 一番近い敵に近づく
-       ((and e2 (> rr2 (* *chh* *chh* (~ *dparam* 'p1) (~ *dparam* 'p1) 4.0))
+       ((and e2 (> rr2 (* d1 d1 4.0))
              (<= (- *ht/2*) y2 *ht/2*))
         (if (<= (- y0 y2) (- *v*)) (set! vy    *v*))
         (if (>= (- y0 y2)    *v*)  (set! vy (- *v*))))
@@ -198,8 +199,8 @@
     )
    ;; デモでないとき
    (else
+    ;; 自機の移動
     (let ((vx 0) (vy 0))
-      ;; 自機の移動
       (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx (+ vx (- *v*))))
       (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx (+ vx    *v*)))
       (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy (+ vy    *v*)))

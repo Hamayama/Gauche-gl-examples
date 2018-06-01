@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-6-1 v1.09
+;; 2018-6-1 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -111,6 +111,9 @@
    (kind    :init-value 0)  ; 種別(=0:ワーム0101,=1:ワーム0201)
    (state   :init-value 0)  ; 状態(=0:通常,=1:被弾,=10-50:やられ)
    (life    :init-value 0)  ; 耐久力
+   (x       :init-value 0)  ; X座標
+   (y       :init-value 0)  ; Y座標
+   (r       :init-value 0)  ; 半径
    (minx    :init-value 0)  ; X座標の最小値
    (maxx    :init-value 0)  ; X座標の最大値
    (miny    :init-value 0)  ; Y座標の最小値
@@ -160,10 +163,11 @@
            (vx    0)
            (x1    (if e1 (~ e1 'worm 'axvec index) 0))
            (x2    (if e2 (~ e2 'worm 'axvec 0) 0))
-           (y2    (if e2 (~ e2 'worm 'ayvec 0) 0)))
+           (y2    (if e2 (~ e2 'worm 'ayvec 0) 0))
+           (d1    (* *chw* (~ *dparam* 'p1))))
       (cond
        ;; 一番近い敵を避ける
-       ((and e1 (< rr1 (* *chw* *chw* (~ *dparam* 'p1) (~ *dparam* 'p1))))
+       ((and e1 (< rr1 (* d1 d1)))
         (set! vx (if (< *x* x1) (- *v*) *v*)))
        ;; 一番近い敵の先端に近づく
        ((and e2 (<= (- *wd/2*) x2 *wd/2*) (<= (- *ht/2*) y2 *ht/2*))
@@ -186,8 +190,8 @@
     )
    ;; デモでないとき
    (else
+    ;; 自機の移動
     (let ((vx 0) (vy 0))
-      ;; 自機の移動
       (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! vx (+ vx (- *v*))))
       (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! vx (+ vx    *v*)))
       (if (spkey-on? *ksinfo* GLUT_KEY_UP)    (set! vy (+ vy    *v*)))
@@ -210,13 +214,14 @@
 (define (make-enemies enemies :optional (missiles #f))
   (let1 i (find-index (lambda (e1) (not (~ e1 'useflag))) enemies)
     (if (and i (< i *mr*))
-      (let* ((e1     (~ enemies i))
-             (minx   (- *wd/2*))
-             (maxx      *wd/2*)
-             (miny   (- (* *ht/2* 2)))
-             (maxy      (* *ht/2* 2))
-             (w1     (make <worm0101>))
-             (w2     (make <worm0201>)))
+      (let ((e1   (~ enemies i))
+            (minx (- *wd/2*))
+            (maxx    *wd/2*)
+            (miny (- (* *ht/2* 2)))
+            (maxy    (* *ht/2* 2))
+            (w1   (make <worm0101>))
+            (w2   (make <worm0201>))
+            (last (+ *wlen* 1)))
         (set! (~ e1 'useflag) #t)
         (set! (~ e1 'kind)    1)
         (set! (~ e1 'state)   0)
@@ -249,6 +254,9 @@
         (worm-init w2 *wlen* (randint minx maxx) maxy 0)
         (worm-set-goal w1 (randint minx maxx) (randint (- *ht/2*) *ht/2*))
         (worm-set-goal w2 (randint minx maxx) (randint (- *ht/2*) *ht/2*))
+        (set! (~ e1 'x) (/. (+ (~ w1 'axvec 0) (~ w1 'axvec last)) 2))
+        (set! (~ e1 'y) (/. (+ (~ w1 'ayvec 0) (~ w1 'ayvec last)) 2))
+        (set! (~ e1 'r) (/. (+ (~ w1 'arvec 0) (~ w1 'arvec last) (* (~ w1 'al) last)) 2))
         ))))
 
 ;; 敵の表示
@@ -286,8 +294,11 @@
                 (minx (~ e1 'minx))
                 (maxx (~ e1 'maxx))
                 (miny (~ e1 'miny))
-                (maxy (~ e1 'maxy)))
+                (maxy (~ e1 'maxy))
+                (last (+ *wlen* 1)))
             (worm-move w1)
+            (set! (~ e1 'x) (/. (+ (~ w1 'axvec 0) (~ w1 'axvec last)) 2))
+            (set! (~ e1 'y) (/. (+ (~ w1 'ayvec 0) (~ w1 'ayvec last)) 2))
             (set! (~ e1 'count1) (+ (~ e1 'count1) *wait*))
             ;; 目標に到達したか、または、10秒経過したとき
             (when (or (worm-goal? w1 *waku*)
@@ -334,29 +345,20 @@
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
-         ;; ワームの全関節をチェックする
-         (let* ((w1   (~ e1 'worm))
-                (last (+ (~ w1 'anum) 1)))
-           (do ((i 0 (+ i 1)))
-               ((> i last) #f)
-             (let ((ax (~ w1 'axvec i))
-                   (ay (~ w1 'ayvec i))
-                   (ar (~ w1 'arvec i)))
-               ;; 最初におおまかに判定
-               (when (= i 0)
-                 (let ((ax1 (/. (+ ax (~ w1 'axvec last)) 2))
-                       (ay1 (/. (+ ay (~ w1 'ayvec last)) 2))
-                       (ar1 (/. (+ ar (~ w1 'arvec last) (* (~ w1 'al) last)) 2)))
-                   (unless (recthit? x1 y1 wd1 ht1 (- ax1 ar1) (- ay1 ar1) (* ar1 2) (* ar1 2))
-                     ;(print i " " ax1 " " ay1 " " ar1)
-                     (set! i (+ last 1)))))
-               ;; 正確に判定
-               (when (<= i last)
-                 ;; (円に内接する正方形のサイズで判定)
-                 (let1 ar1 (* ar 0.7)
-                   (when (recthit? x1 y1 wd1 ht1 (- ax ar1) (- ay ar1) (* ar1 2) (* ar1 2))
-                     (set! ret #t))))
-               )))))
+         ;; 最初に大まかに判定する
+         (let ((x2 (~ e1 'x))
+               (y2 (~ e1 'y))
+               (r2 (~ e1 'r)))
+           (when (recthit? x1 y1 wd1 ht1 (- x2 r2) (- y2 r2) (* r2 2) (* r2 2))
+             ;; ワームの全関節をチェックする
+             (let1 w1 (~ e1 'worm)
+               (for-each
+                (lambda (ax ay ar)
+                  ;; (円に内接する正方形のサイズで判定)
+                  (let1 ar1 (* ar 0.7)
+                    (when (recthit? x1 y1 wd1 ht1 (- ax ar1) (- ay ar1) (* ar1 2) (* ar1 2))
+                      (set! ret #t))))
+                (~ w1 'axvec) (~ w1 'ayvec) (~ w1 'arvec)))))))
      enemies)
     (if (and ret (not *demoflag*)) (auddata-play *adata-end1*))
     ret))
@@ -382,32 +384,23 @@
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
-         ;; ワームの全関節をチェックする
-         (let* ((w1   (~ e1 'worm))
-                (last (+ (~ w1 'anum) 1)))
-           (do ((i 0 (+ i 1)))
-               ((> i last) #f)
-             (let ((ax (~ w1 'axvec i))
-                   (ay (~ w1 'ayvec i))
-                   (ar (~ w1 'arvec i)))
-               ;; 最初におおまかに判定
-               (when (= i 0)
-                 (let ((ax1 (/. (+ ax (~ w1 'axvec last)) 2))
-                       (ay1 (/. (+ ay (~ w1 'ayvec last)) 2))
-                       (ar1 (/. (+ ar (~ w1 'arvec last) (* (~ w1 'al) last)) 2)))
-                   (unless (recthit? x1 y1 wd1 ht1 (- ax1 ar1) (- ay1 ar1) (* ar1 2) (* ar1 2))
-                     ;(print i " " ax1 " " ay1 " " ar1)
-                     (set! i (+ last 1)))))
-               ;; 正確に判定
-               (when (<= i last)
-                 (let ((ax1 (- ax ar))
-                       (ay1 (- ay ar)))
-                   (when (and (< ay1 minby)
-                              (recthit? x1 y1 wd1 ht1 ax1 ay1 (* ar 2) (* ar 2)))
-                     (set! e2 e1)
-                     (set! hit-index i)
-                     (set! minby ay1))))
-               )))))
+         ;; 最初に大まかに判定する
+         (let ((x2 (~ e1 'x))
+               (y2 (~ e1 'y))
+               (r2 (~ e1 'r)))
+           (when (recthit? x1 y1 wd1 ht1 (- x2 r2) (- y2 r2) (* r2 2) (* r2 2))
+             ;; ワームの全関節をチェックする
+             (let1 w1 (~ e1 'worm)
+               (for-each-with-index
+                (lambda (i ax ay ar)
+                  (let ((ax1 (- ax ar))
+                        (ay1 (- ay ar)))
+                    (when (and (< ay1 minby)
+                               (recthit? x1 y1 wd1 ht1 ax1 ay1 (* ar 2) (* ar 2)))
+                      (set! e2 e1)
+                      (set! hit-index i)
+                      (set! minby ay1))))
+                (~ w1 'axvec) (~ w1 'ayvec) (~ w1 'arvec)))))))
      *enemies*)
     (set! *bc* (max (floor->exact (/. (- minby *y*) *chh*)) 1))
     ;; ワームの先端のみダメージを与えられる
@@ -434,20 +427,17 @@
        (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
          ;; ワームの全関節をチェックする
          ;; (ただし、front-only が #t のときは、ワームの先端のみチェックする)
-         (let* ((w1   (~ e1 'worm))
-                (last (+ (~ w1 'anum) 1)))
-           (do ((i 0 (+ i 1)))
-               ((> i last) #f)
-             (let* ((ax    (~ w1 'axvec i))
-                    (ay    (~ w1 'ayvec i))
-                    (xdiff (- ax *x*))
-                    (ydiff (- ay (- *y* (* *chh* 1.5))))
-                    (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
-               (when (< rr (car (~ ret (- n 1))))
-                 (set! (~ ret (- n 1)) (list rr e1 i))
-                 (when (> n 1) (set! ret (sort! ret < car))))
-               (when front-only (set! i (+ last 1)))
-               )))))
+         (let1 w1 (~ e1 'worm)
+           (for-each-with-index
+            (lambda (i ax ay)
+              (unless (and front-only (> i 0))
+                (let* ((xdiff (- ax *x*))
+                       (ydiff (- ay (- *y* (* *chh* 1.5))))
+                       (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
+                  (when (< rr (car (~ ret (- n 1))))
+                    (set! (~ ret (- n 1)) (list rr e1 i))
+                    (when (> n 1) (set! ret (sort! ret < car)))))))
+            (~ w1 'axvec) (~ w1 'ayvec)))))
      *enemies*)
     ;(print ret)
     ret))
