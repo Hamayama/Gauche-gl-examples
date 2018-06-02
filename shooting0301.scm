@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-6-2 v1.12
+;; 2018-6-2 v1.13
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -69,7 +69,7 @@
 (define *demotmin* 0.0) ; デモ生存時間最小値
 (define *demotavg* 0.0) ; デモ生存時間平均値
 
-(define *flatdisp*   0) ; フラット表示(=0:OFF,=1:ON,=2:ON+枠線表示(デバッグ用))
+(define *flatdisp*   0) ; フラット表示(=0:OFF,=1:ON)
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
@@ -110,9 +110,6 @@
    (kind    :init-value 0)  ; 種別(=0:ワーム0101,=1:ワーム0201)
    (state   :init-value 0)  ; 状態(=0:通常,=1:被弾,=10-50:やられ)
    (life    :init-value 0)  ; 耐久力
-   (x       :init-value 0)  ; X座標
-   (y       :init-value 0)  ; Y座標
-   (r       :init-value 0)  ; 半径
    (minx    :init-value 0)  ; X座標の最小値
    (maxx    :init-value 0)  ; X座標の最大値
    (miny    :init-value 0)  ; Y座標の最小値
@@ -252,11 +249,6 @@
         (worm-init w2 *wlen* (randint minx maxx) maxy 0)
         (worm-set-goal w1 (randint minx maxx) (randint (- *ht/2*) *ht/2*))
         (worm-set-goal w2 (randint minx maxx) (randint (- *ht/2*) *ht/2*))
-        ;; (先頭と末尾の中点を代表の座標とする)
-        (set! (~ e1 'x) (/. (+ (~ w1 'axvec 0) (~ w1 'axvec last)) 2))
-        (set! (~ e1 'y) (/. (+ (~ w1 'ayvec 0) (~ w1 'ayvec last)) 2))
-        ;; (全長/2を半径とする)
-        (set! (~ e1 'r) (/. (+ (~ w1 'arvec 0) (~ w1 'arvec last) (* (~ w1 'al) last)) 2))
         ))))
 
 ;; 敵の表示
@@ -264,15 +256,6 @@
   (for-each
    (lambda (e1)
      (when (~ e1 'useflag)
-       (when (= *flatdisp* 2)
-         ;; 枠線表示(デバッグ用)
-         (gl-color #f32(1.0 1.0 0.0 1.0))
-         (let1 r1 (~ e1 'r)
-           (draw-win-rect-line (win-x *win* (- (~ e1 'x) r1))
-                               (win-y *win* (+ (~ e1 'y) r1))
-                               (win-w *win* (* r1 2))
-                               (win-h *win* (* r1 2))
-                               *width* *height*)))
        (let ((w1    (~ e1 'worm))
              (color (case (~ e1 'state)
                       ((0)  #f32(1.0 1.0 1.0 1.0))
@@ -306,8 +289,6 @@
                 (maxy (~ e1 'maxy))
                 (last (+ *wlen* 1)))
             (worm-move w1)
-            (set! (~ e1 'x) (/. (+ (~ w1 'axvec 0) (~ w1 'axvec last)) 2))
-            (set! (~ e1 'y) (/. (+ (~ w1 'ayvec 0) (~ w1 'ayvec last)) 2))
             (set! (~ e1 'count1) (+ (~ e1 'count1) *wait*))
             ;; 目標に到達したか、または、10秒経過したとき
             (when (or (worm-goal? w1 *waku*)
@@ -354,20 +335,15 @@
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
-         ;; 最初に大まかに判定する
-         (let ((x2 (~ e1 'x))
-               (y2 (~ e1 'y))
-               (r2 (~ e1 'r)))
-           (when (recthit? x1 y1 wd1 ht1 (- x2 r2) (- y2 r2) (* r2 2) (* r2 2))
-             ;; ワームの全関節をチェックする
-             (let1 w1 (~ e1 'worm)
-               (for-each
-                (lambda (ax ay ar)
-                  ;; (円に内接する正方形のサイズで判定)
-                  (let1 ar1 (* ar 0.7)
-                    (when (recthit? x1 y1 wd1 ht1 (- ax ar1) (- ay ar1) (* ar1 2) (* ar1 2))
-                      (set! ret #t))))
-                (~ w1 'axvec) (~ w1 'ayvec) (~ w1 'arvec)))))))
+         ;; ワームの全関節をチェックする
+         (let1 w1 (~ e1 'worm)
+           (for-each
+            (lambda (ax ay ar)
+              ;; (円に内接する正方形のサイズで判定)
+              (let1 ar1 (* ar 0.7)
+                (when (recthit? x1 y1 wd1 ht1 (- ax ar1) (- ay ar1) (* ar1 2) (* ar1 2))
+                  (set! ret #t))))
+            (~ w1 'axvec) (~ w1 'ayvec) (~ w1 'arvec)))))
      enemies)
     (if (and ret (not *demoflag*)) (auddata-play *adata-end1*))
     ret))
@@ -393,23 +369,18 @@
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
-         ;; 最初に大まかに判定する
-         (let ((x2 (~ e1 'x))
-               (y2 (~ e1 'y))
-               (r2 (~ e1 'r)))
-           (when (recthit? x1 y1 wd1 ht1 (- x2 r2) (- y2 r2) (* r2 2) (* r2 2))
-             ;; ワームの全関節をチェックする
-             (let1 w1 (~ e1 'worm)
-               (for-each-with-index
-                (lambda (i ax ay ar)
-                  (let ((ax1 (- ax ar))
-                        (ay1 (- ay ar)))
-                    (when (and (< ay1 minby)
-                               (recthit? x1 y1 wd1 ht1 ax1 ay1 (* ar 2) (* ar 2)))
-                      (set! e2 e1)
-                      (set! hit-index i)
-                      (set! minby ay1))))
-                (~ w1 'axvec) (~ w1 'ayvec) (~ w1 'arvec)))))))
+         ;; ワームの全関節をチェックする
+         (let1 w1 (~ e1 'worm)
+           (for-each-with-index
+            (lambda (i ax ay ar)
+              (let ((ax1 (- ax ar))
+                    (ay1 (- ay ar)))
+                (when (and (< ay1 minby)
+                           (recthit? x1 y1 wd1 ht1 ax1 ay1 (* ar 2) (* ar 2)))
+                  (set! e2 e1)
+                  (set! hit-index i)
+                  (set! minby ay1))))
+            (~ w1 'axvec) (~ w1 'ayvec) (~ w1 'arvec)))))
      *enemies*)
     (set! *bc* (max (floor->exact (/. (- minby *y*) *chh*)) 1))
     ;; ワームの先端のみダメージを与えられる
