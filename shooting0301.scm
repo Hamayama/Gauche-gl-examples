@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-6-1 v1.11
+;; 2018-6-2 v1.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -52,7 +52,6 @@
 (define *mmr*        1) ; 敵の最大数
 (define *mmmr*       7) ; 敵の最大数の最大数
 (define *wlen*       8) ; ワームの長さ
-(define *boss*       #f) ; ボスフラグ
 (define *bosssize* 1.5) ; ボスの大きさ(倍率)
 (define *sc*         0) ; スコア
 (define *hs*         0) ; ハイスコア
@@ -211,7 +210,7 @@
   (for-each (lambda (e1) (set! (~ e1 'useflag) #f)) enemies))
 
 ;; 敵の生成
-(define (make-enemies enemies :optional (missiles #f))
+(define (make-enemies enemies :optional (boss #f))
   (let1 i (find-index (lambda (e1) (not (~ e1 'useflag))) enemies)
     (if (and i (< i *mr*))
       (let ((e1   (~ enemies i))
@@ -235,10 +234,9 @@
         (set! (~ e1 'worm2)   w2)
         (set! (~ e1 'count1)  0)
         (set! (~ e1 'count2)  0)
-        (set! (~ e1 'boss)    *boss*)
+        (set! (~ e1 'boss)    boss)
         ;; ボス出現
-        (when *boss*
-          (set! *boss* #f)
+        (when boss
           (set! (~ e1 'life) (* (~ e1 'life) *bosssize*))
           (set! (~ e1 'miny) (* (~ e1 'miny) *bosssize*))
           (set! (~ e1 'maxy) (* (~ e1 'maxy) *bosssize*))
@@ -254,8 +252,10 @@
         (worm-init w2 *wlen* (randint minx maxx) maxy 0)
         (worm-set-goal w1 (randint minx maxx) (randint (- *ht/2*) *ht/2*))
         (worm-set-goal w2 (randint minx maxx) (randint (- *ht/2*) *ht/2*))
+        ;; (先頭と末尾の中点を代表の座標とする)
         (set! (~ e1 'x) (/. (+ (~ w1 'axvec 0) (~ w1 'axvec last)) 2))
         (set! (~ e1 'y) (/. (+ (~ w1 'ayvec 0) (~ w1 'ayvec last)) 2))
+        ;; (全長/2を半径とする)
         (set! (~ e1 'r) (/. (+ (~ w1 'arvec 0) (~ w1 'arvec last) (* (~ w1 'al) last)) 2))
         ))))
 
@@ -610,7 +610,6 @@
        (set! *bc*    0)
        (set! *mr*    1)
        (set! *mmr*   1)
-       (set! *boss*  #f)
        ;(set! *sc*    0)
        (set! *ssc*   0)
        (init-enemies *enemies*)
@@ -653,10 +652,9 @@
            (set! *mr* 0)
            (set! *mmr* (min (+ *mmr* 2) *mmmr*))
            ))
-       (when (= (modulo *ssc* 2000) 0)
-         (set! *boss* #t))
        ;; 敵の生成
-       (if (= (modulo *ssc* 50) 0) (make-enemies *enemies*))
+       (if (= (modulo *ssc* 50) 0)
+         (make-enemies *enemies* (= (modulo *ssc* (* 50 40)) 0)))
        ;; 敵の移動
        (move-enemies *enemies*)
        ;; 自機の移動
