@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2018-6-1 v2.14
+;; 2018-6-3 v2.15
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -154,33 +154,47 @@
 
 ;; 自機の移動
 (define (move-mychr)
+  ;; デモ用の自機移動処理
+  (define (demo-move-mychr x y)
+    (let* ((ne2 (get-nearest-enemy x y *enemies*))
+           (rr2 (car ne2))
+           (e2  (cdr ne2))
+           (ne1 (get-nearest-enemy x y *missiles* ne2))
+           (rr1 (car ne1))
+           (e1  (cdr ne1))
+           (vx  0)
+           (x1  (if e1 (~ e1 'x) 0))
+           (x2  (if e2 (~ e2 'x) 0))
+           (d1  (* *chw* (~ *dparam* 'p1)))
+           (pri #f))
+      (cond
+       ;; 一番近い敵/敵ミサイルを避ける(優先行動)
+       ((and e1 (< rr1 (* d1 d1)))
+        (set! vx (* (sign-value2 (- x1 x)) (- *v*)))
+        (set! pri #t))
+       ;; 一番近い敵に近づく
+       ((and e2 (> rr2 (* d1 d1 25)) (<= (- *wd/2*) x2 *wd/2*))
+        (set! vx (* (sign-value  (- x2 x))    *v*)))
+       ;; 中央に戻る
+       ((and (<= (randint 1 100) (~ *dparam* 'p2))
+             (>= (abs (- 0 x)) *v*))
+        (set! vx (* (sign-value  (-  0 x))    *v*))))
+      (cons vx pri)))
   (cond
    ;; デモのとき
    (*demoflag*
     ;; 自機の移動
-    (let* ((nes1 (get-near-enemies 1))
-           (rr1  (car (~ nes1 0)))
-           (e1   (cdr (~ nes1 0)))
-           (nes2 (get-near-enemies 1 #t))
-           (rr2  (car (~ nes2 0)))
-           (e2   (cdr (~ nes2 0)))
-           (vx   0)
-           (x1   (if e1 (~ e1 'x) 0))
-           (x2   (if e2 (~ e2 'x) 0))
-           (d1   (* *chw* (~ *dparam* 'p1))))
-      (cond
-       ;; 一番近い敵/敵ミサイルを避ける
-       ((and e1 (< rr1 (* d1 d1)))
-        (set! vx (if (< *x* x1) (- *v*) *v*)))
-       ;; 一番近い敵に近づく
-       ((and e2 (> rr2 (* d1 d1 25)) (<= (- *wd/2*) x2 *wd/2*))
-        (if (<= (- *x* x2) (- *v*)) (set! vx    *v*))
-        (if (>= (- *x* x2)    *v*)  (set! vx (- *v*))))
-       ;; 中央に戻る
-       ((<= (randint 1 100) (~ *dparam* 'p2))
-        (if (<= *x* (- *v*)) (set! vx    *v*))
-        (if (>= *x*    *v*)  (set! vx (- *v*)))))
-      (set! *x* (clamp (+ *x* vx) *minx* *maxx*)))
+    ;; (優先行動でないときは、自機の振動を抑制する)
+    (let* ((ret1 (demo-move-mychr *x* *y*))
+           (vx1  (car ret1))
+           (pri  (cdr ret1))
+           (ret2 (demo-move-mychr (+ *x* vx1) *y*))
+           (vx2  (car ret2)))
+      (when (and (not pri)
+                 (not (= vx1 0))
+                 (= vx1 (- vx2)))
+        (set! vx1 0))
+      (set! *x* (clamp (+ *x* vx1) *minx* *maxx*)))
     ;; 自機ビーム発射
     (cond
      ((attack-enemies?)
@@ -408,32 +422,25 @@
      *enemies*)
     ret))
 
-;; 自機に近い敵/敵ミサイルを、近い順にn個だけ取得する(デモ用)
-;;   ・戻り値は #((距離の2乗 . 敵/敵ミサイル) ...) というベクタを返す
-;;   ・有効な敵/敵ミサイルがいなければ #((1000000 . #f) ...) というベクタを返す
-;;   ・enemy-only が #t のときは、敵のみをチェックする
-(define (get-near-enemies n :optional (enemy-only #f))
-  (let1 ret (make-vector n '(1000000 . #f))
-    (define (%search-near-enemies enemies)
-      (for-each
-       (lambda (e1)
-         (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
-           (let* ((x1    *x*)
-                  (y1    (- *y* (* *chh* 1.5)))
-                  (x2    (~ e1 'x))
-                  (y2    (- (~ e1 'y) (~ e1 'h/2)))
-                  (xdiff (- x2 x1))
-                  (ydiff (- y2 y1))
-                  (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
-             (when (< rr (car (~ ret (- n 1))))
-               (set! (~ ret (- n 1)) (cons rr e1))
-               (when (> n 1) (set! ret (sort! ret < car)))))
-           ))
-       enemies))
-    (%search-near-enemies *enemies*)
-    (unless enemy-only
-      (%search-near-enemies *missiles*))
-    ;(print ret)
+;; 自機に最も近い敵/敵ミサイルの情報を取得する(デモ用)
+;;   ・戻り値は (距離の2乗 . 敵/敵ミサイル) というペアを返す
+;;   ・有効な敵/敵ミサイルが存在しないときは (1000000 . #f) というペアを返す
+;;   ・previous に前回の結果を与えると、それよりも近いものを探す
+(define (get-nearest-enemy x y enemies :optional (previous #f))
+  (let1 ret (or previous '(1000000 . #f))
+    (for-each
+     (lambda (e1)
+       (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
+         (let* ((x1    x)
+                (y1    (- y (* *chh* 1.5)))
+                (x2    (~ e1 'x))
+                (y2    (- (~ e1 'y) (~ e1 'h/2)))
+                (xdiff (- x2 x1))
+                (ydiff (- y2 y1))
+                (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
+           (if (< rr (car ret))
+             (set! ret (cons rr e1))))))
+     enemies)
     ret))
 
 ;; 自機の敵への攻撃チェック(デモ用)

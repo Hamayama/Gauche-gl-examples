@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-6-2 v1.13
+;; 2018-6-3 v1.14
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -146,34 +146,48 @@
 
 ;; 自機の移動
 (define (move-mychr)
-  (cond
-   ;; デモのとき
-   (*demoflag*
-    ;; 自機の移動
-    (let* ((nes1  (get-near-enemies 1))
-           (rr1   (~ (~ nes1 0) 0))
-           (e1    (~ (~ nes1 0) 1))
-           (index (~ (~ nes1 0) 2))
-           (nes2  (get-near-enemies 1 #t))
-           (e2    (~ (~ nes2 0) 1))
+  ;; デモ用の自機移動処理
+  (define (demo-move-mychr x y)
+    (let* ((ne1   (get-nearest-enemy x y *enemies*))
+           (rr1   (~ ne1 0))
+           (e1    (~ ne1 1))
+           (index (~ ne1 2))
+           (ne2   (get-nearest-enemy x y *enemies* #t))
+           (e2    (~ ne2 1))
            (vx    0)
            (x1    (if e1 (~ e1 'worm 'axvec index) 0))
            (x2    (if e2 (~ e2 'worm 'axvec 0) 0))
            (y2    (if e2 (~ e2 'worm 'ayvec 0) 0))
-           (d1    (* *chw* (~ *dparam* 'p1))))
+           (d1    (* *chw* (~ *dparam* 'p1)))
+           (pri   #f))
       (cond
-       ;; 一番近い敵を避ける
+       ;; 一番近い敵を避ける(優先行動)
        ((and e1 (< rr1 (* d1 d1)))
-        (set! vx (if (< *x* x1) (- *v*) *v*)))
-       ;; 一番近い敵の先端に近づく
+        (set! vx (* (sign-value2 (- x1 x)) (- *v*)))
+        (set! pri #t))
+       ;; 一番近い敵に近づく
        ((and e2 (<= (- *wd/2*) x2 *wd/2*) (<= (- *ht/2*) y2 *ht/2*))
-        (if (<= (- *x* x2) (- *v*)) (set! vx    *v*))
-        (if (>= (- *x* x2)    *v*)  (set! vx (- *v*))))
+        (set! vx (* (sign-value  (- x2 x))    *v*)))
        ;; 中央に戻る
-       ((<= (randint 1 100) (~ *dparam* 'p2))
-        (if (<= *x* (- *v*)) (set! vx    *v*))
-        (if (>= *x*    *v*)  (set! vx (- *v*)))))
-      (set! *x* (clamp (+ *x* vx) *minx* *maxx*)))
+       ((and (<= (randint 1 100) (~ *dparam* 'p2))
+             (>= (abs (- 0 x)) *v*))
+        (set! vx (* (sign-value  (-  0 x))    *v*))))
+      (cons vx pri)))
+  (cond
+   ;; デモのとき
+   (*demoflag*
+    ;; 自機の移動
+    ;; (優先行動でないときは、自機の振動を抑制する)
+    (let* ((ret1 (demo-move-mychr *x* *y*))
+           (vx1  (car ret1))
+           (pri  (cdr ret1))
+           (ret2 (demo-move-mychr (+ *x* vx1) *y*))
+           (vx2  (car ret2)))
+      (when (and (not pri)
+                 (not (= vx1 0))
+                 (= vx1 (- vx2)))
+        (set! vx1 0))
+      (set! *x* (clamp (+ *x* vx1) *minx* *maxx*)))
     ;; 自機ビーム発射
     (cond
      ((attack-enemies?)
@@ -358,14 +372,14 @@
 
 ;; 自機ビームの当たり判定
 (define (hit-beam?)
-  (let ((ret       #f)
-        (x1        (- *x* (* *chw* 0.5)))
-        (y1        *y*)
-        (wd1       (* *chw* 1.0))
-        (ht1       (- *ht/2* *y*))
-        (minby     *ht/2*)
-        (e2        #f)
-        (hit-index 0))
+  (let ((ret   #f)
+        (x1    (- *x* (* *chw* 0.5)))
+        (y1    *y*)
+        (wd1   (* *chw* 1.0))
+        (ht1   (- *ht/2* *y*))
+        (minby *ht/2*)
+        (e2    #f)
+        (index 0))
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
@@ -378,13 +392,13 @@
                 (when (and (< ay1 minby)
                            (recthit? x1 y1 wd1 ht1 ax1 ay1 (* ar 2) (* ar 2)))
                   (set! e2 e1)
-                  (set! hit-index i)
+                  (set! index i)
                   (set! minby ay1))))
             (~ w1 'axvec) (~ w1 'ayvec) (~ w1 'arvec)))))
      *enemies*)
     (set! *bc* (max (floor->exact (/. (- minby *y*) *chh*)) 1))
     ;; ワームの先端のみダメージを与えられる
-    (when (and e2 (= hit-index 0))
+    (when (and e2 (= index 0))
       (set! ret #t)
       (set! (~ e2 'state) 1)
       (dec! (~ e2 'life))
@@ -395,13 +409,13 @@
           (auddata-play *adata-hit1*))))
     ret))
 
-;; 自機に近い敵を、近い順にn個だけ取得する(デモ用)
-;;   ・戻り値は #((距離の2乗 敵 index) ...) というベクタを返す
+;; 自機に最も近い敵の情報を取得する(デモ用)
+;;   ・戻り値は (距離の2乗 敵 index) というリストを返す
 ;;     (ここで index は、ワームの関節の番号)
-;;   ・有効な敵がいなければ #((1000000 #f 0) ...) というベクタを返す
+;;   ・有効な敵が存在しないときは (1000000 #f 0) というリストを返す
 ;;   ・front-only が #t のときは、ワームの先端のみチェックする
-(define (get-near-enemies n :optional (front-only #f))
-  (let1 ret (make-vector n '(1000000 #f 0))
+(define (get-nearest-enemy x y enemies :optional (front-only #f))
+  (let1 ret '(1000000 #f 0)
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (< (~ e1 'state) 10))
@@ -411,15 +425,13 @@
            (for-each-with-index
             (lambda (i ax ay)
               (unless (and front-only (> i 0))
-                (let* ((xdiff (- ax *x*))
-                       (ydiff (- ay (- *y* (* *chh* 1.5))))
+                (let* ((xdiff (- ax x))
+                       (ydiff (- ay (- y (* *chh* 1.5))))
                        (rr    (+ (* xdiff xdiff) (* ydiff ydiff))))
-                  (when (< rr (car (~ ret (- n 1))))
-                    (set! (~ ret (- n 1)) (list rr e1 i))
-                    (when (> n 1) (set! ret (sort! ret < car)))))))
+                  (if (< rr (car ret))
+                    (set! ret (list rr e1 i))))))
             (~ w1 'axvec) (~ w1 'ayvec)))))
-     *enemies*)
-    ;(print ret)
+     enemies)
     ret))
 
 ;; 自機の敵への攻撃チェック(デモ用)
