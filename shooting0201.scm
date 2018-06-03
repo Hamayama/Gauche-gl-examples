@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0201.scm
-;; 2018-6-3 v1.66
+;; 2018-6-3 v1.67
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -195,9 +195,7 @@
            (pri  (cdr ret1))
            (ret2 (demo-move-mychr *x* (+ *y* vy1)))
            (vy2  (car ret2)))
-      (when (and (not pri)
-                 (not (= vy1 0))
-                 (= vy1 (- vy2)))
+      (if (and (not pri) (not (= vy1 0)) (= vy1 (- vy2)))
         (set! vy1 0))
       (set! *y* (clamp (+ *y* vy1) *miny* *maxy*)))
     ;; 自機ビーム発射
@@ -206,7 +204,6 @@
       (set! *bc* 1)
       (set! *demotime2* 0))
      ((> *bc* 0)
-      (set! *bc* 1)
       (set! *demotime2* (+ *demotime2* *wait*))
       (if (>= *demotime2* 200) (set! *bc* 0))))
     )
@@ -383,8 +380,7 @@
          (inc! (~ e1 'state))
          (if (>= (~ e1 'state) 10)
            ;; 爆発終了なら未使用にする
-           (set! (~ e1 'useflag) #f))))
-       ))
+           (set! (~ e1 'useflag) #f))))))
    enemies))
 
 ;; 敵/敵ミサイルの当たり判定
@@ -397,10 +393,10 @@
     (for-each
      (lambda (e1)
        (if (and (~ e1 'useflag) (= (~ e1 'state) 0))
-         (when (textscrn-disp-check-str
-                (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
-                (win-w *win* *chw*) (win-h *win* *chh*)
-                (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y)) 'center)
+         (if (textscrn-disp-check-str
+              (~ e1 'tscrn) (~ e1 'hitstr) x1 y1 x2 y2
+              (win-w *win* *chw*) (win-h *win* *chh*)
+              (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y)) 'center)
            (set! ret #t))))
      enemies)
     (if (and ret (not *demoflag*)) (auddata-play *adata-end1*))
@@ -435,8 +431,7 @@
                      (win-w *win* *chw*) (win-h *win* *chh*)
                      (win-x *win* (~ e1 'x)) (win-y *win* (~ e1 'y)) 'center))
            (set! e2 e1)
-           (set! minbx (~ e1 'x)))
-         ))
+           (set! minbx (~ e1 'x)))))
      *enemies*)
     (when e2
       (set! ret #t)
@@ -464,9 +459,7 @@
                             ((= hity 0)                           ",")
                             ((= hity (- (~ e2 'tscrn 'height) 1)) "'")
                             (else                                 ".")))
-            (set! minbx (+ minbx (* (- hitx (/. *rsize* 2)) *chw*))))
-           ))
-        ))
+            (set! minbx (+ minbx (* (- hitx (/. *rsize* 2)) *chw*))))))))
     (set! *bc* (max (- (floor->exact (/. (- minbx *x*) *chw*)) 1) 1))
     ret))
 
@@ -506,10 +499,8 @@
                     (set! (~ e2 'state) 1)
                     (when (not *demoflag*)
                       (set! *sc* (+ *sc* 200))
-                      (auddata-play *adata-hit1*)))))
-              ))
-          *enemies*)
-         ))
+                      (auddata-play *adata-hit1*)))))))
+          *enemies*)))
      *enemies*)
     ret))
 
@@ -750,7 +741,7 @@
        ;; 自機の移動
        (move-mychr)
        ;; 自機ビーム処理
-       (if (= *bc* 1) (hit-beam?))
+       (if (> *bc* 0) (hit-beam?))
        ;; 爆風の当たり判定
        (hit-blast?)
        ;; 敵の当たり判定

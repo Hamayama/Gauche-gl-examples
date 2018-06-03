@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-6-3 v1.14
+;; 2018-6-3 v1.15
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -183,9 +183,7 @@
            (pri  (cdr ret1))
            (ret2 (demo-move-mychr (+ *x* vx1) *y*))
            (vx2  (car ret2)))
-      (when (and (not pri)
-                 (not (= vx1 0))
-                 (= vx1 (- vx2)))
+      (if (and (not pri) (not (= vx1 0)) (= vx1 (- vx2)))
         (set! vx1 0))
       (set! *x* (clamp (+ *x* vx1) *minx* *maxx*)))
     ;; 自機ビーム発射
@@ -194,7 +192,6 @@
       (set! *bc* 1)
       (set! *demotime2* 0))
      ((> *bc* 0)
-      (set! *bc* 1)
       (set! *demotime2* (+ *demotime2* *wait*))
       (if (>= *demotime2* 200) (set! *bc* 0))))
     )
@@ -355,7 +352,7 @@
             (lambda (ax ay ar)
               ;; (円に内接する正方形のサイズで判定)
               (let1 ar1 (* ar 0.7)
-                (when (recthit? x1 y1 wd1 ht1 (- ax ar1) (- ay ar1) (* ar1 2) (* ar1 2))
+                (if (recthit? x1 y1 wd1 ht1 (- ax ar1) (- ay ar1) (* ar1 2) (* ar1 2))
                   (set! ret #t))))
             (~ w1 'axvec) (~ w1 'ayvec) (~ w1 'arvec)))))
      enemies)
@@ -643,7 +640,7 @@
        ;; 自機の移動
        (move-mychr)
        ;; 自機ビーム処理
-       (if (= *bc* 1) (hit-beam?))
+       (if (> *bc* 0) (hit-beam?))
        ;; 敵の当たり判定
        (if (hit-enemies? *enemies*) (set! *scene* 2))
        ;; デモを抜けるチェック
