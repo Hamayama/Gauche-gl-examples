@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0201.scm
-;; 2018-6-3 v1.67
+;; 2018-6-4 v1.68
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -727,8 +727,7 @@
          (inc! *mr*)
          (when (> *mr* *mmr*)
            (set! *mr* 0)
-           (set! *mmr* (min (+ *mmr* 2) *mmmr*))
-           ))
+           (set! *mmr* (min (+ *mmr* 2) *mmmr*))))
        ;; 敵の生成
        (if (= (modulo *ssc* 12) 0) (make-enemies *enemies*))
        ;; 敵の移動

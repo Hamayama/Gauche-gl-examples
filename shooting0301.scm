@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-6-3 v1.15
+;; 2018-6-4 v1.16
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -51,6 +51,8 @@
 (define *mr*         1) ; 敵の数
 (define *mmr*        1) ; 敵の最大数
 (define *mmmr*       7) ; 敵の最大数の最大数
+(define *life*      50) ; 敵の耐久力
+(define *maxlife*  100) ; 敵の耐久力の最大値
 (define *wlen*       8) ; ワームの長さ
 (define *bosssize* 1.5) ; ボスの大きさ(倍率)
 (define *sc*         0) ; スコア
@@ -227,12 +229,11 @@
             (miny (- (* *ht/2* 2)))
             (maxy    (* *ht/2* 2))
             (w1   (make <worm0101>))
-            (w2   (make <worm0201>))
-            (last (+ *wlen* 1)))
+            (w2   (make <worm0201>)))
         (set! (~ e1 'useflag) #t)
         (set! (~ e1 'kind)    1)
         (set! (~ e1 'state)   0)
-        (set! (~ e1 'life)    70)
+        (set! (~ e1 'life)    *life*)
         (set! (~ e1 'minx)    minx)
         (set! (~ e1 'maxx)    maxx)
         (set! (~ e1 'miny)    miny)
@@ -297,8 +298,7 @@
                 (minx (~ e1 'minx))
                 (maxx (~ e1 'maxx))
                 (miny (~ e1 'miny))
-                (maxy (~ e1 'maxy))
-                (last (+ *wlen* 1)))
+                (maxy (~ e1 'maxy)))
             (worm-move w1)
             (set! (~ e1 'count1) (+ (~ e1 'count1) *wait*))
             ;; 目標に到達したか、または、10秒経過したとき
@@ -590,6 +590,7 @@
        (set! *bc*    0)
        (set! *mr*    1)
        (set! *mmr*   1)
+       (set! *life* 50)
        ;(set! *sc*    0)
        (set! *ssc*   0)
        (init-enemies *enemies*)
@@ -631,7 +632,7 @@
          (when (> *mr* *mmr*)
            (set! *mr* 0)
            (set! *mmr* (min (+ *mmr* 2) *mmmr*))
-           ))
+           (set! *life* (min (+ *life* 10) *maxlife*))))
        ;; 敵の生成
        (if (= (modulo *ssc* 50) 0)
          (make-enemies *enemies* (= (modulo *ssc* (* 50 40)) 0)))
