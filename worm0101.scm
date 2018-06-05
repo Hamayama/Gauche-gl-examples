@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm0101.scm
-;; 2018-5-31 v1.31
+;; 2018-6-5 v1.40
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -48,6 +48,8 @@
 (define *backcolor*  #f32(0.2 0.2 0.2 1.0)) ; 背景色
 
 (define *flatdisp*   0) ; フラット表示(=0:OFF,=1:ON)
+(define *wormkind*   0) ; ワームの種別(=0:ワーム0101,=1:ワーム0201)
+;                       ;   (変更する場合は、ワームクラスの変更も必要)
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -65,20 +67,20 @@
 ;; ワームクラス
 ;; (ワーム0101クラスを継承)
 (define-class <worm> (<worm0101>)
-  ((state  :init-value      0)  ; 状態(=0:追跡中,=1:食事中,=2:ランダム動作中)
-   (count1 :init-value      0)  ; 動作カウンタ1
-   (count2 :init-value      0)  ; 動作カウンタ2
-   (wtime1 :init-value   1000)  ; 食事時間(msec)
-   (wtime2 :init-value   8000)  ; ランダム動作時間最小値(msec)
-   (wtime3 :init-value  15000)  ; ランダム動作時間最大値(msec)
-   (wtime4 :init-value   2000)  ; ランダム動作切換時間最小値(msec)
-   (wtime5 :init-value   8000)  ; ランダム動作切換時間最大値(msec)
+  ((state  :init-value      0) ; 状態(=0:追跡中,=1:食事中,=2:ランダム動作中)
+   (count1 :init-value      0) ; 動作カウンタ1
+   (count2 :init-value      0) ; 動作カウンタ2
+   (wtime1 :init-value   1000) ; 食事時間(msec)
+   (wtime2 :init-value   8000) ; ランダム動作時間最小値(msec)
+   (wtime3 :init-value  15000) ; ランダム動作時間最大値(msec)
+   (wtime4 :init-value   2000) ; ランダム動作切換時間最小値(msec)
+   (wtime5 :init-value   8000) ; ランダム動作切換時間最大値(msec)
    ))
 ;; ワームの初期化
 ;;   anum  関節の数
-;;   x     (末尾の)X座標
-;;   y     (末尾の)Y座標
-;;   c     (末尾の)角度(度)
+;;   x     X座標
+;;   y     Y座標
+;;   c     角度(度)
 (define-method worm-init ((w1 <worm>) (anum <integer>) (x <real>) (y <real>) (c <real>))
   (next-method w1 anum x y c))
 ;; ワームの目標設定
@@ -99,7 +101,7 @@
     ((0 1) ; 追跡中/食事中
      (set! state 0)
      (worm-set-goal w1 *cx* *cy*)
-     (%worm-calc-angle w1)
+     (if (= *wormkind* 0) (%worm-calc-angle w1))
      (cond
       ((worm-goal? w1)
        (set! state 1)
@@ -107,7 +109,10 @@
        (when (>= count1 (~ w1 'wtime1))
          (set! state 2)))
       (else
-       (%worm-move-tail w1)))
+       (if (= *wormkind* 0)
+         (%worm-move-tail w1)
+         ;; 追跡中に10秒経過したら乱数を加算
+         (%worm-move-front w1 (>= count2 10000)))))
      (%worm-calc-point w1)
      ;; 3分で強制移行(永久パターン防止のため)
      (set! count2 (+ count2 *wait*))
@@ -119,10 +124,12 @@
        (worm-set-goal w1 (randint *minx* *maxx*) (randint *miny* *maxy*))
        ))
     ((2) ; ランダム動作中
-     (%worm-calc-angle w1)
+     (if (= *wormkind* 0) (%worm-calc-angle w1))
      (if (worm-goal? w1)
        (set! count2 0)
-       (%worm-move-tail w1))
+       (if (= *wormkind* 0)
+         (%worm-move-tail w1)
+         (%worm-move-front w1)))
      (%worm-calc-point w1)
      (set! count1 (- count1 *wait*))
      (set! count2 (- count2 *wait*))
@@ -133,7 +140,7 @@
        (set! count2 0))
       ((<= count2 0)
        (set! count2 (randint (~ w1 'wtime4) (~ w1 'wtime5)))
-       (worm-set-goal w1(randint *minx* *maxx*) (randint *miny* *maxy*))
+       (worm-set-goal w1 (randint *minx* *maxx*) (randint *miny* *maxy*))
        ))))
   (set! (~ w1 'state)  state)
   (set! (~ w1 'count1) count1)
@@ -157,14 +164,6 @@
     (worm-disp-flat w1 *win* color wedge)))
 ;; ワームクラスのインスタンス生成
 (define *worms* (make-vector-of-class *wnum* <worm>))
-(for-each
- (lambda (w1)
-   (worm-init w1
-              *wlen*
-              (randint *minx* *maxx*)
-              (randint *miny* *maxy*)
-              (randint -180 179)))
- *worms*)
 
 
 ;; カーソルの表示
@@ -285,6 +284,20 @@
 ;; メイン処理
 (define (main args)
   (set! *flatdisp* (x->integer (list-ref args 1 0)))
+
+  ;; ワームの初期化等
+  (set! *title* (if (= *wormkind* 0) "worm0101" "worm0201"))
+  (for-each
+   (lambda (w1)
+     ;; class-of により、クラス再定義時のインスタンス更新を行う
+     (class-of w1)
+     (worm-init w1
+                *wlen*
+                (randint *minx* *maxx*)
+                (randint *miny* *maxy*)
+                (randint -180 179)))
+   *worms*)
+
   (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
