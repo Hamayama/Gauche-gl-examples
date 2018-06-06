@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glwormkit.scm
-;; 2018-6-1 v1.04
+;; 2018-6-6 v1.05
 ;;
 ;; ＜内容＞
 ;;   ワームシミュレータ用のモジュールです。
@@ -117,20 +117,29 @@
            (c1    (* (atan gy1 gx1) 180/pi))
            (c2    (* (atan fy1 fx1) 180/pi))
            (diffc (wrap-range (- c1 c2) -180 180))
-           (ac1   0))
+           (ac1   (~ w1 'ac i))
+           (ac2   0))
       (cond
        ((= i 0)
         ;; 末尾の角度を計算
         (set! diffc (clamp diffc (- rcv) rcv))
-        (set! (~ w1 'ac 0) (wrap-range (+ (~ w1 'ac 0) diffc) -180 180)))
+        (set! (~ w1 'ac i) (wrap-range (+ ac1 diffc) -180 180)))
        (else
         ;; 関節の角度を計算
         (set! diffc (clamp diffc (- acv) acv))
-        (set! ac1 (+ (~ w1 'ac i) diffc))
-        (when (> (abs ac1) maxac)
-          (set! ac1 (clamp ac1 (- maxac) maxac))
-          (set! diffc (- ac1 (~ w1 'ac i))))
-        (set! (~ w1 'ac i) ac1)))
+        (cond
+         ;; コンバートにより角度が範囲外になっていたとき
+         ((> (abs ac1) maxac)
+          (if (= (sign-value ac1) (sign-value diffc))
+            (set! diffc 0)
+            (set! (~ w1 'ac i) (+ ac1 diffc))))
+         ;; 角度が範囲内のとき
+         (else
+          (set! ac2 (+ ac1 diffc))
+          (when (> (abs ac2) maxac)
+            (set! ac2 (clamp ac2 (- maxac) maxac))
+            (set! diffc (- ac2 ac1)))
+          (set! (~ w1 'ac i) ac2)))))
       ;; 先端の座標を補正して繰り返す
       (set! fx (+ ax (- (* fx1 (cos (* diffc pi/180)))
                         (* fy1 (sin (* diffc pi/180))))))
