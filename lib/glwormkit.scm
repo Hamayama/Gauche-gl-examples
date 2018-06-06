@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glwormkit.scm
-;; 2018-6-6 v1.05
+;; 2018-6-6 v1.06
 ;;
 ;; ＜内容＞
 ;;   ワームシミュレータ用のモジュールです。
@@ -129,10 +129,11 @@
         (set! diffc (clamp diffc (- acv) acv))
         (cond
          ;; コンバートにより角度が範囲外になっていたとき
-         ((> (abs ac1) maxac)
-          (if (= (sign-value ac1) (sign-value diffc))
-            (set! diffc 0)
-            (set! (~ w1 'ac i) (+ ac1 diffc))))
+         ;; (現在未使用)
+         ;((> (abs ac1) maxac)
+         ; (if (= (sign-value ac1) (sign-value diffc))
+         ;   (set! diffc 0)
+         ;   (set! (~ w1 'ac i) (+ ac1 diffc))))
          ;; 角度が範囲内のとき
          (else
           (set! ac2 (+ ac1 diffc))
