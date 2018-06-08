@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glwormkit.scm
-;; 2018-6-6 v1.06
+;; 2018-6-8 v1.07
 ;;
 ;; ＜内容＞
 ;;   ワームシミュレータ用のモジュールです。
@@ -88,6 +88,14 @@
 (define-method worm-set-goal ((w1 <worm0101>) (gx <real>) (gy <real>))
   (set! (~ w1 'gx)    gx)
   (set! (~ w1 'gy)    gy))
+;; ワーム0101の目標到達チェック
+(define-method worm-goal? ((w1 <worm0101>) :optional (waku 4))
+  (define gx    (~ w1 'gx))
+  (define gy    (~ w1 'gy))
+  (define fx    (~ w1 'fx))
+  (define fy    (~ w1 'fy))
+  (recthit? (- gx waku) (- gy waku) (* waku 2) (* waku 2)
+            (- fx waku) (- fy waku) (* waku 2) (* waku 2)))
 ;; ワーム0101の移動
 (define-method worm-move ((w1 <worm0101>))
   (%worm-calc-angle w1)
@@ -104,8 +112,6 @@
   (define fx    (~ w1 'fx))
   (define fy    (~ w1 'fy))
   ;; 先端から順番に目標に近づけていく
-  (set! (~ w1 'ax 0) (~ w1 'rx))
-  (set! (~ w1 'ay 0) (~ w1 'ry))
   (do ((i anum (- i 1)))
       ((< i 0) #f)
     (let* ((ax    (~ w1 'ax i))
@@ -147,14 +153,6 @@
       (set! fy (+ ay (+ (* fx1 (sin (* diffc pi/180)))
                         (* fy1 (cos (* diffc pi/180))))))
       )))
-;; ワーム0101の目標到達チェック
-(define-method worm-goal? ((w1 <worm0101>) :optional (waku 4))
-  (define gx    (~ w1 'gx))
-  (define gy    (~ w1 'gy))
-  (define fx    (~ w1 'fx))
-  (define fy    (~ w1 'fy))
-  (recthit? (- gx waku) (- gy waku) (* waku 2) (* waku 2)
-            (- fx waku) (- fy waku) (* waku 2) (* waku 2)))
 ;; ワーム0101の末尾移動(内部処理用)
 (define-method %worm-move-tail ((w1 <worm0101>))
   (define rv    (~ w1 'rv))
@@ -268,7 +266,7 @@
    (fcv   :init-value   5)  ; 先端の角速度(度)
    (ar    :init-value  10)  ; 関節の半径
    (al    :init-value  40)  ; 関節の距離
-   (adf   :init-value   #f) ; 関節の遅延フレーム係数
+   (adf   :init-value   6)  ; 関節の遅延フレーム係数
    (axque :init-value   #f) ; 関節のX座標の遅延キュー
    (ayque :init-value   #f) ; 関節のY座標の遅延キュー
    (rr    :init-value  20)  ; 末尾の半径
@@ -319,19 +317,21 @@
   (define fx    (~ w1 'fx))
   (define fy    (~ w1 'fy))
   (define fv    (~ w1 'fv))
+  (define fc    (~ w1 'fc))
   (define fcv   (~ w1 'fcv))
   ;; 先端の角度を目標に近づける
   (let* ((c1    (* (atan (- gy fy) (- gx fx)) 180/pi))
-         (diffc (wrap-range (- c1 (~ w1 'fc)) -180 180)))
+         (diffc (wrap-range (- c1 fc) -180 180)))
     (when (> (abs diffc) fcv)
       (set! diffc (clamp diffc (- fcv) fcv))
       ;; 指定があれば乱数を加算
       (when add-rand
         (set! diffc (+ diffc (randint (- fcv) fcv)))))
-    (set! (~ w1 'fc) (wrap-range (+ (~ w1 'fc) diffc) -180 180))
+    (set! fc (wrap-range (+ fc diffc) -180 180))
+    (set! (~ w1 'fc) fc)
     ;; 先端の座標を計算
-    (set! (~ w1 'fx) (+ fx (* fv (cos (* (~ w1 'fc) pi/180)))))
-    (set! (~ w1 'fy) (+ fy (* fv (sin (* (~ w1 'fc) pi/180)))))
+    (set! (~ w1 'fx) (+ fx (* fv (cos (* fc pi/180)))))
+    (set! (~ w1 'fy) (+ fy (* fv (sin (* fc pi/180)))))
     ;; 遅延キューに座標を追加
     (quedata-push (~ w1 'axque) (~ w1 'fx))
     (quedata-push (~ w1 'ayque) (~ w1 'fy))
@@ -339,12 +339,13 @@
 ;; ワーム0201の座標計算(内部処理用)
 (define-method %worm-calc-point ((w1 <worm0201>))
   (define anum  (~ w1 'anum))
+  (define adf   (~ w1 'adf))
   ;; 公開用情報を更新
   ;; (遅延キューの座標を参照して設定)
   (do ((i 0 (+ i 1)))
       ((> i (+ anum 1)) #f)
-    (set! (~ w1 'axvec i) (quedata-ref (~ w1 'axque) (* i (~ w1 'adf))))
-    (set! (~ w1 'ayvec i) (quedata-ref (~ w1 'ayque) (* i (~ w1 'adf))))))
+    (set! (~ w1 'axvec i) (quedata-ref (~ w1 'axque) (* i adf)))
+    (set! (~ w1 'ayvec i) (quedata-ref (~ w1 'ayque) (* i adf)))))
 ;; ワーム0201の表示
 (define-method worm-disp ((w1 <worm0201>) :optional (color #f32(1.0 1.0 1.0 1.0)) (wedge 70))
   (%worm-disp-sub w1 color wedge))
