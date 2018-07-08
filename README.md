@@ -177,7 +177,7 @@
 - OS
   - Windows 8.1 (64bit)
 - 言語
-  - Gauche v0.9.6_pre7
+  - Gauche v0.9.6
   - Gauche v0.9.5
   - Gauche v0.9.4
 - 拡張ライブラリ
@@ -190,4 +190,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2018-5-27)
+(2018-7-8)
