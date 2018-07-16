@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0301.scm
-;; 2018-6-4 v1.16
+;; 2018-7-16 v1.17
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -54,6 +54,7 @@
 (define *life*      50) ; 敵の耐久力
 (define *maxlife*  100) ; 敵の耐久力の最大値
 (define *wlen*       8) ; ワームの長さ
+(define *bossflag*   #f) ; ボス出現フラグ
 (define *bosssize* 1.5) ; ボスの大きさ(倍率)
 (define *sc*         0) ; スコア
 (define *hs*         0) ; ハイスコア
@@ -220,7 +221,7 @@
   (for-each (lambda (e1) (set! (~ e1 'useflag) #f)) enemies))
 
 ;; 敵の生成
-(define (make-enemies enemies :optional (boss #f))
+(define (make-enemies enemies)
   (let1 i (find-index (lambda (e1) (not (~ e1 'useflag))) enemies)
     (if (and i (< i *mr*))
       (let ((e1   (~ enemies i))
@@ -243,9 +244,10 @@
         (set! (~ e1 'worm2)   w2)
         (set! (~ e1 'count1)  0)
         (set! (~ e1 'count2)  0)
-        (set! (~ e1 'boss)    boss)
+        (set! (~ e1 'boss)    *bossflag*)
         ;; ボス出現
-        (when boss
+        (when *bossflag*
+          (set! *bossflag* #f)
           (set! (~ e1 'life) (* (~ e1 'life) *bosssize*))
           (set! (~ e1 'miny) (* (~ e1 'miny) *bosssize*))
           (set! (~ e1 'maxy) (* (~ e1 'maxy) *bosssize*))
@@ -393,7 +395,6 @@
                   (set! minby ay1))))
             (~ w1 'axvec) (~ w1 'ayvec) (~ w1 'arvec)))))
      *enemies*)
-    (set! *bc* (max (floor->exact (/. (- minby *y*) *chh*)) 1))
     ;; ワームの先端のみダメージを与えられる
     (when (and e2 (= index 0))
       (set! ret #t)
@@ -404,6 +405,7 @@
         (when (not *demoflag*)
           (set! *sc* (+ *sc* (if (~ e2 'boss) 1000 500)))
           (auddata-play *adata-hit1*))))
+    (set! *bc* (max (floor->exact (/. (- minby *y*) *chh*)) 1))
     ret))
 
 ;; 自機に最も近い敵の情報を取得する(デモ用)
@@ -585,14 +587,15 @@
     (case *scene*
       ((0) ; スタート画面
        ;; 初期化
-       (set! *x*     0)
-       (set! *y*  -240)
-       (set! *bc*    0)
-       (set! *mr*    1)
-       (set! *mmr*   1)
-       (set! *life* 50)
-       ;(set! *sc*    0)
-       (set! *ssc*   0)
+       (set! *x*         0)
+       (set! *y*      -240)
+       (set! *bc*        0)
+       (set! *mr*        1)
+       (set! *mmr*       1)
+       (set! *life*     50)
+       (set! *bossflag*  #f)
+       ;(set! *sc*        0)
+       (set! *ssc*       0)
        (init-enemies *enemies*)
        (set! *demotime1* 0)
        (set! *demotime2* 0)
@@ -634,8 +637,8 @@
            (set! *mmr* (min (+ *mmr* 2) *mmmr*))
            (set! *life* (min (+ *life* 10) *maxlife*))))
        ;; 敵の生成
-       (if (= (modulo *ssc* 50) 0)
-         (make-enemies *enemies* (= (modulo *ssc* (* 50 40)) 0)))
+       (if (= (modulo *ssc* 2000) 0) (set! *bossflag* #t))
+       (if (= (modulo *ssc* 50) 0) (make-enemies *enemies*))
        ;; 敵の移動
        (move-enemies *enemies*)
        ;; 自機の移動

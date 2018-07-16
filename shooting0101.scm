@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0101.scm
-;; 2018-6-4 v2.17
+;; 2018-7-16 v2.18
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -363,7 +363,6 @@
            (set! e2 e1)
            (set! minby (~ e1 'y)))))
      *enemies*)
-    (set! *bc* (max (- (floor->exact (/. (- minby *y*) *chh*)) 1) 1))
     (when e2
       (set! ret #t)
       (dec! (~ e2 'life))
@@ -372,6 +371,7 @@
         (when (not *demoflag*)
           (set! *sc* (+ *sc* 100))
           (auddata-play *adata-hit1*))))
+    (set! *bc* (max (- (floor->exact (/. (- minby *y*) *chh*)) 1) 1))
     ret))
 
 ;; 爆風の表示
