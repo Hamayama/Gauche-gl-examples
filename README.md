@@ -5,7 +5,7 @@
 |![image](image/image0101.png)|![image](image/image0201.png)|![image](image/image0301.png)|![image](image/image0401.png)|
 |![image](image/image0501.png)|![image](image/image0601.png)|![image](image/image0701.png)|![image](image/image0801.png)|
 |![image](image/image0901.png)|![image](image/image1001.png)|![image](image/image1101.png)|![image](image/image1201.png)|
-|![image](image/image1301.png)|![image](image/image1401.png)|
+|![image](image/image1301.png)|![image](image/image1401.png)|![image](image/image1501.png)|
 
 ## 概要
 - Gauche-gl を使用したサンプルプログラム等です。  
@@ -134,6 +134,12 @@
     また、スタート画面でしばらく待つとデモになります。  
     ESCキーを押すと終了します。
 
+15. 振り子シミュレータ (pendulum.scm)  
+    Gauche-gl を使用した、振り子シミュレータです。  
+    ラグランジュの運動方程式とルンゲクッタ法により  
+    近似解を求めています。  
+    ESCキーを押すと終了します。
+
 
 ## その他 注意事項等
 1. 一部のサンプルは、以下のモジュールを使用しています。これらは、lib フォルダに格納しています。
@@ -190,4 +196,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2018-7-8)
+(2018-8-9)
