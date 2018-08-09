@@ -502,6 +502,7 @@ worm0201.scm
 
 pendulum.scm
   2018-8-9   v1.00  初版
+  2018-8-9   v1.01  計算処理見直し等
 
 
 glmintool.scm
