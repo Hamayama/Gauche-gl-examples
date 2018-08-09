@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; planet.scm
-;; 2017-8-11 v1.17
+;; 2018-8-9 v1.18
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、星を表示するサンプルです。
@@ -25,7 +25,7 @@
 (define *zmin*  300) ; 星のZ座標の最小値
 (define *zmax* 3000) ; 星のZ座標の最大値
 (define *vangle* 45) ; 視野角(度)
-(define *tanvan*  (tan (/. (* *vangle* pi) 180 2))) ; 視野角/2のタンジェント(計算用)
+(define *tanvan*     (tan (* (/. *vangle* 2) pi/180))) ; 視野角/2のタンジェント(計算用)
 
 ;; 乱数
 ;;   (randint n1 n2)でn1以上n2以下の整数の乱数を取得する(n1,n2は整数であること)
