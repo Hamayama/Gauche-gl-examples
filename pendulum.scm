@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; pendulum.scm
-;; 2018-8-9 v1.03
+;; 2018-8-10 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、振り子シミュレータです。
@@ -100,14 +100,14 @@
   (runge *N* *t* *sc* *sv* ffunc gfunc *h*))
 
 ;; ひもの角度の速度
-(define (ffunc N t sc sv sv_ret)
-  (f64vector-copy! sv_ret 0 sv))
+(define (ffunc N t sc sv sv-ret)
+  (f64vector-copy! sv-ret 0 sv))
 
 ;; ひもの角度の加速度
 ;; (運動方程式 A x SA = B について、
 ;;  Aの逆行列Cを両辺にかけることで、
 ;;  加速度SAを求める)
-(define (gfunc N t sc sv sa)
+(define (gfunc N t sc sv sa-ret)
   (define A  (make-f64array (shape 0 N 0 N) 0))
   (define B  (make-f64array (shape 0 N 0 1) 0))
   (define C  #f)
@@ -120,32 +120,31 @@
 
   ;; 行列Aを計算
   ;;   a[i][j] = (m[Max(i,j)]+...+m[N-1])*sr[j]*cos(sc[i]-sc[j])
-  (array-for-each-index
+  (array-retabulate!
    A
    (lambda (i j)
-     (array-set! A i j (* (msum (max i j) N)
-                          (f64vector-ref *sr* j)
-                          (cos (- (f64vector-ref sc i) (f64vector-ref sc j)))))))
+     (* (msum (max i j) N)
+        (f64vector-ref *sr* j)
+        (cos (- (f64vector-ref sc i) (f64vector-ref sc j))))))
   ;; ベクトルBを計算
   ;;   b[i][0] = Sum(j=0...N-1){
   ;;               -(m[Max(i,j)]+...+m[N-1])*sr[j]*sv[j]*sv[j]*sin(sc[i]-sc[j])
   ;;             }
   ;;             -(m[i]+...+m[N-1])*g*sin(sc[i])
-  (array-for-each-index
+  (array-retabulate!
    B
    (lambda (i dummy)
-     (do ((j 0 (+ j 1)))
-         ((>= j N) #f)
-       (array-set! B i 0 (- (array-ref B i 0)
-                            (* (msum (max i j) N)
-                               (f64vector-ref *sr* j)
-                               (f64vector-ref sv   j)
-                               (f64vector-ref sv   j)
-                               (sin (- (f64vector-ref sc i) (f64vector-ref sc j)))))))
-     (array-set! B i 0 (- (array-ref B i 0)
-                          (* (msum i N)
-                             *g*
-                             (sin (f64vector-ref sc i)))))))
+     (rlet1 b 0
+       (do ((j 0 (+ j 1)))
+           ((>= j N) #f)
+         (set! b (- b (* (msum (max i j) N)
+                         (f64vector-ref *sr* j)
+                         (f64vector-ref sv   j)
+                         (f64vector-ref sv   j)
+                         (sin (- (f64vector-ref sc i) (f64vector-ref sc j)))))))
+       (set! b (- b (* (msum i N)
+                       *g*
+                       (sin (f64vector-ref sc i))))))))
   ;; 逆行列Cを計算
   (set! C (array-inverse A))
   (when C
@@ -154,7 +153,7 @@
     (array-for-each-index
      SA
      (lambda (i dummy)
-       (f64vector-set! sa i (array-ref SA i 0))))))
+       (f64vector-set! sa-ret i (array-ref SA i 0))))))
 
 ;; ルンゲクッタ法(4次)(2N+1変数)
 (define (runge N t sc sv ffunc gfunc h)
@@ -171,35 +170,39 @@
   ;; 増分1を計算
   (ffunc N t sc sv c1)
   (gfunc N t sc sv v1)
-  (set! c1 (f64vector-mul! c1 h))
-  (set! v1 (f64vector-mul! v1 h))
+  (f64vector-mul!  c1 h)
+  (f64vector-mul!  v1 h)
   ;; 増分2を計算
-  (f64vector-copy! sc-temp 0 sc)
-  (f64vector-copy! sv-temp 0 sv)
-  (set! sc-temp (f64vector-add! sc-temp (f64vector-div c1 2)))
-  (set! sv-temp (f64vector-add! sv-temp (f64vector-div v1 2)))
+  (f64vector-copy! sc-temp 0 c1)
+  (f64vector-copy! sv-temp 0 v1)
+  (f64vector-div!  sc-temp 2)
+  (f64vector-div!  sv-temp 2)
+  (f64vector-add!  sc-temp sc)
+  (f64vector-add!  sv-temp sv)
   (ffunc N (+ t (/. h 2)) sc-temp sv-temp c2)
   (gfunc N (+ t (/. h 2)) sc-temp sv-temp v2)
-  (set! c2 (f64vector-mul! c2 h))
-  (set! v2 (f64vector-mul! v2 h))
+  (f64vector-mul!  c2 h)
+  (f64vector-mul!  v2 h)
   ;; 増分3を計算
-  (f64vector-copy! sc-temp 0 sc)
-  (f64vector-copy! sv-temp 0 sv)
-  (set! sc-temp (f64vector-add! sc-temp (f64vector-div c2 2)))
-  (set! sv-temp (f64vector-add! sv-temp (f64vector-div v2 2)))
+  (f64vector-copy! sc-temp 0 c2)
+  (f64vector-copy! sv-temp 0 v2)
+  (f64vector-div!  sc-temp 2)
+  (f64vector-div!  sv-temp 2)
+  (f64vector-add!  sc-temp sc)
+  (f64vector-add!  sv-temp sv)
   (ffunc N (+ t (/. h 2)) sc-temp sv-temp c3)
   (gfunc N (+ t (/. h 2)) sc-temp sv-temp v3)
-  (set! c3 (f64vector-mul! c3 h))
-  (set! v3 (f64vector-mul! v3 h))
+  (f64vector-mul!  c3 h)
+  (f64vector-mul!  v3 h)
   ;; 増分4を計算
-  (f64vector-copy! sc-temp 0 sc)
-  (f64vector-copy! sv-temp 0 sv)
-  (set! sc-temp (f64vector-add! sc-temp c3))
-  (set! sv-temp (f64vector-add! sv-temp v3))
+  (f64vector-copy! sc-temp 0 c3)
+  (f64vector-copy! sv-temp 0 v3)
+  (f64vector-add!  sc-temp sc)
+  (f64vector-add!  sv-temp sv)
   (ffunc N (+ t h) sc-temp sv-temp c4)
   (gfunc N (+ t h) sc-temp sv-temp v4)
-  (set! c4 (f64vector-mul! c4 h))
-  (set! v4 (f64vector-mul! v4 h))
+  (f64vector-mul!  c4 h)
+  (f64vector-mul!  v4 h)
   ;; 増分1-4の平均を加算
   (do ((i 0 (+ i 1)))
       ((>= i N) #f)
