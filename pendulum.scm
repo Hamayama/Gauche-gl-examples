@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; pendulum.scm
-;; 2018-8-9 v1.02
+;; 2018-8-9 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、振り子シミュレータです。
@@ -38,6 +38,7 @@
 (define *sr*         (make-f64vector *N* (/. 400 *N*))) ; ひもの長さ
 (define *sc*         (make-f64vector *N* 0))  ; ひもの角度(ラジアン)
 (define *sv*         (make-f64vector *N* 0))  ; ひもの角度の速度
+(define *sb*         2) ; ひもの太さ(半径)
 (define *r*          (make-f64vector *N* 25)) ; 重りの半径
 (define *m*          (make-f64vector *N* 10)) ; 重りの質量
 (define *g*         10) ; 重力加速度
@@ -85,7 +86,7 @@
     (gl-push-matrix)
     (gl-translate x1 y1 0)
     (gl-rotate (- (* sc1 180/pi)) 0 0 1)
-    (cylinder 2 (/. sr1 2) 20)
+    (cylinder *sb* (/. sr1 2) 20)
     (gl-pop-matrix)
     ;; 重り
     (gl-push-matrix)
@@ -129,7 +130,7 @@
   ;;   b[i][0] = Sum(j=0...N-1){
   ;;               -(m[Max(i,j)]+...+m[N-1])*sr[j]*sv[j]*sv[j]*sin(sc[i]-sc[j])
   ;;             }
-  ;;             -(m[i]...m[N-1])*g*sin(sc[i])
+  ;;             -(m[i]+...+m[N-1])*g*sin(sc[i])
   (array-for-each-index
    B
    (lambda (i dummy)
