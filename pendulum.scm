@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; pendulum.scm
-;; 2018-8-10 v1.04
+;; 2018-8-11 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、振り子シミュレータです。
@@ -13,7 +13,6 @@
 (use gl)
 (use gl.glut)
 (use gauche.uvector)
-(use gauche.sequence)
 (use gauche.array)
 (use math.const)
 (use glmintool)
@@ -51,10 +50,6 @@
 
 (define *forecolor*  #f32(1.0 1.0 1.0 1.0)) ; 振り子の色
 (define *backcolor*  #f32(0.2 0.2 0.2 1.0)) ; 背景色
-
-;; ウィンドウ情報クラスのインスタンス生成
-(define *win* (make <wininfo>))
-(win-init *win* *width* *height* (* *wd/2* 2) (* *ht/2* 2))
 
 ;; ウェイト時間調整クラスのインスタンス生成
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
@@ -252,7 +247,6 @@
 (define (reshape w h)
   (set! *width*  (min w h))
   (set! *height* (min w h))
-  (win-update-size *win* *width* *height*)
   ;; 縦横比を変えずにリサイズ
   (gl-viewport (quotient (- w *width*) 2) (quotient (- h *height*) 2) *width* *height*)
   (gl-matrix-mode GL_PROJECTION)
