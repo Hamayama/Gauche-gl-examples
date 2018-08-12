@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; pendulum.scm
-;; 2018-8-12 v1.06
+;; 2018-8-12 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、振り子シミュレータです。
@@ -92,18 +92,17 @@
 ;; 振り子の座標計算
 (define (calc-pendulum)
   ;; ルンゲクッタ法
-  (runge *t* *sc* *sv* ffunc gfunc *h*))
+  (runge *N* *t* *sc* *sv* ffunc gfunc *h*))
 
 ;; ひもの角度の速度
-(define (ffunc t sc sv sv-ret)
+(define (ffunc N t sc sv sv-ret)
   (f64vector-copy! sv-ret 0 sv))
 
 ;; ひもの角度の加速度
 ;; (運動方程式 A x SA = B について、
 ;;  Aの逆行列Cを両辺にかけることで、
 ;;  加速度SAを求める)
-(define (gfunc t sc sv sa-ret)
-  (define N  *N*)
+(define (gfunc N t sc sv sa-ret)
   (define A  (make-f64array (shape 0 N 0 N) 0))
   (define B  (make-f64array (shape 0 N 0 1) 0))
   (define C  #f)
@@ -115,7 +114,7 @@
         ((>= i end) msum1)))
 
   ;; 行列Aを計算
-  ;;   a[i][j] = (m[Max(i,j)]+...+m[N-1])*sr[j]*cos(sc[i]-sc[j])
+  ;;   a[i][j] = (m[Max(i,j)]+...+m[N-1]) * sr[j] * cos(sc[i]-sc[j])
   (array-retabulate!
    A
    (lambda (i j)
@@ -124,9 +123,9 @@
         (cos (- (f64vector-ref sc i) (f64vector-ref sc j))))))
   ;; ベクトルBを計算
   ;;   b[i][0] = Sum(j=0...N-1){
-  ;;               -(m[Max(i,j)]+...+m[N-1])*sr[j]*sv[j]*sv[j]*sin(sc[i]-sc[j])
+  ;;               -(m[Max(i,j)]+...+m[N-1]) * sr[j] * sv[j] * sv[j] * sin(sc[i]-sc[j])
   ;;             }
-  ;;             -(m[i]+...+m[N-1])*g*sin(sc[i])
+  ;;             -(m[i]+...+m[N-1]) * g * sin(sc[i])
   (array-retabulate!
    B
    (lambda (i dummy)
@@ -152,8 +151,7 @@
        (f64vector-set! sa-ret i (array-ref SA i 0))))))
 
 ;; ルンゲクッタ法(4次)(2N+1変数)
-(define (runge t sc sv ffunc gfunc h)
-  (define N *N*)
+(define (runge N t sc sv ffunc gfunc h)
   (define sc-temp (make-f64vector N 0)) ; ひもXの角度(計算用)
   (define sv-temp (make-f64vector N 0)) ; ひもXの角度の速度(計算用)
   (define c1 (make-f64vector N 0)) ; ひもXの角度の増分1
@@ -165,60 +163,52 @@
   (define v3 (make-f64vector N 0)) ; ひもXの角度の速度の増分3
   (define v4 (make-f64vector N 0)) ; ひもXの角度の速度の増分4
   ;; 増分1を計算
-  ;;   ffunc(t, sc, sv, c1)
-  ;;   gfunc(t, sc, sv, v1)
-  ;;   c1*=h
-  ;;   v1*=h
-  (ffunc t sc sv c1)
-  (gfunc t sc sv v1)
+  ;;   c1 = ffunc(N, t, sc, sv) * h
+  ;;   v1 = gfunc(N, t, sc, sv) * h
+  (ffunc N t sc sv c1)
+  (gfunc N t sc sv v1)
   (f64vector-mul!  c1 h)
   (f64vector-mul!  v1 h)
   ;; 増分2を計算
-  ;;   ffunc(t+h/2, sc+c1/2, sv+v1/2, c2)
-  ;;   gfunc(t+h/2, sc+c1/2, sv+v1/2, v2)
-  ;;   c2*=h
-  ;;   v2*=h
+  ;;   c2 = ffunc(N, t+h/2, sc+c1/2, sv+v1/2) * h
+  ;;   v2 = gfunc(N, t+h/2, sc+c1/2, sv+v1/2) * h
   (f64vector-copy! sc-temp 0 c1)
   (f64vector-copy! sv-temp 0 v1)
   (f64vector-div!  sc-temp 2)
   (f64vector-div!  sv-temp 2)
   (f64vector-add!  sc-temp sc)
   (f64vector-add!  sv-temp sv)
-  (ffunc (+ t (/. h 2)) sc-temp sv-temp c2)
-  (gfunc (+ t (/. h 2)) sc-temp sv-temp v2)
+  (ffunc N (+ t (/. h 2)) sc-temp sv-temp c2)
+  (gfunc N (+ t (/. h 2)) sc-temp sv-temp v2)
   (f64vector-mul!  c2 h)
   (f64vector-mul!  v2 h)
   ;; 増分3を計算
-  ;;   ffunc(t+h/2, sc+c2/2, sv+v2/2, c3)
-  ;;   gfunc(t+h/2, sc+c2/2, sv+v2/2, v3)
-  ;;   c3*=h
-  ;;   v3*=h
+  ;;   c3 = ffunc(N, t+h/2, sc+c2/2, sv+v2/2) * h
+  ;;   v3 = gfunc(N, t+h/2, sc+c2/2, sv+v2/2) * h
   (f64vector-copy! sc-temp 0 c2)
   (f64vector-copy! sv-temp 0 v2)
   (f64vector-div!  sc-temp 2)
   (f64vector-div!  sv-temp 2)
   (f64vector-add!  sc-temp sc)
   (f64vector-add!  sv-temp sv)
-  (ffunc (+ t (/. h 2)) sc-temp sv-temp c3)
-  (gfunc (+ t (/. h 2)) sc-temp sv-temp v3)
+  (ffunc N (+ t (/. h 2)) sc-temp sv-temp c3)
+  (gfunc N (+ t (/. h 2)) sc-temp sv-temp v3)
   (f64vector-mul!  c3 h)
   (f64vector-mul!  v3 h)
   ;; 増分4を計算
-  ;;   ffunc(t+h, sc+c3, sv+v3, c4)
-  ;;   gfunc(t+h, sc+c3, sv+v3, v4)
-  ;;   c4*=h
-  ;;   v4*=h
+  ;;   c4 = ffunc(N, t+h, sc+c3, sv+v3) * h
+  ;;   v4 = gfunc(N, t+h, sc+c3, sv+v3) * h
   (f64vector-copy! sc-temp 0 c3)
   (f64vector-copy! sv-temp 0 v3)
   (f64vector-add!  sc-temp sc)
   (f64vector-add!  sv-temp sv)
-  (ffunc (+ t h) sc-temp sv-temp c4)
-  (gfunc (+ t h) sc-temp sv-temp v4)
+  (ffunc N (+ t h) sc-temp sv-temp c4)
+  (gfunc N (+ t h) sc-temp sv-temp v4)
   (f64vector-mul!  c4 h)
   (f64vector-mul!  v4 h)
   ;; 増分1-4の平均を加算
-  ;;   sc+=(c1+c2*2+c3*2+c4)/6
-  ;;   sv+=(v1+v2*2+v3*2+v4)/6
+  ;;   sc += (c1 + c2*2 + c3*2 + c4) / 6
+  ;;   sv += (v1 + v2*2 + v3*2 + v4) / 6
   (f64vector-mul!  c2 2)
   (f64vector-mul!  c3 2)
   (f64vector-add!  c1 c2)
