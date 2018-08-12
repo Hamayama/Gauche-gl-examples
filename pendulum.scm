@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; pendulum.scm
-;; 2018-8-11 v1.05
+;; 2018-8-12 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、振り子シミュレータです。
@@ -92,17 +92,18 @@
 ;; 振り子の座標計算
 (define (calc-pendulum)
   ;; ルンゲクッタ法
-  (runge *N* *t* *sc* *sv* ffunc gfunc *h*))
+  (runge *t* *sc* *sv* ffunc gfunc *h*))
 
 ;; ひもの角度の速度
-(define (ffunc N t sc sv sv-ret)
+(define (ffunc t sc sv sv-ret)
   (f64vector-copy! sv-ret 0 sv))
 
 ;; ひもの角度の加速度
 ;; (運動方程式 A x SA = B について、
 ;;  Aの逆行列Cを両辺にかけることで、
 ;;  加速度SAを求める)
-(define (gfunc N t sc sv sa-ret)
+(define (gfunc t sc sv sa-ret)
+  (define N  *N*)
   (define A  (make-f64array (shape 0 N 0 N) 0))
   (define B  (make-f64array (shape 0 N 0 1) 0))
   (define C  #f)
@@ -151,7 +152,8 @@
        (f64vector-set! sa-ret i (array-ref SA i 0))))))
 
 ;; ルンゲクッタ法(4次)(2N+1変数)
-(define (runge N t sc sv ffunc gfunc h)
+(define (runge t sc sv ffunc gfunc h)
+  (define N *N*)
   (define sc-temp (make-f64vector N 0)) ; ひもXの角度(計算用)
   (define sv-temp (make-f64vector N 0)) ; ひもXの角度の速度(計算用)
   (define c1 (make-f64vector N 0)) ; ひもXの角度の増分1
@@ -163,56 +165,74 @@
   (define v3 (make-f64vector N 0)) ; ひもXの角度の速度の増分3
   (define v4 (make-f64vector N 0)) ; ひもXの角度の速度の増分4
   ;; 増分1を計算
-  (ffunc N t sc sv c1)
-  (gfunc N t sc sv v1)
+  ;;   ffunc(t, sc, sv, c1)
+  ;;   gfunc(t, sc, sv, v1)
+  ;;   c1*=h
+  ;;   v1*=h
+  (ffunc t sc sv c1)
+  (gfunc t sc sv v1)
   (f64vector-mul!  c1 h)
   (f64vector-mul!  v1 h)
   ;; 増分2を計算
+  ;;   ffunc(t+h/2, sc+c1/2, sv+v1/2, c2)
+  ;;   gfunc(t+h/2, sc+c1/2, sv+v1/2, v2)
+  ;;   c2*=h
+  ;;   v2*=h
   (f64vector-copy! sc-temp 0 c1)
   (f64vector-copy! sv-temp 0 v1)
   (f64vector-div!  sc-temp 2)
   (f64vector-div!  sv-temp 2)
   (f64vector-add!  sc-temp sc)
   (f64vector-add!  sv-temp sv)
-  (ffunc N (+ t (/. h 2)) sc-temp sv-temp c2)
-  (gfunc N (+ t (/. h 2)) sc-temp sv-temp v2)
+  (ffunc (+ t (/. h 2)) sc-temp sv-temp c2)
+  (gfunc (+ t (/. h 2)) sc-temp sv-temp v2)
   (f64vector-mul!  c2 h)
   (f64vector-mul!  v2 h)
   ;; 増分3を計算
+  ;;   ffunc(t+h/2, sc+c2/2, sv+v2/2, c3)
+  ;;   gfunc(t+h/2, sc+c2/2, sv+v2/2, v3)
+  ;;   c3*=h
+  ;;   v3*=h
   (f64vector-copy! sc-temp 0 c2)
   (f64vector-copy! sv-temp 0 v2)
   (f64vector-div!  sc-temp 2)
   (f64vector-div!  sv-temp 2)
   (f64vector-add!  sc-temp sc)
   (f64vector-add!  sv-temp sv)
-  (ffunc N (+ t (/. h 2)) sc-temp sv-temp c3)
-  (gfunc N (+ t (/. h 2)) sc-temp sv-temp v3)
+  (ffunc (+ t (/. h 2)) sc-temp sv-temp c3)
+  (gfunc (+ t (/. h 2)) sc-temp sv-temp v3)
   (f64vector-mul!  c3 h)
   (f64vector-mul!  v3 h)
   ;; 増分4を計算
+  ;;   ffunc(t+h, sc+c3, sv+v3, c4)
+  ;;   gfunc(t+h, sc+c3, sv+v3, v4)
+  ;;   c4*=h
+  ;;   v4*=h
   (f64vector-copy! sc-temp 0 c3)
   (f64vector-copy! sv-temp 0 v3)
   (f64vector-add!  sc-temp sc)
   (f64vector-add!  sv-temp sv)
-  (ffunc N (+ t h) sc-temp sv-temp c4)
-  (gfunc N (+ t h) sc-temp sv-temp v4)
+  (ffunc (+ t h) sc-temp sv-temp c4)
+  (gfunc (+ t h) sc-temp sv-temp v4)
   (f64vector-mul!  c4 h)
   (f64vector-mul!  v4 h)
   ;; 増分1-4の平均を加算
-  (do ((i 0 (+ i 1)))
-      ((>= i N) #f)
-    (f64vector-set! sc i (+ (f64vector-ref sc i)
-                            (/. (+ (f64vector-ref c1 i)
-                                   (* (f64vector-ref c2 i) 2)
-                                   (* (f64vector-ref c3 i) 2)
-                                   (f64vector-ref c4 i))
-                                6)))
-    (f64vector-set! sv i (+ (f64vector-ref sv i)
-                            (/. (+ (f64vector-ref v1 i)
-                                   (* (f64vector-ref v2 i) 2)
-                                   (* (f64vector-ref v3 i) 2)
-                                   (f64vector-ref v4 i))
-                                6)))))
+  ;;   sc+=(c1+c2*2+c3*2+c4)/6
+  ;;   sv+=(v1+v2*2+v3*2+v4)/6
+  (f64vector-mul!  c2 2)
+  (f64vector-mul!  c3 2)
+  (f64vector-add!  c1 c2)
+  (f64vector-add!  c1 c3)
+  (f64vector-add!  c1 c4)
+  (f64vector-div!  c1 6)
+  (f64vector-add!  sc c1)
+  (f64vector-mul!  v2 2)
+  (f64vector-mul!  v3 2)
+  (f64vector-add!  v1 v2)
+  (f64vector-add!  v1 v3)
+  (f64vector-add!  v1 v4)
+  (f64vector-div!  v1 6)
+  (f64vector-add!  sv v1))
 
 
 ;; 初期化
