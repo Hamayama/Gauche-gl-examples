@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; pendulum.scm
-;; 2018-8-13 v1.10
+;; 2018-8-14 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、振り子シミュレータです。
@@ -54,6 +54,15 @@
 ;; ひもの角度の初期値を設定
 (do ((i 0 (+ i 1))) ((>= i *N*) #f)
   (f64vector-set! *sc* i (* (/. 80 *N*) pi/180 (+ i 1))))
+
+;; 質量の和を事前計算
+;;   msum[i] = m[i]+...+m[N-1]
+(define *msum* (make-f64vector *N* 0))
+(do ((i  (- *N* 1) (- i 1))
+     (ms 0 ms))
+    ((< i 0) #f)
+  (set! ms (+ ms (f64vector-ref *m* i)))
+  (f64vector-set! *msum* i ms))
 
 (define *forecolor*  #f32(1.0 1.0 1.0 1.0)) ; 振り子の色
 (define *backcolor*  #f32(0.2 0.2 0.2 1.0)) ; 背景色
@@ -114,18 +123,13 @@
   (define B  (make-f64array (shape 0 N 0 1) 0))
   (define C  #f)
   (define SA #f)
-  ;; 質量の和
-  (define (msum start end)
-    (do ((i     start (+ i 1))
-         (msum1 0     (+ msum1 (f64vector-ref *m* i))))
-        ((>= i end) msum1)))
 
   ;; 行列Aを計算
   ;;   a[i][j] = (m[Max(i,j)]+...+m[N-1]) * sr[j] * cos(sc[i]-sc[j])
   (array-retabulate!
    A
    (lambda (i j)
-     (* (msum (max i j) N)
+     (* (f64vector-ref *msum* (max i j))
         (f64vector-ref *sr* j)
         (cos (- (f64vector-ref sc i) (f64vector-ref sc j))))))
   ;; ベクトルBを計算
@@ -139,12 +143,12 @@
      (rlet1 b 0
        (do ((j 0 (+ j 1)))
            ((>= j N) #f)
-         (set! b (- b (* (msum (max i j) N)
+         (set! b (- b (* (f64vector-ref *msum* (max i j))
                          (f64vector-ref *sr* j)
                          (f64vector-ref sv   j)
                          (f64vector-ref sv   j)
                          (sin (- (f64vector-ref sc i) (f64vector-ref sc j)))))))
-       (set! b (- b (* (msum i N)
+       (set! b (- b (* (f64vector-ref *msum* i)
                        *g*
                        (sin (f64vector-ref sc i))))))))
   ;; 加速度SAを求める
@@ -152,7 +156,7 @@
    ;; eigenmat モジュールがロード済みのとき
    (*eigenmat-loaded*
     (set! SA (eigen-array-solve A B))
-    (when SA (f64vector-copy! sa-ret 0 (slot-ref SA 'backing-storage))))
+    (f64vector-copy! sa-ret 0 (slot-ref SA 'backing-storage)))
    ;; eigenmat モジュールがロード済みでないとき
    (else
     ;; 逆行列Cを計算
