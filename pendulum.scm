@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; pendulum.scm
-;; 2018-8-12 v1.07
+;; 2018-8-13 v1.10
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、振り子シミュレータです。
@@ -18,6 +18,13 @@
 (use glmintool)
 (use gltextscrn)
 (use glmodelkit)
+;(use eigenmat)
+(define-module eigenmat)
+(import eigenmat)
+
+;; eigenmat モジュールのロード
+(define *eigenmat-loaded*
+  (load "eigenmat" :error-if-not-found #f))
 
 (define *wait*      20) ; ウェイト(msec)
 (define *title* "pendulum") ; ウィンドウのタイトル
@@ -140,15 +147,22 @@
        (set! b (- b (* (msum i N)
                        *g*
                        (sin (f64vector-ref sc i))))))))
-  ;; 逆行列Cを計算
-  (set! C (array-inverse A))
-  (when C
-    ;; 加速度SAを計算
-    (set! SA (array-mul C B))
-    (array-for-each-index
-     SA
-     (lambda (i dummy)
-       (f64vector-set! sa-ret i (array-ref SA i 0))))))
+  ;; 加速度SAを求める
+  (cond
+   ;; eigenmat モジュールがロード済みのとき
+   (*eigenmat-loaded*
+    (set! SA (eigen-array-solve A B))
+    (when SA (f64vector-copy! sa-ret 0 (slot-ref SA 'backing-storage))))
+   ;; eigenmat モジュールがロード済みでないとき
+   (else
+    ;; 逆行列Cを計算
+    (set! C (array-inverse A))
+    (when C
+      (set! SA (array-mul C B))
+      ;; 結果が <f64array> にならないため対策
+      (if (eq? (class-of SA) <array>)
+        (f64vector-copy! sa-ret 0 (vector->f64vector (slot-ref SA 'backing-storage)))
+        (f64vector-copy! sa-ret 0 (slot-ref SA 'backing-storage)))))))
 
 ;; ルンゲクッタ法(4次)(2N+1変数)
 (define (runge N t sc sv ffunc gfunc h)
