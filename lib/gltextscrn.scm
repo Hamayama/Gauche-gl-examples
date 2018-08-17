@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2018-6-1 v2.03
+;; 2018-8-17 v2.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -1002,8 +1002,7 @@
 ;;   ・透明色はオプション引数に '(R G B) のリストで指定する(各色は0-255の値)
 (define (load-bitmap-file file :optional (trans-color #f))
   (define (err msg . rest)
-    (apply errorf (cons (format "bitmap file load error (file=~a)\n~a" file msg)
-                        rest)))
+    (apply errorf (format "bitmap file load error (file=~a)\n~a" file msg) rest))
   (define (get-one-param header index)
     (rlet1 p (~ header index)
       (if (eof-object? p) (err "file size is too small"))))
