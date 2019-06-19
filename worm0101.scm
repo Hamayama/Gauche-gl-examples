@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; worm0101.scm
-;; 2018-8-9 v1.41
+;; 2019-6-19 v1.42
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、ワームシミュレータです。
@@ -313,6 +313,7 @@
   (glut-mouse-func mouse)
   (glut-motion-func mousedrag)
   (glut-timer-func *wait* timer 0)
+  (glut-show-window)
   ;; コールバック内エラー対策
   (guard (ex (else (report-error ex) (exit 1)))
     (glut-main-loop))

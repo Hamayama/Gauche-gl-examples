@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; planet.scm
-;; 2018-8-9 v1.18
+;; 2019-6-19 v1.19
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、星を表示するサンプルです。
@@ -129,7 +129,7 @@
 
 ;; メイン処理
 (define (main args)
-  (glut-init args)
+  (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size 480 480)
   (glut-init-window-position 100 100)
@@ -139,6 +139,7 @@
   (glut-reshape-func reshape)
   (glut-keyboard-func keyboard)
   (glut-timer-func *wait* timer 0)
+  (glut-show-window)
   ;; コールバック内エラー対策
   (guard (ex (else (report-error ex) (exit 1)))
     (glut-main-loop))

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; trochoid.scm
-;; 2017-8-10 v1.20
+;; 2019-6-19 v1.21
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って、内トロコイド曲線を描くサンプルです。
@@ -129,7 +129,7 @@
 
 ;; メイン処理
 (define (main args)
-  (glut-init args)
+  (glut-init '())
   (glut-init-display-mode (logior GLUT_SINGLE GLUT_RGB))
   (glut-init-window-size 480 480)
   (glut-init-window-position 100 100)
@@ -138,6 +138,7 @@
   (glut-display-func disp)
   (glut-reshape-func reshape)
   (glut-keyboard-func keyboard)
+  (glut-show-window)
   ;; コールバック内エラー対策
   (guard (ex (else (report-error ex) (exit 1)))
     (glut-main-loop))

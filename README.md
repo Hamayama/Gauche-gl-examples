@@ -183,6 +183,8 @@
 - OS
   - Windows 8.1 (64bit)
 - 言語
+  - Gauche v0.9.8
+  - Gauche v0.9.7
   - Gauche v0.9.6
   - Gauche v0.9.5
   - Gauche v0.9.4
@@ -196,4 +198,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2018-8-9)
+(2019-6-19)

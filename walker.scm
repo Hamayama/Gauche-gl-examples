@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; walker.scm
-;; 2018-2-11 v1.26
+;; 2019-6-19 v1.27
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な探索ゲームです。
@@ -643,6 +643,7 @@
   (glut-special-func specialkey)
   (glut-special-up-func specialkeyup)
   (glut-timer-func *wait* timer 0)
+  (glut-show-window)
   ;; コールバック内エラー対策
   (guard (ex (else (report-error ex) (exit-main-loop 1)))
     (glut-main-loop))

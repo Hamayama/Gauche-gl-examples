@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; テキスト画面クラスのテスト
-;; 2017-8-10
+;; 2019-6-19
 ;;
 (add-load-path "../lib" :relative)
 (use gl)
@@ -93,7 +93,7 @@
 
 ;; メイン処理
 (define (main args)
-  (glut-init args)
+  (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
   (glut-init-window-position 100 100)
@@ -102,6 +102,7 @@
   (glut-display-func disp)
   (glut-reshape-func reshape)
   (glut-keyboard-func keyboard)
+  (glut-show-window)
   ;; コールバック内エラー対策
   (guard (ex (else (report-error ex) (exit 1)))
     (glut-main-loop))

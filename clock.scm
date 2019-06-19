@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; clock.scm
-;; 2017-8-10 v1.10
+;; 2019-6-19 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、アナログ時計を表示するサンプルです。
@@ -167,7 +167,7 @@
 
 ;; メイン処理
 (define (main args)
-  (glut-init args)
+  (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
   (glut-init-window-position 100 100)
@@ -177,6 +177,7 @@
   (glut-reshape-func reshape)
   (glut-keyboard-func keyboard)
   (glut-timer-func *wait* timer 0)
+  (glut-show-window)
   ;; コールバック内エラー対策
   (guard (ex (else (report-error ex) (exit 1)))
     (glut-main-loop))

@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; fighter.scm
-;; 2018-8-9 2.21
+;; 2019-6-19 2.22
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単な格闘ゲームです。
@@ -519,6 +519,7 @@
   (glut-special-func specialkey)
   (glut-special-up-func specialkeyup)
   (glut-timer-func *wait* timer 0)
+  (glut-show-window)
   ;; コールバック内エラー対策
   (guard (ex (else (report-error ex) (exit-main-loop 1)))
     (glut-main-loop))
