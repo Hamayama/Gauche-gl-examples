@@ -178,6 +178,47 @@
 6. 各サンプルについての説明をもう少し、以下のページに載せています。  
    http://practical-scheme.net/wiliki/wiliki.cgi?Gauche%3AGauche-gl%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB
 
+7. Linux 上での利用について(実験中)  
+   以下は、Windows の VirtualBox 内の Linux Mint 19.3 (Cinnamon) 上で  
+   動作させたときのメモです(2020-4-12)。
+   ```
+   # Gauche のインストール
+   #  ( get-gauche.sh 内の make -j を make に置換しないと、固まった)
+   sudo apt install automake
+   sudo apt install libtool
+   curl -f -o get-gauche.sh https://raw.githubusercontent.com/shirok/get-gauche/master/get-gauche.sh
+   sed -i -e 's/make -j/make/' get-gauche.sh
+   chmod +x get-gauche.sh
+   ./get-gauche.sh
+
+   # Gauche-gl のインストール
+   #  ( https://github.com/shirok/Gauche-gl からソースを取得 )
+   sudo apt install libglu1-mesa-dev mesa-common-dev # already installed
+   sudo apt install freeglut3-dev
+   sudo apt install libxmu-dev
+   sudo apt install libxi-dev
+   ./DIST gen
+   ./configure
+   make
+   make check
+   sudo make install
+
+   # Gauche-al のインストール
+   #  ( https://github.com/Hamayama/Gauche-al-mg からソースを取得 )
+   sudo apt install libopenal-dev
+   sudo apt install libalut-dev
+   sudo apt install texinfo
+   ./DIST gen
+   ./configure
+   make
+   make check
+   sudo make install
+
+   # あとは、本サイト ( https://github.com/Hamayama/Gauche-gl-examples ) のソースを取得して、
+   # gosh xxx.scm のように実行する。
+   # (一部のサンプルは、gosh xxx.scm 1 のように引数を付けて実行すると、効果音付きになる)
+   ```
+
 
 ## 環境等
 - OS
@@ -198,4 +239,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2019-6-19)
+(2020-4-12)
