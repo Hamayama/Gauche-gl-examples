@@ -178,12 +178,12 @@
 6. 各サンプルについての説明をもう少し、以下のページに載せています。  
    http://practical-scheme.net/wiliki/wiliki.cgi?Gauche%3AGauche-gl%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB
 
-7. Linux 上での利用について(実験中)  
+7. Linux 上での利用について (参考)  
    以下は、Windows の VirtualBox 内の Linux Mint 19.3 (Cinnamon) 上で  
    動作させたときのメモです(2020-4-12)。
    ```
    # Gauche のインストール
-   #  ( get-gauche.sh 内の make -j を make に置換しないと、固まった)
+   #  ( get-gauche.sh 内の make -j を make に置換しないと、(多分PCが非力なため) 固まった )
    sudo apt install automake
    sudo apt install libtool
    curl -f -o get-gauche.sh https://raw.githubusercontent.com/shirok/get-gauche/master/get-gauche.sh
@@ -224,6 +224,7 @@
 - OS
   - Windows 8.1 (64bit)
 - 言語
+  - Gauche v0.9.9
   - Gauche v0.9.8
   - Gauche v0.9.7
   - Gauche v0.9.6
@@ -239,4 +240,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2020-4-12)
+(2020-4-23)
