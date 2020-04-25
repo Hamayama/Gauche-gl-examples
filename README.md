@@ -192,7 +192,7 @@
    ./get-gauche.sh
 
    # Gauche-gl のインストール
-   #  ( https://github.com/shirok/Gauche-gl からソースを取得 )
+   #  ( https://github.com/shirok/Gauche-gl からソースを取得してインストール )
    sudo apt install libglu1-mesa-dev mesa-common-dev # already installed
    sudo apt install freeglut3-dev
    sudo apt install libxmu-dev
@@ -204,7 +204,7 @@
    sudo make install
 
    # Gauche-al のインストール
-   #  ( https://github.com/Hamayama/Gauche-al-mg からソースを取得 )
+   #  ( https://github.com/Hamayama/Gauche-al-mg からソースを取得してインストール )
    sudo apt install libopenal-dev
    sudo apt install libalut-dev
    sudo apt install texinfo
@@ -217,6 +217,8 @@
    # あとは、本サイト ( https://github.com/Hamayama/Gauche-gl-examples ) のソースを取得して、
    # gosh xxx.scm のように実行する。
    # (一部のサンプルは、gosh xxx.scm 1 のように引数を付けて実行すると、効果音付きになる)
+   gosh trochoid.scm
+   gosh shooting0101.scm 1
    ```
 
 
@@ -240,4 +242,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2020-4-23)
+(2020-4-25)
