@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; collision.scm
-;; 2020-5-4 v1.00
+;; 2020-5-5 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、物体(球)の衝突をシミュレートするプログラムです。
@@ -38,8 +38,8 @@
 (define *rm*         (make-f64vector *N* 0))  ; 物体の質量
 (define *rcol*       (make-vector    *N* 0))  ; 物体の色番号
 (define *rhit*       (make-vector    *N* #f)) ; 衝突フラグ
-(define *rv0*        (make-f64vector *N* 0))  ; 衝突後の物体の速度
-(define *rc0*        (make-f64vector *N* 0))  ; 衝突後の物体の角度
+(define *eng0*       0) ; 全体の運動エネルギーの初期値
+(define *eng1*       0) ; 全体の運動エネルギーの現在値
 
 (define *backcolor*  #f32(0.2 0.2 0.2 1.0)) ; 背景色
 
@@ -54,6 +54,12 @@
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
 
+;; 運動エネルギーの計算
+(define (calc-energy)
+  (do ((i 0 (+ i 1))
+       (eng 0 (+ eng (* (/. 1 2) (~ *rm* i) (expt (~ *rv* i) 2)))))
+      ((>= i *N*) eng)))
+
 ;; 物体の初期化
 (define (init-ball)
   ;; 球
@@ -66,9 +72,7 @@
     (set! (~ *rr* i)   (randint 30 90))
     (set! (~ *rm* i)   (* (/. 4 3) pi (expt (~ *rr* i) 3)))
     (set! (~ *rcol* i) (randint 10 15))
-    (set! (~ *rhit* i) #f)
-    (set! (~ *rv0* i)  0)
-    (set! (~ *rc0* i)  0)))
+    (set! (~ *rhit* i) #f)))
 
 ;; 物体の表示
 (define (disp-ball)
@@ -169,22 +173,15 @@
             (when (< v2cx1 0) (set! v2cx1 (- v2cx1)))
             (when (> v2cx2 0) (set! v2cx2 (- v2cx2)))))
           ;; 極座標の速度と角度に戻す
-          (set! (~ *rv0* i1) (sqrt (+ (expt v2cx1 2) (expt v2cy1 2))))
-          (set! (~ *rc0* i1) (+ (atan v2cy1 v2cx1) cc))
-          (set! (~ *rv0* i2) (sqrt (+ (expt v2cx2 2) (expt v2cy2 2))))
-          (set! (~ *rc0* i2) (+ (atan v2cy2 v2cx2) cc))
+          (set! (~ *rv* i1) (sqrt (+ (expt v2cx1 2) (expt v2cy1 2))))
+          (set! (~ *rc* i1) (+ (atan v2cy1 v2cx1) cc))
+          (set! (~ *rv* i2) (sqrt (+ (expt v2cx2 2) (expt v2cy2 2))))
+          (set! (~ *rc* i2) (+ (atan v2cy2 v2cx2) cc))
           )))
     (cond
      ((< i2 (- *N* 1)) (loop i1 (+ i2 1)))
      ((< i1 (- *N* 2)) (loop (+ i1 1) (+ i1 2))))
-    )
-  ;; 実際の速度と角度に反映する
-  (do ((i 0 (+ i 1)))
-      ((>= i *N*))
-    (when (~ *rhit* i)
-      (set! (~ *rv* i) (~ *rv0* i))
-      (set! (~ *rc* i) (~ *rc0* i))))
-  )
+    ))
 
 
 ;; 初期化
@@ -203,13 +200,22 @@
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 30.0)
   ;; 物体の初期化
-  (init-ball))
+  (init-ball)
+  ;; 全体の運動エネルギーの初期値を計算
+  (set! *eng0* (calc-energy)))
 
 ;; 画面表示
 (define (disp)
   (gl-clear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
+  ;; 文字表示
+  (let ((str1 (format "Energy=~D (~D%)"
+                      (truncate->exact *eng1*)
+                      (truncate-n (* (/. *eng1* *eng0*) 100) 1)))
+        (z1 0.9))
+    (gl-color 0.0 1.0 0.0 1.0)
+    (draw-stroke-text str1 0 0 *width* *height* 24 'left z1))
   ;; 物体の表示
   (disp-ball)
   ;; 背景の表示
@@ -250,6 +256,8 @@
   (calc-ball)
   ;; 物体の衝突処理
   (collision-ball)
+  ;; 全体の運動エネルギーの現在値を計算
+  (set! *eng1* (calc-energy))
   ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整
