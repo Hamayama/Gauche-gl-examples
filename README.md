@@ -5,7 +5,7 @@
 |![image](image/image0101.png)|![image](image/image0201.png)|![image](image/image0301.png)|![image](image/image0401.png)|
 |![image](image/image0501.png)|![image](image/image0601.png)|![image](image/image0701.png)|![image](image/image0801.png)|
 |![image](image/image0901.png)|![image](image/image1001.png)|![image](image/image1101.png)|![image](image/image1201.png)|
-|![image](image/image1301.png)|![image](image/image1401.png)|![image](image/image1501.png)|
+|![image](image/image1301.png)|![image](image/image1401.png)|![image](image/image1501.png)|![image](image/image1601.png)|
 
 ## 概要
 - Gauche-gl を使用したサンプルプログラム等です。  
@@ -140,6 +140,11 @@
     近似解を求めています。  
     ESCキーを押すと終了します。
 
+16. 物体(球)の衝突 ( collision.scm )  
+    Gauche-gl を使用した、物体(球)の衝突をシミュレートするプログラムです。  
+    (一部計算が正しくないところがあります)  
+    ESCキーを押すと終了します。
+
 
 ## その他 注意事項等
 1. 一部のサンプルは、以下のモジュールを使用しています。これらは、lib フォルダに格納しています。
@@ -242,4 +247,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2020-4-25)
+(2020-5-4)
