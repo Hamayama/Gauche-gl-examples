@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; collision.scm
-;; 2020-5-5 v1.01
+;; 2020-5-5 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、物体(球)の衝突をシミュレートするプログラムです。
@@ -37,7 +37,6 @@
 (define *rr*         (make-f64vector *N* 0))  ; 物体の半径
 (define *rm*         (make-f64vector *N* 0))  ; 物体の質量
 (define *rcol*       (make-vector    *N* 0))  ; 物体の色番号
-(define *rhit*       (make-vector    *N* #f)) ; 衝突フラグ
 (define *eng0*       0) ; 全体の運動エネルギーの初期値
 (define *eng1*       0) ; 全体の運動エネルギーの現在値
 
@@ -71,8 +70,7 @@
     (set! (~ *rc* i)   (* (randint 0 359) pi/180))
     (set! (~ *rr* i)   (randint 30 90))
     (set! (~ *rm* i)   (* (/. 4 3) pi (expt (~ *rr* i) 3)))
-    (set! (~ *rcol* i) (randint 10 15))
-    (set! (~ *rhit* i) #f)))
+    (set! (~ *rcol* i) (randint 10 15))))
 
 ;; 物体の表示
 (define (disp-ball)
@@ -118,10 +116,6 @@
 ;; 物体の衝突処理
 ;; (現状、3個以上の物体が重なった場合には、正しい結果にならない)
 (define (collision-ball)
-  ;; 衝突フラグOFF
-  (do ((i 0 (+ i 1)))
-      ((>= i *N*))
-    (set! (~ *rhit* i) #f))
   ;; 球と球の衝突処理(2重ループ)
   ;;   球1の番号i1  球2の番号i2
   ;;        0        1 ... N-1
@@ -153,17 +147,14 @@
                              (* (~ *rm* i2) v1cx2))
                           (+ (~ *rm* i1) (~ *rm* i2))))
                (v2cy2 v1cy2)
-               ;; 衝突軸上の座標を計算
+               ;; 衝突軸上の座標を取得(速度の方向チェック用)
                (cx1   (* (sqrt (+ (expt (~ *rx* i1) 2) (expt (~ *ry* i1) 2)))
                          (cos  (- (atan (~ *ry* i1) (~ *rx* i1)) cc))))
                (cx2   (* (sqrt (+ (expt (~ *rx* i2) 2) (expt (~ *ry* i2) 2)))
                          (cos  (- (atan (~ *ry* i2) (~ *rx* i2)) cc))))
                )
-          ;; 衝突フラグON
-          (set! (~ *rhit* i1) #t)
-          (set! (~ *rhit* i2) #t)
           ;; 速度の方向をチェックして、近づくケースでは速度を反転する
-          ;; (現実には、衝突後に2個の物体が同じ方向に進むケースもあるため、正しくない。
+          ;; (厳密には、衝突後に2個の物体が同じ方向に進むケースもあるため、正しくない。
           ;;  しかし、めりこみ時の振動状態を簡単に解消するために、このようにした)
           (cond
            ((< cx1 cx2)
@@ -192,7 +183,7 @@
   ;(gl-light  GL_LIGHT0 GL_POSITION #f32(1.0 1.0 1.0 0.0))
   (gl-light  GL_LIGHT0 GL_POSITION #f32(-1.0 1.0 1.0 0.0))
   ;(gl-light  GL_LIGHT0 GL_AMBIENT  #f32( 0.5 0.5 0.5 1.0)) ; 環境光
-  (gl-light  GL_LIGHT0 GL_AMBIENT  #f32( 0.35 0.35 0.35 1.0)) ; 環境光
+  (gl-light  GL_LIGHT0 GL_AMBIENT  #f32(0.35 0.35 0.35 1.0)) ; 環境光
   (gl-enable GL_LIGHTING)
   (gl-enable GL_LIGHT0)
   (gl-enable GL_NORMALIZE)
