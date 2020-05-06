@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; collision.scm
-;; 2020-5-6 v1.03
+;; 2020-5-6 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、物体(球)の衝突をシミュレートするプログラムです。
@@ -55,9 +55,12 @@
 
 ;; 運動エネルギーの計算
 (define (calc-energy)
-  (do ((i 0 (+ i 1))
-       (eng 0 (+ eng (* (/. 1 2) (~ *rm* i) (expt (~ *rv* i) 2)))))
-      ((>= i *N*) eng)))
+  (define eng 0)
+  ;; 全ての球
+  (do ((i 0 (+ i 1)))
+      ((>= i *N*))
+    (inc! eng (* (/. 1 2) (~ *rm* i) (expt (~ *rv* i) 2))))
+  eng)
 
 ;; 物体の初期化
 (define (init-balls)
@@ -220,7 +223,7 @@
   (set! *width*  w)
   (set! *height* h)
   ;; 画面幅の変化に追従
-  (set! *wd/2* (* (/. *width* *height*) *ht/2*))
+  (set! *wd/2* (truncate->exact (* (/. *width* *height*) *ht/2*)))
   ;; 画面のリサイズ
   (gl-viewport 0 0 *width* *height*)
   (gl-matrix-mode GL_PROJECTION)
