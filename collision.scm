@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; collision.scm
-;; 2020-5-5 v1.02
+;; 2020-5-6 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、物体(球)の衝突をシミュレートするプログラムです。
@@ -60,8 +60,8 @@
       ((>= i *N*) eng)))
 
 ;; 物体の初期化
-(define (init-ball)
-  ;; 球
+(define (init-balls)
+  ;; 全ての球
   (do ((i 0 (+ i 1)))
       ((>= i *N*))
     (set! (~ *rx* i)   (randint (- *wd/2*) *wd/2*))
@@ -73,8 +73,8 @@
     (set! (~ *rcol* i) (randint 10 15))))
 
 ;; 物体の表示
-(define (disp-ball)
-  ;; 球
+(define (disp-balls)
+  ;; 全ての球
   (do ((i 0 (+ i 1)))
       ((>= i *N*))
     ;; 色
@@ -86,9 +86,9 @@
     (glut-solid-sphere (~ *rr* i) 20 20)
     (gl-pop-matrix)))
 
-;; 物体の座標計算
-(define (calc-ball)
-  ;; 球
+;; 物体の移動
+(define (move-balls)
+  ;; 全ての球
   (do ((i 0 (+ i 1)))
       ((>= i *N*))
     ;; 移動
@@ -115,7 +115,7 @@
 
 ;; 物体の衝突処理
 ;; (現状、3個以上の物体が重なった場合には、正しい結果にならない)
-(define (collision-ball)
+(define (collision-balls)
   ;; 球と球の衝突処理(2重ループ)
   ;;   球1の番号i1  球2の番号i2
   ;;        0        1 ... N-1
@@ -191,7 +191,7 @@
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 30.0)
   ;; 物体の初期化
-  (init-ball)
+  (init-balls)
   ;; 全体の運動エネルギーの初期値を計算
   (set! *eng0* (calc-energy)))
 
@@ -206,9 +206,9 @@
                       (truncate-n (* (/. *eng1* *eng0*) 100) 1)))
         (z1 0.9))
     (gl-color 0.0 1.0 0.0 1.0)
-    (draw-stroke-text str1 0 0 *width* *height* 24 'left z1))
+    (draw-stroke-text str1 2 0 *width* *height* 24 'left z1))
   ;; 物体の表示
-  (disp-ball)
+  (disp-balls)
   ;; 背景の表示
   (gl-color *backcolor*)
   (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.999999)
@@ -243,10 +243,10 @@
 
 ;; タイマー
 (define (timer val)
-  ;; 物体の座標計算
-  (calc-ball)
+  ;; 物体の移動
+  (move-balls)
   ;; 物体の衝突処理
-  (collision-ball)
+  (collision-balls)
   ;; 全体の運動エネルギーの現在値を計算
   (set! *eng1* (calc-energy))
   ;; 画面表示
