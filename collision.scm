@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; collision.scm
-;; 2020-5-6 v1.04
+;; 2020-5-8 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、物体(球)の衝突をシミュレートするプログラムです。
@@ -105,11 +105,9 @@
           (maxx (-    *wd/2*  (~ *rr* i) (- *bval*)))
           (miny (+ (- *ht/2*) (~ *rr* i) (- *bval*)))
           (maxy (-    *ht/2*  (~ *rr* i) (- *bval*))))
-      (when (or (< (~ *rx* i) minx)
-                (> (~ *rx* i) maxx))
+      (unless (<= minx (~ *rx* i) maxx)
         (set! (~ *rc* i) (+ (- (~ *rc* i)) pi)))
-      (when (or (< (~ *ry* i) miny)
-                (> (~ *ry* i) maxy))
+      (unless (<= miny (~ *ry* i) maxy)
         (set! (~ *rc* i)    (- (~ *rc* i))))
       (set! (~ *rx* i) (clamp (~ *rx* i) minx maxx))
       (set! (~ *ry* i) (clamp (~ *ry* i) miny maxy))
