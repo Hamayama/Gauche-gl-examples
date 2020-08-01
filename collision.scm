@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; collision.scm
-;; 2020-5-8 v1.05
+;; 2020-8-1 v1.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、物体(球)の衝突をシミュレートするプログラムです。
@@ -30,13 +30,15 @@
 (define *N*         10) ; 物体の数
 (define *C*          1) ; 反発係数(0-1)
 (define *bval*       1) ; 物体のふちの調整値(この分だけめりこむ)
-(define *rx*         (make-f64vector *N* 0))  ; 物体のX座標
-(define *ry*         (make-f64vector *N* 0))  ; 物体のY座標
-(define *rv*         (make-f64vector *N* 0))  ; 物体の速度
-(define *rc*         (make-f64vector *N* 0))  ; 物体の角度
-(define *rr*         (make-f64vector *N* 0))  ; 物体の半径
-(define *rm*         (make-f64vector *N* 0))  ; 物体の質量
-(define *rcol*       (make-vector    *N* 0))  ; 物体の色番号
+(define *rx*         (make-f64vector *N* 0)) ; 物体のX座標
+(define *ry*         (make-f64vector *N* 0)) ; 物体のY座標
+(define *rv*         (make-f64vector *N* 0)) ; 物体の速度
+(define *rc*         (make-f64vector *N* 0)) ; 物体の角度
+(define *rr*         (make-f64vector *N* 0)) ; 物体の半径
+(define *rm*         (make-f64vector *N* 0)) ; 物体の質量
+(define *hit-num*    (make-vector    *N* 0)) ; 物体の衝突数
+(define *hit-num-old* (make-vector   *N* 0)) ; 物体の衝突数(1フレーム前)
+(define *rcol*       (make-vector    *N* 0)) ; 物体の色番号
 (define *eng0*       0) ; 全体の運動エネルギーの初期値
 (define *eng1*       0) ; 全体の運動エネルギーの現在値
 
@@ -67,13 +69,16 @@
   ;; 全ての球
   (do ((i 0 (+ i 1)))
       ((>= i *N*))
-    (set! (~ *rx* i)   (randint (- *wd/2*) *wd/2*))
-    (set! (~ *ry* i)   (randint (- *ht/2*) *ht/2*))
-    (set! (~ *rv* i)   (randint 3 6))
-    (set! (~ *rc* i)   (* (randint 0 359) pi/180))
-    (set! (~ *rr* i)   (randint 30 90))
-    (set! (~ *rm* i)   (* (/. 4 3) pi (expt (~ *rr* i) 3)))
-    (set! (~ *rcol* i) (randint 10 15))))
+    (set! (~ *rx* i)          (randint (- *wd/2*) *wd/2*))
+    (set! (~ *ry* i)          (randint (- *ht/2*) *ht/2*))
+    (set! (~ *rv* i)          (randint 3 6))
+    (set! (~ *rc* i)          (* (randint 0 359) pi/180))
+    (set! (~ *rr* i)          (randint 30 90))
+    (set! (~ *rm* i)          (* (/. 4 3) pi (expt (~ *rr* i) 3)))
+    (set! (~ *rcol* i)        (randint 10 15))
+    (set! (~ *hit-num* i)     0)
+    (set! (~ *hit-num-old* i) 0)
+    ))
 
 ;; 物体の表示
 (define (disp-balls)
@@ -94,6 +99,9 @@
   ;; 全ての球
   (do ((i 0 (+ i 1)))
       ((>= i *N*))
+    ;; 衝突数をリセット
+    (set! (~ *hit-num-old* i) (~ *hit-num* i))
+    (set! (~ *hit-num* i) 0)
     ;; 移動
     (inc! (~ *rx* i) (* (~ *rv* i) (cos (~ *rc* i))))
     (inc! (~ *ry* i) (* (~ *rv* i) (sin (~ *rc* i))))
@@ -106,8 +114,10 @@
           (miny (+ (- *ht/2*) (~ *rr* i) (- *bval*)))
           (maxy (-    *ht/2*  (~ *rr* i) (- *bval*))))
       (unless (<= minx (~ *rx* i) maxx)
+        (inc! (~ *hit-num* i))
         (set! (~ *rc* i) (+ (- (~ *rc* i)) pi)))
       (unless (<= miny (~ *ry* i) maxy)
+        (inc! (~ *hit-num* i))
         (set! (~ *rc* i)    (- (~ *rc* i))))
       (set! (~ *rx* i) (clamp (~ *rx* i) minx maxx))
       (set! (~ *ry* i) (clamp (~ *ry* i) miny maxy))
@@ -129,6 +139,7 @@
                  (expt (- (~ *ry* i1) (~ *ry* i2)) 2)))
           (r2 (expt (+ (~ *rr* i1) (~ *rr* i2) (- *bval*)) 2)))
       (when (< r1 r2)
+        (inc! (~ *hit-num* i1))
         (let* (;; 衝突軸の角度を求める
                (cc    (atan (- (~ *ry* i2) (~ *ry* i1))
                             (- (~ *rx* i2) (~ *rx* i1))))
@@ -157,13 +168,17 @@
           ;; 速度の方向をチェックして、近づくケースでは速度を反転する
           ;; (厳密には、衝突後に2個の物体が同じ方向に進むケースもあるため、正しくない。
           ;;  しかし、めりこみ時の振動状態を簡単に解消するために、このようにした)
-          (cond
-           ((< cx1 cx2)
-            (when (> v2cx1 0) (set! v2cx1 (- v2cx1)))
-            (when (< v2cx2 0) (set! v2cx2 (- v2cx2))))
-           (else
-            (when (< v2cx1 0) (set! v2cx1 (- v2cx1)))
-            (when (> v2cx2 0) (set! v2cx2 (- v2cx2)))))
+          ;;
+          ;; (その後、1フレーム前の衝突数が0のときは、本処理を行わないようにした)
+          ;;
+          (when (> (~ *hit-num-old* i1) 0)
+            (cond
+             ((< cx1 cx2)
+              (when (> v2cx1 0) (set! v2cx1 (- v2cx1)))
+              (when (< v2cx2 0) (set! v2cx2 (- v2cx2))))
+             (else
+              (when (< v2cx1 0) (set! v2cx1 (- v2cx1)))
+              (when (> v2cx2 0) (set! v2cx2 (- v2cx2))))))
           ;; 極座標の速度と角度に戻す
           (set! (~ *rv* i1) (sqrt (+ (expt v2cx1 2) (expt v2cy1 2))))
           (set! (~ *rc* i1) (+ (atan v2cy1 v2cx1) cc))
