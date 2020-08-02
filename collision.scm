@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; collision.scm
-;; 2020-8-1 v1.06
+;; 2020-8-2 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、物体(球)の衝突をシミュレートするプログラムです。
@@ -114,10 +114,10 @@
           (miny (+ (- *ht/2*) (~ *rr* i) (- *bval*)))
           (maxy (-    *ht/2*  (~ *rr* i) (- *bval*))))
       (unless (<= minx (~ *rx* i) maxx)
-        (inc! (~ *hit-num* i))
+        ;(inc! (~ *hit-num* i))
         (set! (~ *rc* i) (+ (- (~ *rc* i)) pi)))
       (unless (<= miny (~ *ry* i) maxy)
-        (inc! (~ *hit-num* i))
+        ;(inc! (~ *hit-num* i))
         (set! (~ *rc* i)    (- (~ *rc* i))))
       (set! (~ *rx* i) (clamp (~ *rx* i) minx maxx))
       (set! (~ *ry* i) (clamp (~ *ry* i) miny maxy))
@@ -166,6 +166,7 @@
                          (cos  (- (atan (~ *ry* i2) (~ *rx* i2)) cc))))
                )
           ;; 速度の方向をチェックして、近づくケースでは速度を反転する
+          ;;
           ;; (厳密には、衝突後に2個の物体が同じ方向に進むケースもあるため、正しくない。
           ;;  しかし、めりこみ時の振動状態を簡単に解消するために、このようにした)
           ;;
