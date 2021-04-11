@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; collision.scm
-;; 2020-8-2 v1.07
+;; 2021-4-11 v1.08
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、物体(球)の衝突をシミュレートするプログラムです。
@@ -237,7 +237,7 @@
   (set! *width*  w)
   (set! *height* h)
   ;; 画面幅の変化に追従
-  (set! *wd/2* (truncate->exact (* (/. *width* *height*) *ht/2*)))
+  (set! *wd/2* (truncate->exact (* (/. *width* (max *height* 1)) *ht/2*)))
   ;; 画面のリサイズ
   (gl-viewport 0 0 *width* *height*)
   (gl-matrix-mode GL_PROJECTION)

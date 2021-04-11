@@ -229,8 +229,10 @@
 
 ## 環境等
 - OS
+  - Windows 10 (version 20H2) (64bit)
   - Windows 8.1 (64bit)
 - 言語
+  - Gauche v0.9.10
   - Gauche v0.9.9
   - Gauche v0.9.8
   - Gauche v0.9.7
@@ -247,4 +249,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2020-5-4)
+(2021-4-11)
