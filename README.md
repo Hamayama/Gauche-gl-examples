@@ -6,6 +6,7 @@
 |![image](image/image0501.png)|![image](image/image0601.png)|![image](image/image0701.png)|![image](image/image0801.png)|
 |![image](image/image0901.png)|![image](image/image1001.png)|![image](image/image1101.png)|![image](image/image1201.png)|
 |![image](image/image1301.png)|![image](image/image1401.png)|![image](image/image1501.png)|![image](image/image1601.png)|
+|![image](image/image1701.png)||||
 
 ## 概要
 - Gauche-gl を使用したサンプルプログラム等です。  
@@ -145,6 +146,11 @@
     (一部計算が正しくないところがあります)  
     ESCキーを押すと終了します。
 
+17. 影のある星 (shadow.scm)  
+    Gauche-gl を使用した、影のある星を表示するプログラムです。  
+    スペースキーを押すと、2D表示と3D表示を切り換えます。  
+    ESCキーを押すと終了します。
+
 
 ## その他 注意事項等
 1. 一部のサンプルは、以下のモジュールを使用しています。これらは、lib フォルダに格納しています。
@@ -249,4 +255,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2021-4-11)
+(2021-6-22)

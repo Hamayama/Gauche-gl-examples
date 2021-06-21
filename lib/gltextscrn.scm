@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2018-8-17 v2.04
+;; 2021-6-22 v2.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -22,6 +22,8 @@
     %win-ortho-on %win-ortho-off
     ;; 拡大縮小、回転、平行移動
     %win-scale %win-rotate %win-translate
+    ;; クリッピング
+    %win-clip
     ;; 各種描画
     ;; (「%」付きの手続きは、内部で 正射影設定ON/OFF をしない
     ;;  (このため、呼び出し側で 正射影設定ON/OFF を行う必要がある))
@@ -120,6 +122,19 @@
 ;;   ・移動量 (dx,dy) は、左上を原点として (0,0)-(width,height) の範囲で指定する
 (define (%win-translate dx dy width height)
   (gl-translate dx (- dy) 0))
+
+
+;; クリッピング設定
+;;   ・長方形 (x,y,w,h) の範囲を、クリッピングエリアに設定する (wとhは幅と高さ)
+;;     (以後、クリッピングエリアの外側は、描画されない)
+;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
+;;   ・事前に (gl-enable GL_SCISSOR_TEST) を実行しておく必要がある
+;;   ・gl-viewport を使用していた場合、ビューポートの左上座標をオフセットに指定する必要あり
+(define (%win-clip x y width height :optional (xoffset 0) (yoffset 0))
+  (gl-scissor (truncate->exact (+ x xoffset))
+              (truncate->exact (+ y yoffset))
+              (truncate->exact width)
+              (truncate->exact height)))
 
 
 ;; 文字列の幅を取得(ビットマップフォント)(内部処理用)
@@ -297,7 +312,7 @@
 ;; 円の表示
 ;;   ・円 (x,y,r,a,b) -> (x'-x)*(x'-x)*(a*a)+(y'-y)*(y'-y)*(b*b)=r*r の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-(define (%draw-win-circle x y r width height :optional (a 1) (b 1) (align 'center) (z 0))
+(define (%draw-win-circle x y r width height :optional (a 1) (b 1) (align 'center) (z 0) (slices 40))
   (let ((x1  (case align
                ((left)  (+ x r)) ; 左寄せ
                ((right) (- x r)) ; 右寄せ
@@ -309,12 +324,12 @@
     (gl-push-matrix)
     (gl-translate x1 y1 z)
     (gl-scale scx scy 1)
-    (glu-disk q 0 r 40 1)
+    (glu-disk q 0 r slices 1)
     (gl-pop-matrix)
     ))
-(define (draw-win-circle x y r width height :optional (a 1) (b 1) (align 'center) (z 0))
+(define (draw-win-circle x y r width height :optional (a 1) (b 1) (align 'center) (z 0) (slices 40))
   (%win-ortho-on width height)
-  (%draw-win-circle x y r width height a b align z)
+  (%draw-win-circle x y r width height a b align z slices)
   (%win-ortho-off))
 
 ;; 多角形の表示
@@ -364,7 +379,8 @@
 ;; 円の輪郭の表示
 ;;   ・円 (x,y,r,a,b) -> (x'-x)*(x'-x)*(a*a)+(y'-y)*(y'-y)*(b*b)=r*r の輪郭の表示を行う
 ;;   ・座標は、左上を原点として (0,0)-(width,height) の範囲で指定する
-(define (%draw-win-circle-line x y r width height :optional (a 1) (b 1) (align 'center) (z 0))
+(define (%draw-win-circle-line x y r width height :optional (a 1) (b 1) (align 'center) (z 0) (slices 40))
+  (define slices1 (if (and (> slices 0) (<= slices 1000)) slices 40))
   (let ((x1   (case align
                 ((left)  (+ x r)) ; 左寄せ
                 ((right) (- x r)) ; 右寄せ
@@ -372,20 +388,20 @@
         (y1   (- height y))
         (r1   (if (= a 0) r (/. r a)))
         (r2   (if (= b 0) r (/. r b)))
-        (step (/. 2pi 40)))
+        (step (/. 2pi slices1)))
     (gl-push-matrix)
     (gl-translate x1 y1 z)
     (gl-begin GL_LINE_LOOP)
     (do ((i   0 (+ i 1))
          (rad 0 (+ rad step)))
-        ((>= i 40) #f)
+        ((>= i slices1) #f)
       (gl-vertex (f32vector (* r1 (cos rad)) (* r2 (sin rad)))))
     (gl-end)
     (gl-pop-matrix)
     ))
-(define (draw-win-circle-line x y r width height :optional (a 1) (b 1) (align 'center) (z 0))
+(define (draw-win-circle-line x y r width height :optional (a 1) (b 1) (align 'center) (z 0) (slices 40))
   (%win-ortho-on width height)
-  (%draw-win-circle-line x y r width height a b align z)
+  (%draw-win-circle-line x y r width height a b align z slices)
   (%win-ortho-off))
 
 ;; 多角形の輪郭の表示
