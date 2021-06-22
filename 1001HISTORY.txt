@@ -550,6 +550,7 @@ collision.scm
 
 shadow.scm
   2021-6-22  v1.00  初版
+  2021-6-22  v1.01  一部処理見直し
 
 
 glmintool.scm

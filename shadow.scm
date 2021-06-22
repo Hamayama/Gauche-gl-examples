@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shadow.scm
-;; 2021-6-22 v1.00
+;; 2021-6-22 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、影のある星を表示するプログラムです。
@@ -109,7 +109,7 @@
   ;; 球
   (glut-solid-sphere *r1* 200 200))
 
-;; 影の端点を移動
+;; 影の移動
 ;;   ・戻り値は、モード移行した場合に #t を返す
 (define (move-shadow)
   (define ret #f)
@@ -118,11 +118,11 @@
     (set! *d1* (if (< *d1* 0) pi 0))
     (set! *fillmode* (- 1 *fillmode*))
     (set! ret #t))
+  ;; 2D表示のときは、影の端点を移動する
   (set! *x3* (* *r1* (cos *d1*)))
-  (when (= *3d-disp* 1)
-    ;; 3D表示のときは、光源の方を移動する
-    (let ((d1 (- (+ *d1* pi (* *fillmode* pi)))))
-      (gl-light GL_LIGHT0 GL_POSITION (f32vector (sin d1) 0.0 (cos d1) 0.0))))
+  ;; 3D表示のときは、光源の方を移動する
+  (let ((d1 (- (+ *d1* pi (* *fillmode* pi)))))
+    (gl-light GL_LIGHT0 GL_POSITION (f32vector (sin d1) 0.0 (cos d1) 0.0)))
   ret)
 
 
@@ -194,7 +194,7 @@
     (timewait-timer *twinfo*))
    ;; 待ち状態でないとき
    (else
-    ;; 影の端点を移動
+    ;; 影の移動
     (when (move-shadow)
       ;; モード移行を遅延する(完了の余韻を残すため)
       (timewait *twinfo* 1000
