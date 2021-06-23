@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shadow.scm
-;; 2021-6-23 v1.02
+;; 2021-6-23 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、影のある星を表示するプログラムです。
@@ -51,6 +51,16 @@
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
 
+;; クリッピング解除
+(define (clip-off)
+  (define xoffset (quotient (- (glut-get GLUT_WINDOW_WIDTH)  *width*)  2))
+  (define yoffset (quotient (- (glut-get GLUT_WINDOW_HEIGHT) *height*) 2))
+  (%win-clip (win-x *win* (- *wd/2*))
+             (win-y *win* *ht/2*)
+             (win-w *win* (* *wd/2* 2))
+             (win-h *win* (* *ht/2* 2))
+             xoffset yoffset))
+
 ;; 星の表示(2D表示)
 (define (disp-star-2d)
   (define xoffset (quotient (- (glut-get GLUT_WINDOW_WIDTH)  *width*)  2))
@@ -94,12 +104,8 @@
                      (win-y *win* 0)
                      (win-h *win* *r2*)
                      *width* *height* 1 1 'center 0.1 200))
-  ;; クリッピングを解除
-  (%win-clip (win-x *win* (- *wd/2*))
-             (win-y *win* *ht/2*)
-             (win-w *win* (* *wd/2* 2))
-             (win-h *win* (* *ht/2* 2))
-             xoffset yoffset))
+  ;; クリッピング解除
+  (clip-off))
 
 ;; 星の表示(3D表示)
 (define (disp-star-3d)
@@ -171,7 +177,9 @@
     ;; 透視射影する範囲を設定
     (glu-perspective *vangle* (/. *width* *height*) (- z1 *zd/2*) (+ z1 *zd/2*))
     ;; 視点の位置と方向を設定
-    (glu-look-at 0 0 z1 0 0 0 0 1 0)))
+    (glu-look-at 0 0 z1 0 0 0 0 1 0))
+  ;; クリッピング解除
+  (clip-off))
 
 ;; キー入力
 (define (keyboard key x y)
