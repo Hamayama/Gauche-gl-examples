@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shadow.scm
-;; 2021-6-23 v1.03
+;; 2021-6-24 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、影のある星を表示するプログラムです。
@@ -28,9 +28,9 @@
 (define *zd/2*     400) ; 画面奥行き/2
 
 (define *r1*       260) ; 星の半径
-(define *x2*         0) ; 影の中心のX座標(計算で求める)
-(define *r2*         0) ; 影の半径       (計算で求める)
-(define *x3*      *r1*) ; 影の端点のX座標
+(define *x2*         0) ; 影の中心のX座標(2D表示用)(計算で求める)
+(define *r2*         0) ; 影の半径       (2D表示用)(計算で求める)
+(define *x3*      *r1*) ; 影の端点のX座標(2D表示用)
 (define *d1*         0) ; 影の端点の(XZ平面上の)角度
 (define *vd1*        (* 0.3 pi/180)) ; 影の端点の(XZ平面上の)角速度
 (define *fillmode*   0) ; 塗りつぶしモード(=0:出現中,=1:消失中)
@@ -38,7 +38,7 @@
 
 (define *backcolor*  #f32(0.0 0.0 0.0 1.0)) ; 背景色
 (define *starcolor1* #f32(1.0 1.0 0.2 1.0)) ; 星の色
-(define *starcolor2* #f32(0.2 0.2 0.2 1.0)) ; 影の色
+(define *starcolor2* #f32(0.2 0.2 0.2 1.0)) ; 影の色(2D表示用)
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -124,11 +124,11 @@
     (set! *d1* (if (< *d1* 0) pi 0))
     (set! *fillmode* (- 1 *fillmode*))
     (set! ret #t))
-  ;; 2D表示のときは、影の端点を移動する
+  ;; 2D表示では、影の端点を移動する
   (set! *x3* (* *r1* (cos *d1*)))
-  ;; 3D表示のときは、光源の方を移動する
-  (let ((d1 (- (+ *d1* pi (* *fillmode* pi)))))
-    (gl-light GL_LIGHT0 GL_POSITION (f32vector (sin d1) 0.0 (cos d1) 0.0)))
+  ;; 3D表示では、光源の方を移動する
+  (let ((d1 (+ *d1* (- pi/2) (* *fillmode* pi))))
+    (gl-light GL_LIGHT0 GL_POSITION (f32vector (cos d1) 0.0 (sin d1) 0.0)))
   ret)
 
 
@@ -205,8 +205,8 @@
     ;; 影の移動
     (when (move-shadow)
       ;; モード移行を遅延する(完了の余韻を残すため)
-      (timewait *twinfo* 1000
-        (lambda () (timewait-clear *twinfo*))))))
+      (timewait *twinfo* 1500
+                (lambda () (timewait-clear *twinfo*))))))
   ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整
