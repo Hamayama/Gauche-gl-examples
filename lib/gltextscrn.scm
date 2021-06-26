@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2021-6-22 v2.05
+;; 2021-6-26 v2.06
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -23,7 +23,7 @@
     ;; 拡大縮小、回転、平行移動
     %win-scale %win-rotate %win-translate
     ;; クリッピング
-    %win-clip
+    %win-clip %win-clip-off
     ;; 各種描画
     ;; (「%」付きの手続きは、内部で 正射影設定ON/OFF をしない
     ;;  (このため、呼び出し側で 正射影設定ON/OFF を行う必要がある))
@@ -135,6 +135,10 @@
               (truncate->exact (+ y yoffset))
               (truncate->exact width)
               (truncate->exact height)))
+
+;; クリッピング解除
+(define (%win-clip-off)
+  (gl-scissor 0 0 (glut-get GLUT_WINDOW_WIDTH) (glut-get GLUT_WINDOW_HEIGHT)))
 
 
 ;; 文字列の幅を取得(ビットマップフォント)(内部処理用)
