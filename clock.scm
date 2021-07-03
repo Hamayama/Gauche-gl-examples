@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; clock.scm
-;; 2019-6-19 v1.11
+;; 2021-7-3 v1.12
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、アナログ時計を表示するサンプルです。
@@ -85,7 +85,7 @@
                  *width* *height*)
   ;; 枠
   (gl-color *framecolor*)
-  (draw-win-circle-line x1 y1 r1 *width* *height*)
+  (draw-win-circle-line x1 y1 r1 *width* *height* 1 1 'center 0 200)
   ;(draw-win-rect-line (- x1 r1) (- y1 r1) (* r1 2) (* r1 2) *width* *height*)
   ;(draw-win-poly-line x1 y1 (vector (f32vector 0 (- r1)) (f32vector (- r1) r1) (f32vector r1 r1)) *width* *height*)
   ;; 目盛
