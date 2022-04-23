@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0401.scm
-;; 2022-4-23 v1.02
+;; 2022-4-23 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -594,7 +594,7 @@
 (define (reshape w h)
   ;; y1      スクリーン(XY平面上)の上端のY座標(下端のY座標は-y1になる)
   ;; z1      スクリーン(XY平面上)を真上から見る場合のZ座標(視野角によって決まる)
-  ;; v1      視野角(rad)
+  ;; vangle  視野角(rad)
   ;; vcamera カメラの視線とスクリーン(XY平面上)との角度(rad)
   ;; b2      2次方程式の解の計算用
   ;; r2      カメラと原点の距離
@@ -607,7 +607,7 @@
   ;;
   (let* ((y1      *ht/2*)
          (z1      (/. *ht/2* *tanvan*))
-         (v1      (* *vangle*  pi/180))
+         (vangle  (* *vangle*  pi/180))
          (vcamera (* *vcamera* pi/180))
          (b2      (/. (* (- (* z1 z1) (* y1 y1)) (sin vcamera))
                       (* 2 z1)))
@@ -615,7 +615,7 @@
          (y2      (- (* r2 (cos vcamera))))
          (z2      (* r2 (sin vcamera)))
          (v3      (atan (/. (- (+ y1 y2)) z2)))
-         (y3      (+ y2 (* (tan (+ v3 (/. v1 2))) z2)))
+         (y3      (+ y2 (* (tan (+ v3 (/. vangle 2))) z2)))
          (d1/d2   (sqrt (/. (+ (* y1 y1) (* z1 z1))
                             (+ (* (+ y1 y2) (+ y1 y2)) (* z2 z2)))))
          )
