@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glwormkit.scm
-;; 2018-6-8 v1.07
+;; 2022-4-23 v1.08
 ;;
 ;; ＜内容＞
 ;;   ワームシミュレータ用のモジュールです。
@@ -182,9 +182,9 @@
     (set! (~ w1 'axvec i) (~ w1 'ax (- (+ anum 1) i)))
     (set! (~ w1 'ayvec i) (~ w1 'ay (- (+ anum 1) i)))))
 ;; ワーム0101の表示
-(define-method worm-disp ((w1 <worm0101>) :optional (color #f32(1.0 1.0 1.0 1.0)) (wedge 70))
-  (%worm-disp-sub w1 color wedge))
-(define (%worm-disp-sub w1 color wedge)
+(define-method worm-disp ((w1 <worm0101>) :optional (color #f32(1.0 1.0 1.0 1.0)) (wedge 70) (face-rot -90))
+  (%worm-disp-sub w1 color wedge face-rot))
+(define (%worm-disp-sub w1 color wedge face-rot)
   (define anum  (~ w1 'anum))
   (define ar    (~ w1 'ar))
   (define rr    (~ w1 'rr))
@@ -195,7 +195,7 @@
   (gl-push-matrix)
   (gl-translate (~ w1 'fx) (~ w1 'fy) 0)
   (gl-rotate (~ w1 'fc) 0 0 1)
-  (gl-rotate -90 1 0 0)
+  (gl-rotate face-rot 1 0 0)
   (model0501 (~ w1 'fr) 15 10 wedge)
   (gl-pop-matrix)
   ;; 関節と末尾
@@ -347,8 +347,8 @@
     (set! (~ w1 'axvec i) (quedata-ref (~ w1 'axque) (* i adf)))
     (set! (~ w1 'ayvec i) (quedata-ref (~ w1 'ayque) (* i adf)))))
 ;; ワーム0201の表示
-(define-method worm-disp ((w1 <worm0201>) :optional (color #f32(1.0 1.0 1.0 1.0)) (wedge 70))
-  (%worm-disp-sub w1 color wedge))
+(define-method worm-disp ((w1 <worm0201>) :optional (color #f32(1.0 1.0 1.0 1.0)) (wedge 70) (face-rot -90))
+  (%worm-disp-sub w1 color wedge face-rot))
 ;; ワーム0201のフラット表示
 (define-method worm-disp-flat ((w1 <worm0201>)
                                (win <wininfo>)
