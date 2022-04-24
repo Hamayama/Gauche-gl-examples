@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0601(自機)
-;; 2022-4-23
+;; 2022-4-24
 ;;
 (define-module model0601
   (use gl)
@@ -55,7 +55,7 @@
     (gl-material GL_FRONT GL_DIFFUSE #f32(1.0 0.0 0.0 0.5))
     (gl-push-matrix)
     (gl-translate 0 (* h -2) 0)
-    (glut-solid-sphere (* r 5) 20 20) 
+    (glut-solid-sphere (* r 5) 20 20)
     (gl-pop-matrix))
   )
 
@@ -67,7 +67,7 @@
 
 ;; モデルビューワー情報の初期化
 (define (model0601-viewer-init vwinfo)
-  (set! (~ vwinfo 'model-name)      "model0101")
+  (set! (~ vwinfo 'model-name)      "model0601")
   (set! (~ vwinfo 'text-vec-A 0)    "  type : 0")
   (set! (~ vwinfo 'text-vec-B 0)    "[z] : change type")
   (set! (~ vwinfo 'viewer-init)     viewer-init)
