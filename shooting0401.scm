@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0401.scm
-;; 2022-4-23 v1.03
+;; 2022-4-24 v1.04
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -37,11 +37,11 @@
 (define *vangle*    45) ; 視野角(度)
 (define *tanvan*     (tan (* (/. *vangle* 2) pi/180))) ; 視野角/2のタンジェント(計算用)
 (define *aratio*     (/. *width* *height*)) ; アスペクト比(計算用)
-(define *vcamera*   39) ; カメラの視線とスクリーン(XY平面)との角度(度)
+(define *vcamera*   39) ; カメラの視線とスクリーン(XY平面)との角度(度)(1-179まで対応)
 
 (define *wd/2*     400) ; 画面幅/2
 (define *ht/2*     405) ; 画面高さ/2
-(define *zd/2*       *ht/2*) ; 画面奥行き/2
+(define *zd/2*     100) ; 画面奥行き/2
 (define *chw*       16) ; 文字の幅
 (define *chh*       32) ; 文字の高さ
 (define *maxx*       (- *wd/2* (* *chw* 1.5)))   ; 自機のX座標最大値
@@ -592,32 +592,44 @@
 
 ;; 画面のリサイズ
 (define (reshape w h)
-  ;; y1      スクリーン(XY平面上)の上端のY座標(下端のY座標は-y1になる)
-  ;; z1      スクリーン(XY平面上)を真上から見る場合のZ座標(視野角によって決まる)
-  ;; vangle  視野角(rad)
-  ;; vcamera カメラの視線とスクリーン(XY平面上)との角度(rad)
-  ;; b2      2次方程式の解の計算用
-  ;; r2      カメラと原点の距離
-  ;; y2      カメラのY座標
-  ;; z2      カメラのZ座標
-  ;; v3      カメラと点(0,-y1,0)を結ぶ直線と、スクリーン(XY平面上)の法線との角度(rad)
-  ;; y3      カメラの視線とスクリーン(XY平面上)との交点のY座標
-  ;; d1/d2   スクリーン(XY平面上)を真上から見る場合と、カメラ位置から見る場合の、
-  ;;         視点から点(0,-y1,0)までの距離の比
+  ;; ＜考え方＞
+  ;;   カメラの位置は、3点(0,0,z1)(0,-y1,0)(0,y1,0)を通る円周上とする。
+  ;;   こうすることで、円周角の定理により、vangle を一定にすることができる。
   ;;
-  (let* ((y1      *ht/2*)
-         (z1      (/. *ht/2* *tanvan*))
-         (vangle  (* *vangle*  pi/180))
-         (vcamera (* *vcamera* pi/180))
-         (b2      (/. (* (- (* z1 z1) (* y1 y1)) (sin vcamera))
-                      (* 2 z1)))
-         (r2      (+ b2 (sqrt (+ (* b2 b2) (* y1 y1)))))
-         (y2      (- (* r2 (cos vcamera))))
-         (z2      (* r2 (sin vcamera)))
-         (v3      (atan (/. (- (+ y1 y2)) z2)))
-         (y3      (+ y2 (* (tan (+ v3 (/. vangle 2))) z2)))
-         (d1/d2   (sqrt (/. (+ (* y1 y1) (* z1 z1))
-                            (+ (* (+ y1 y2) (+ y1 y2)) (* z2 z2)))))
+  ;; ＜変数説明＞
+  ;;   y1       スクリーン(XY平面上)の上端のY座標(下端のY座標は-y1になる)
+  ;;   z1       スクリーン(XY平面上)を真上(Z軸上)から見る場合のZ座標(視野角によって決まる)
+  ;;   vangle/2 視野角/2(rad)
+  ;;   vcamera  カメラの視線とスクリーン(XY平面上)との角度(rad)
+  ;;   b2       2次方程式の解の計算用
+  ;;   r2       カメラと原点の距離
+  ;;   y2       カメラのY座標
+  ;;   z2       カメラのZ座標
+  ;;   v3       カメラと点(0,-y1,0)を結ぶ直線と、スクリーン(XY平面上)の法線との角度(rad)
+  ;;   y3       カメラの視線とスクリーン(XY平面上)との交点のY座標
+  ;;   r-near   カメラから「点(0,-y1,0)と点(0,y1,0)のうちカメラと近い方」までの距離
+  ;;   r-far    カメラから「点(0,-y1,0)と点(0,y1,0)のうちカメラと遠い方」までの距離
+  ;;   z-near   カメラの視線上における、カメラから「表示領域の近い側の端」までの距離
+  ;;   z-far    カメラの視線上における、カメラから「表示領域の遠い側の端」までの距離
+  ;;   d1/d2    スクリーン(XY平面上)を真上(Z軸上)から見る場合と、カメラ位置から見る場合の、
+  ;;            視点から「点(0,-y1,0)と点(0,y1,0)のうちカメラと近い方」までの距離の比
+  ;;
+  (let* ((y1       *ht/2*)
+         (z1       (/. *ht/2* *tanvan*))
+         (vangle/2 (/. (* *vangle*  pi/180) 2))
+         (vcamera  (* *vcamera* pi/180))
+         (b2       (/. (* (- (* z1 z1) (* y1 y1)) (sin vcamera))
+                       (* 2 z1)))
+         (r2       (+ b2 (sqrt (+ (* b2 b2) (* y1 y1)))))
+         (y2       (- (* r2 (cos vcamera))))
+         (z2       (* r2 (sin vcamera)))
+         (v3       (atan (/. (- (+ y1 y2)) z2)))
+         (y3       (+ y2 (* (tan (+ v3 vangle/2)) z2)))
+         (r-near   (sqrt (+ (* (- y1 (abs y2)) (- y1 (abs y2))) (* z2 z2))))
+         (r-far    (sqrt (+ (* (+ y1 (abs y2)) (+ y1 (abs y2))) (* z2 z2))))
+         (z-near   (max 1 (- (* r-near (cos vangle/2)) *zd/2*)))
+         (z-far           (+ (* r-far  (cos vangle/2)) *zd/2*))
+         (d1/d2    (/. (sqrt (+ (* y1 y1) (* z1 z1))) r-near))
          )
     ;; 表示サイズ取得
     (set! *aratio* (* (/. *wd/2* *ht/2*) d1/d2))
@@ -629,7 +641,8 @@
     (gl-matrix-mode GL_PROJECTION)
     (gl-load-identity)
     ;; 透視射影する範囲を設定
-    (glu-perspective *vangle* (/. *width* *height*) (- r2 *zd/2*) (+ r2 *zd/2*))
+    ;(glu-perspective *vangle* (/. *width* *height*) (- z1 *zd/2*) (+ z1 *zd/2*))
+    (glu-perspective *vangle* (/. *width* *height*) z-near z-far)
     ;; 視点の位置と方向を設定
     ;(glu-look-at 0 0 z1 0 0 0 0 1 0)
     (glu-look-at 0 y2 z2 0 y3 0 0 z2 (- y3 y2))
