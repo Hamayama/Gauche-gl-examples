@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; gltextscrn.scm
-;; 2021-6-26 v2.06
+;; 2022-5-3 v2.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使って文字列の表示等を行うためのモジュールです。
@@ -78,6 +78,7 @@
 ;;     画面の座標系を「左下」を原点として (0,0)-(width,height) の範囲に設定する
 ;;     (ここで「左上」を原点にはしない (モデルもすべて上下反転してしまうため)
 ;;      個別の表示ルーチンの方で、必要に応じて、height - y として反転するようにする)
+;;   ・Z座標の範囲は -1.0 ～ 1.0 に設定 (カメラに近い側が正)
 ;;   ・光源は無効に設定する
 ;;   ・ONとOFFは常にセットで使用すること
 (define (%win-ortho-on width height)
@@ -509,7 +510,8 @@
                                (width <real>) (height <real>)
                                (chw <real>) (chh <real>)
                                :optional (align 'left) (z 0))
-  (let* ((w1 (~ ts 'width))
+  (let* ((char-info-table (force *char-info-table*))
+         (w1 (~ ts 'width))
          (x1 (case align
                ((center) (- x (/. (* w1 chw) 2))) ; 中央寄せ
                ((right)  (- x (* w1 chw)))        ; 右寄せ
@@ -520,7 +522,7 @@
     (gl-push-matrix)
     (for-each
      (lambda (c)
-       (if-let1 c1 (vector-ref (force *char-info-table*) c #f)
+       (if-let1 c1 (vector-ref char-info-table c #f)
          (begin
            (gl-load-identity)
            (gl-translate x1 y1 z)
