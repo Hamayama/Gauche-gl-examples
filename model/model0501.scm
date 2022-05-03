@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0501(欠けた球)
-;; 2018-5-31
+;; 2022-5-3
 ;;
 (define-module model0501
   (use gl)
@@ -93,10 +93,16 @@
 ;; 以下はモデルビューワー用
 ;;
 
+(define *wedge-index* 0)
+(define *wedge-data*  '(90 60 30 0 30 60))
+
 ;; モデルビューワー情報の初期化
 (define (model0501-viewer-init vwinfo)
-  (set! (~ vwinfo 'model-name)  "model0501")
-  (set! (~ vwinfo 'viewer-disp) viewer-disp)
+  (set! (~ vwinfo 'model-name)      "model0501")
+  (set! (~ vwinfo 'text-vec-A 0)    "  wedge : 90")
+  (set! (~ vwinfo 'text-vec-B 0)    "[space] : change wedge")
+  (set! (~ vwinfo 'viewer-disp)     viewer-disp)
+  (set! (~ vwinfo 'viewer-keyboard) viewer-keyboard)
   )
 
 ;; モデルの表示
@@ -104,6 +110,14 @@
   ;(glut-wire-sphere 50 5 10)
   ;(glut-solid-sphere 50 5 10)
   ;(model0501 50 20 20 90)
-  (model0501 50 15 10 90)
+  (model0501 50 15 10 (list-ref *wedge-data* *wedge-index*))
+  )
+
+;; キー入力ON
+(define (viewer-keyboard vwinfo)
+  (when (key-on? (~ vwinfo 'ksinfo) #\space)
+    (inc! *wedge-index*)
+    (if (>= *wedge-index* (length *wedge-data*)) (set! *wedge-index* 0))
+    (set! (~ vwinfo 'text-vec-A 0) (format "  wedge : ~d" (list-ref *wedge-data* *wedge-index*))))
   )
 

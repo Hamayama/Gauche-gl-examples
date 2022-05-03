@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0201(人形)
-;; 2018-5-25
+;; 2022-5-3
 ;;
 (define-module model0201
   (use gl)
@@ -27,11 +27,13 @@
   (glut-solid-sphere 10 20 20)
   (gl-pop-matrix)
   ;; 胴体
+  (gl-push-matrix)
   (gl-translate   0 -20 0)
   (box-model 10 20 7)
+  (gl-pop-matrix)
   ;; 右手
   (gl-push-matrix)
-  (gl-translate -14 -13 0)
+  (gl-translate -14 -33 0)
   (case pose
     ((0)  (gl-rotate   0 0 1 0))
     ((1)  (gl-rotate  30 0 1 0))
@@ -47,7 +49,7 @@
   (gl-pop-matrix)
   ;; 左手
   (gl-push-matrix)
-  (gl-translate  14 -13 0)
+  (gl-translate  14 -33 0)
   (case pose
     ((0)  (gl-rotate   0 0 1 0))
     ((1)  (gl-rotate -30 0 1 0))
@@ -63,12 +65,12 @@
   (gl-pop-matrix)
   ;; 右足
   (gl-push-matrix)
-  (gl-translate  -5 -40 0)
+  (gl-translate  -5 -60 0)
   (cylinder 4 20 20)
   (gl-pop-matrix)
   ;; 左足
   (gl-push-matrix)
-  (gl-translate   5 -40 0)
+  (gl-translate   5 -60 0)
   (cylinder 4 20 20)
   (gl-pop-matrix)
   )
