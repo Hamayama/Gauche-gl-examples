@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shooting0401.scm
-;; 2022-4-24 v1.04
+;; 2022-5-22 v1.05
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なシューティングゲームです。
@@ -48,15 +48,15 @@
 (define *minx*       (- *maxx*))                 ; 自機のX座標最小値
 (define *maxy*       (- *ht/2* *chh*))           ; 自機のY座標最大値
 (define *miny*       (+ (- *ht/2*) (* *chh* 2))) ; 自機のY座標最小値
-(define *x*          0) ; 自機のX座標
-(define *y*          (* *ht/2* -0.6)) ; 自機のY座標
+(define/init *x*     0) ; 自機のX座標
+(define/init *y*     (* *ht/2* -0.6)) ; 自機のY座標
 (define *v*         10) ; 自機の速度
-(define *bc*         0) ; 自機ビームカウンタ
+(define/init *bc*    0) ; 自機ビームカウンタ
 (define *waku*       5) ; 当たり判定調整用
-(define *mr*         1) ; 敵の数
-(define *mmr*        1) ; 敵の最大数
+(define/init *mr*    1) ; 敵の数
+(define/init *mmr*   1) ; 敵の最大数
 (define *mmmr*       7) ; 敵の最大数の最大数
-(define *life*      50) ; 敵の耐久力
+(define/init *life* 50) ; 敵の耐久力
 (define *maxlife*  100) ; 敵の耐久力の最大値
 (define *wlen*       8) ; ワームの長さ
 (define *bossflag*   #f) ; ボス出現フラグ
@@ -685,12 +685,12 @@
     (case *scene*
       ((0) ; スタート画面
        ;; 初期化
-       (set! *x*         0)
-       (set! *y*         (* *ht/2* -0.6))
-       (set! *bc*        0)
-       (set! *mr*        1)
-       (set! *mmr*       1)
-       (set! *life*     50)
+       (reset/init! *x*)
+       (reset/init! *y*)
+       (reset/init! *bc*)
+       (reset/init! *mr*)
+       (reset/init! *mmr*)
+       (reset/init! *life*)
        (set! *bossflag*  #f)
        ;(set! *sc*        0)
        (set! *ssc*       0)

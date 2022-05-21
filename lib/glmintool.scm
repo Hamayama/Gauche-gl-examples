@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2018-5-19 v1.71
+;; 2022-5-22 v1.72
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -12,6 +12,7 @@
   (use gauche.uvector)
   (use math.mt-random)
   (export
+    define/init reset/init!
     randint sign-value sign-value2 round-n truncate-n wrap-range remap-range recthit?
     make-fpath make-vector-of-class make-time-text
     <wininfo> win-init win-update-size win-x win-y win-w win-h win-w-r win-h-r win-gl-x win-gl-y
@@ -25,6 +26,15 @@
     quedata-count quedata-test
     ))
 (select-module glmintool)
+
+;; 初期値に戻せる変数を定義
+;; (暗黙の変数 sym-init-val-0 が定義される)
+(define-macro (define/init sym val)
+  `(begin
+     (define ,sym ,val)
+     (define ,(symbol-append `,sym '-init-val-0) ,val)))
+(define-macro (reset/init! sym)
+  `(set! ,sym ,(symbol-append `,sym '-init-val-0)))
 
 ;; 乱数
 ;;   (randint n1 n2)でn1以上n2以下の整数の乱数を取得する(n1,n2は整数であること)
