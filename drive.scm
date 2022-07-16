@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; drive.scm
-;; 2019-6-19 v1.65
+;; 2022-7-16 v1.70
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、簡単なドライブゲームです。
@@ -10,6 +10,7 @@
 ;;   アクセルは自動です。スピードが上がると曲がりにくくなります。
 ;;   ゴールするかコースアウトするとゲーム終了です。
 ;;   (道路の端が画面の中心に来ると、コースアウトと判定されます)
+;;   また、スタート画面でしばらく待つとデモになります。
 ;;   ESCキーを押すと終了します。
 ;;
 (add-load-path "lib" :relative)
@@ -89,6 +90,8 @@
     (set! (~ *rcy* i) (* (~ *rcy* i) 0.5)))
   ;; Y方向は上向きに調整
   (set! (~ *rcy* i) (- (~ *rcy* i) (* 5 -0.000004))))
+
+(define *demoflag*   #f) ; デモフラグ
 
 ;; アプリのディレクトリのパス名
 (define *app-dpath* (if-let1 path (current-load-path) (sys-dirname path) ""))
@@ -184,7 +187,8 @@
       (inc! *goal*)
       (set! *rcx2* 0)
       (set! *rcy2* 0)
-      (if (= *goal* 1) (auddata-play *adata-end2*)))
+      (if (and (= *goal* 1) (not *demoflag*))
+        (auddata-play *adata-end2*)))
      ))
   ;; 道路の曲がり量の更新(少しずつ変化させる)
   ;(let1 rdc 0.0000007
@@ -199,24 +203,62 @@
 
 ;; 自分の移動
 (define (move-mychr)
-  ;; 速度の更新
-  (cond
-   ((key-on? *ksinfo* #\space) (set! *spd* (- *spd* 6))
-                               (auddata-play *adata-brake1*))
-   ((< *spd* *maxspd*)         (set! *spd* (+ *spd* 2)))
-   (else                       (set! *spd* (- *spd* 1))))
-  (set! *spd* (clamp *spd* *minspd* *maxspd*))
-  ;; X座標の更新
-  (let ((dx1 0) (dx2 0))
-    ;; ハンドル操作による差分を計算(速度に反比例)
-    (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! dx1 (+ dx1  1)))
-    (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! dx1 (+ dx1 -1)))
-    (set! dx1 (* dx1 (remap-range *spd* *minspd* *maxspd* 16  8)))
-    ;; 道路の曲がり量による差分を計算(速度に正比例)
-    (set! dx2 (calc-curv *rcx1* (- *rzmax* *scz*)))
-    (set! dx2 (* dx2 (remap-range *spd* *minspd* *maxspd*  5 16)))
-    ;; 差分を反映
+  (let ((dx1 0) (dx2 0) (brake #f))
+
+    ;; 道路の曲がり量による差分を計算
+    (set! dx1 (calc-curv *rcx1* (- *rzmax* *scz*)))
+
+    ;; 操作
+    (cond
+     ;; デモのとき
+     (*demoflag*
+      ;; ハンドル操作
+      (cond
+       ((< dx1 0)
+        (cond
+         ((< *x* 0)              (set! dx2 (+ dx2  1)))
+         ((< *x* (/. *wd/2*  2)) (set! dx2 (+ dx2  0.8)))
+         ))
+       ((> dx1 0)
+        (cond
+         ((> *x* 0)              (set! dx2 (+ dx2 -1)))
+         ((> *x* (/. *wd/2* -2)) (set! dx2 (+ dx2 -0.8)))
+         ))
+       (else
+        (cond
+         ((< *x* 0)              (set! dx2 (+ dx2  0.2)))
+         ((> *x* 0)              (set! dx2 (+ dx2 -0.2)))
+         ))
+       )
+      ;; ブレーキ操作
+      (if (or (and (< dx1 0) (< *x* 0))
+              (and (> dx1 0) (> *x* 0)))
+        (set! brake #t))
+      )
+     ;; デモでないとき
+     (else
+      ;; ハンドル操作
+      (if (spkey-on? *ksinfo* GLUT_KEY_LEFT)  (set! dx2 (+ dx2  1)))
+      (if (spkey-on? *ksinfo* GLUT_KEY_RIGHT) (set! dx2 (+ dx2 -1)))
+      ;; ブレーキ操作
+      (if (key-on? *ksinfo* #\space) (set! brake #t))
+      ))
+
+    ;; X座標の更新
+    ;; (道路の曲がり量による差分 dx1 は、速度に正比例とする)
+    ;; (ハンドル操作による差分   dx2 は、速度に反比例とする)
+    (set! dx1 (* dx1 (remap-range *spd* *minspd* *maxspd*  5 16)))
+    (set! dx2 (* dx2 (remap-range *spd* *minspd* *maxspd* 16  8)))
     (set! *x* (+ *x* dx1 dx2))
+
+    ;; 速度の更新
+    (cond
+     (brake              (set! *spd* (- *spd* 6))
+                         (if (not *demoflag*)
+                           (auddata-play *adata-brake1*)))
+     ((< *spd* *maxspd*) (set! *spd* (+ *spd* 2)))
+     (else               (set! *spd* (- *spd* 1))))
+    (set! *spd* (clamp *spd* *minspd* *maxspd*))
     ))
 
 
@@ -243,28 +285,36 @@
   ;; 文字表示
   (let ((str1 "") (str2 "") (str3 "") (str4 "") (str5 "") (str6 "") (str7 "")
         (y1 25) (y2 36))
-    ;; シーン情報で場合分け
-    (case *scene*
-      ((0) ; スタート画面
-       (set! str1 "== DRIVE ==")
-       (set! str2 "HIT [S] KEY")
-       (set! y2 37))
-      ((1) ; プレイ中
-       (if (<= *sc* 4000) (set! str2 "MOVE : [<-] [->]  BRAKE : [SPACE]")))
-      ((2) ; プレイ終了
-       (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
-      )
-    (when (or (= *scene* 1) (= *scene* 2))
-      (cond
-       ((> *goal* 0)
-        (set! str1 "== GOAL!! ==")
-        (set! y1 19)
-        (set! str7 (format "TIME : ~A ~A"
-                           (make-time-text *sc*)
-                           (if (= *sc* *hs*) "(1st!!)" ""))))
-       ((= *scene* 2)
-        (set! str1 "COURSE OUT!!"))
-       ))
+    (cond
+     ;; デモのとき
+     (*demoflag*
+      (set! str1 "== Demo ==")
+      (set! str2 "HIT [D] KEY"))
+     ;; デモでないとき
+     (else
+      ;; シーン情報で場合分け
+      (case *scene*
+        ((0) ; スタート画面
+         (set! str1 "== DRIVE ==")
+         (set! str2 "HIT [S] KEY")
+         (set! y2 37))
+        ((1) ; プレイ中
+         (if (<= *sc* 4000) (set! str2 "MOVE : [<-] [->]  BRAKE : [SPACE]")))
+        ((2) ; プレイ終了
+         (if (timewait-finished? *twinfo*) (set! str2 "HIT [D] KEY")))
+        )
+      (when (or (= *scene* 1) (= *scene* 2))
+        (cond
+         ((> *goal* 0)
+          (set! str1 "== GOAL!! ==")
+          (set! y1 19)
+          (set! str7 (format "TIME : ~A ~A"
+                             (make-time-text *sc*)
+                             (if (= *sc* *hs*) "(1st!!)" ""))))
+         ((= *scene* 2)
+          (set! str1 "COURSE OUT!!"))
+         )))
+     )
     (set! str3 (format "TIME : ~A" (make-time-text *sc*)))
     (set! str4 (format "1st : ~A"  (make-time-text *hs*)))
     (set! str5 (format "STAGE : ~D/~D" *stg* *maxstg*))
@@ -352,12 +402,27 @@
        (set! *goal*   0)
        (set! *sc*     0)
        (set! *ssc*    0)
-       ;; キー入力待ち
-       (keywait *kwinfo* '(#\s #\S)
-                (lambda ()
-                  (set! *scene* 1)
-                  (auddata-play *adata-start1*)
-                  (keywait-clear *kwinfo*)))
+       (cond
+        ;; デモのとき
+        (*demoflag*
+         (set! *scene* 1))
+        ;; デモでないとき
+        (else
+         ;; キー入力待ち
+         (keywait *kwinfo* '(#\s #\S)
+                  (lambda ()
+                    (set! *scene* 1)
+                    (auddata-play *adata-start1*)
+                    (keywait-clear *kwinfo*)
+                    (timewait-clear *twinfo*)))
+         ;; 時間待ち(タイムアップでデモへ移行)
+         (timewait *twinfo* 5000
+                   (lambda ()
+                     (set! *scene*    1)
+                     (set! *demoflag* #t)
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*))))
+        )
        )
       ((1) ; プレイ中
        ;; ウェイト時間の調整(速度に反比例)
@@ -366,6 +431,8 @@
        (waitcalc-set-wait *wcinfo* *wait*)
        ;; スコアと制御カウンタの処理等
        (cond
+        (*demoflag*
+         )
         ((= *goal* 0)
          (set! *sc* (+ *sc* *wait*))
          (if (> *sc* 1000000) (set! *sc* 1000000)))
@@ -382,22 +449,46 @@
                  (< (+ *rx2* *rdx*) 0)
                  (>= *goal* 4))
          (set! *scene* 2)
-         (if (= *goal* 0) (auddata-play *adata-end1*)))
+         (if (and (= *goal* 0) (not *demoflag*))
+           (auddata-play *adata-end1*)))
+       ;; デモを抜けるチェック
+       (when (and *demoflag* (key-on? *ksinfo* '(#\d #\D)))
+         (set! *scene*    0)
+         (set! *demoflag* #f))
        )
       ((2) ; プレイ終了
        ;; ウェイト時間の復旧
        (set! *wait* *minwait*)
        (waitcalc-set-wait *wcinfo* *wait*)
-       ;; 時間待ち
-       ;(timewait *twinfo* 1500
-       (timewait *twinfo* (if (> *goal* 0) 1000 1500)
-                 (lambda ()
-                   ;; キー入力待ち
-                   (keywait *kwinfo* '(#\d #\D)
-                            (lambda ()
-                              (set! *scene* 0)
-                              (keywait-clear  *kwinfo*)
-                              (timewait-clear *twinfo*)))))
+       (cond
+        ;; デモのとき
+        (*demoflag*
+         ;; キー入力待ち
+         (keywait  *kwinfo* '(#\d #\D)
+                   (lambda ()
+                     (set! *scene*    0)
+                     (set! *demoflag* #f)
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*)))
+         ;; 時間待ち(タイムアウトでデモを続行)
+         (timewait *twinfo* 2000
+                   (lambda ()
+                     (set! *scene* 0)
+                     (keywait-clear  *kwinfo*)
+                     (timewait-clear *twinfo*))))
+        ;; デモでないとき
+        (else
+         ;; 時間待ち
+         ;(timewait *twinfo* 1500
+         (timewait *twinfo* (if (> *goal* 0) 1000 1500)
+                   (lambda ()
+                     ;; キー入力待ち
+                     (keywait *kwinfo* '(#\d #\D)
+                              (lambda ()
+                                (set! *scene* 0)
+                                (keywait-clear  *kwinfo*)
+                                (timewait-clear *twinfo*))))))
+        )
        )
       )
     )
