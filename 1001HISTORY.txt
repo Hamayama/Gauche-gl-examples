@@ -697,6 +697,7 @@ gltextscrn.scm
                     円の描画(draw-win-circle,draw-win-circle-line)にslices引数追加
   2021-6-26  v2.06  クリッピング解除(%win-clip-off)追加
   2022-5-3   v2.07  一部処理見直し
+  2023-1-10  v2.08  ビットマップファイル読み込み処理一部修正
 
 alaudplay.scm
   2016-3-31  v1.00  初版
@@ -746,4 +747,4 @@ glwormkit.scm
   2022-4-23  v1.08  worm-dispに顔の回転の引数を追加
 
 
-(2022-7-16)
+(2023-1-10)
