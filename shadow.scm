@@ -1,11 +1,11 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; shadow.scm
-;; 2021-6-28 v1.06
+;; 2023-2-19 v1.07
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、影のある星を表示するプログラムです。
-;;   スペースキーを押すと、2D表示と3D表示を切り換えます。
+;;   スペースキーを押すと、2D表示、3D表示、3D+ワイヤフレーム表示の切り換えを行います。
 ;;   ESCキーを押すと終了します。
 ;;
 (add-load-path "lib" :relative)
@@ -32,13 +32,15 @@
 (define *r2*         0) ; 影の半径       (2D表示用)(計算で求める)
 (define *x3*      *r1*) ; 影の端点のX座標(2D表示用)
 (define *d1*         0) ; 影の端点の(XZ平面上の)角度
+(define *d2*         0) ; ワイヤフレームの角度
 (define *vd1*        (* 0.16 pi/180)) ; 影の端点の(XZ平面上の)角速度
 (define *fillmode*   0) ; 塗りつぶしモード(=0:出現中,=1:消失中)
-(define *3d-disp*    0) ; 3D表示(=0:OFF,=1:ON)
+(define *dispmode*   0) ; 表示モード(=0:2D表示,=1:3D表示,=2:3D+ワイヤフレーム表示)
 
 (define *backcolor*  #f32(0.0 0.0 0.0 1.0)) ; 背景色
 (define *starcolor1* #f32(1.0 1.0 0.2 1.0)) ; 星の色
-(define *starcolor2* #f32(0.2 0.2 0.2 1.0)) ; 影の色(2D表示用)
+(define *starcolor2* #f32(0.2 0.2 0.2 1.0)) ; 星の影の色(2D表示用)
+(define *starcolor3* #f32(0.0 0.0 1.0 1.0)) ; 星の線の色(ワイヤフレーム表示用)
 
 ;; ウィンドウ情報クラスのインスタンス生成
 (define *win* (make <wininfo>))
@@ -51,8 +53,8 @@
 (define *wcinfo* (make <waitcalcinfo> :waittime *wait*))
 
 
-;; 星の表示(2D表示)
-(define (disp-star-2d)
+;; 星の2D表示
+(define (disp-2d-star)
   (define xoffset (quotient (- (glut-get GLUT_WINDOW_WIDTH)  *width*)  2))
   (define yoffset (quotient (- (glut-get GLUT_WINDOW_HEIGHT) *height*) 2))
   ;; 星の表示(半円)
@@ -93,17 +95,35 @@
     (draw-win-circle (win-x *win* *x2*)
                      (win-y *win* 0)
                      (win-h *win* *r2*)
-                     *width* *height* 1 1 'center 0.1 200))
+                     *width* *height* 1 1 'center 0.001 200))
   ;; クリッピング解除
   (%win-clip-off))
 
-;; 星の表示(3D表示)
-(define (disp-star-3d)
+;; 星の3D表示
+(define (disp-3d-star)
+  (gl-push-matrix)
+  ;; 球の軸を垂直にする
+  (gl-rotate -90 1 0 0)
   ;; 色
   (gl-material GL_FRONT GL_DIFFUSE *starcolor1*)
   (gl-material GL_FRONT GL_AMBIENT #f32(0.4 0.4 0.4 1.0))
   ;; 球
-  (glut-solid-sphere *r1* 200 200))
+  (glut-solid-sphere *r1* 200 200)
+  (gl-pop-matrix))
+
+;; 星のワイヤフレーム表示
+(define (disp-wire-star)
+  (gl-push-matrix)
+  ;; 球の軸を垂直にする
+  (gl-rotate -90 1 0 0)
+  ;; 回転
+  (gl-rotate (* *d2* 180/pi) 0 0 -1)
+  ;; 色
+  (gl-material GL_FRONT GL_DIFFUSE *starcolor3*)
+  (gl-material GL_FRONT GL_AMBIENT #f32(0.4 0.4 0.4 1.0))
+  ;; ワイヤフレームの球
+  (glut-wire-sphere (+ *r1* 5) 21 11)
+  (gl-pop-matrix))
 
 ;; 影の移動
 ;;   ・戻り値は、モード移行した場合に #t を返す
@@ -120,6 +140,13 @@
   (let ((d1 (+ *d1* (- pi/2) (* *fillmode* pi))))
     (gl-light GL_LIGHT0 GL_POSITION (f32vector (cos d1) 0.0 (sin d1) 0.0)))
   ret)
+
+;; ワイヤフレームの星を回転
+(define (rotate-wire-star)
+  (set! *d2* (+ *d2* *vd1*))
+  (when (or (< *d2* 0) (> *d2* 2pi))
+    (set! *d2* (+ *d2* (if (< *d2* 0) 2pi (- 2pi)))))
+  )
 
 
 ;; 初期化
@@ -144,10 +171,13 @@
   (gl-clear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
   (gl-matrix-mode GL_MODELVIEW)
   (gl-load-identity)
-  ;; 星の表示
-  (if (= *3d-disp* 0)
-    (disp-star-2d)
-    (disp-star-3d))
+  ;; 星の2D/3D表示
+  (if (= *dispmode* 0)
+    (disp-2d-star)
+    (disp-3d-star))
+  ;; 星のワイヤフレーム表示
+  (when (= *dispmode* 2)
+    (disp-wire-star))
   ;; 背景の表示
   (gl-color *backcolor*)
   (draw-win-rect 0 0 *width* *height* *width* *height* 'left -0.999999)
@@ -176,9 +206,12 @@
   (cond
    ;; ESCキーで終了
    ((= key (char->integer #\escape)) (exit 0))
-   ;; スペースキーで2D表示と3D表示を切り換える
+   ;; スペースキーで、2D表示、3D表示、3D+ワイヤフレーム表示を切り換える
    ((= key (char->integer #\space))
-    (set! *3d-disp* (- 1 *3d-disp*)))
+    (set! *dispmode* (cond
+                      ((= *dispmode* 0) 1)
+                      ((= *dispmode* 1) 2)
+                      (else             0))))
    ;; [g]キーでGC実行(デバッグ用)
    ((or (= key (char->integer #\g)) (= key (char->integer #\G)))
     (gc) (print (gc-stat)))
@@ -197,6 +230,8 @@
       ;; モード移行を遅延する(完了の余韻を残すため)
       (timewait *twinfo* 1500
                 (lambda () (timewait-clear *twinfo*))))))
+  ;; ワイヤフレームの星を回転
+  (rotate-wire-star)
   ;; 画面表示
   (glut-post-redisplay)
   ;; ウェイト時間調整
@@ -204,7 +239,7 @@
 
 ;; メイン処理
 (define (main args)
-  (set! *3d-disp* (x->integer (list-ref args 1 0)))
+  (set! *dispmode* (x->integer (list-ref args 1 0)))
   (glut-init '())
   (glut-init-display-mode (logior GLUT_DOUBLE GLUT_RGB GLUT_DEPTH))
   (glut-init-window-size *width* *height*)
