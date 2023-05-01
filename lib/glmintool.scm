@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; glmintool.scm
-;; 2022-5-22 v1.72
+;; 2023-5-1 v1.73
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使うプログラムのための簡単なツール類です。
@@ -11,7 +11,9 @@
   (use gl.glut)
   (use gauche.uvector)
   (use math.mt-random)
+  (use gauche.version)
   (export
+    %sin %cos %tan %asin %acos %atan %expt %log %sqrt
     define/init reset/init!
     randint sign-value sign-value2 round-n truncate-n wrap-range remap-range recthit?
     make-fpath make-vector-of-class make-time-text
@@ -26,6 +28,13 @@
     quedata-count quedata-test
     ))
 (select-module glmintool)
+
+;; Gauche 0.9.13_pre1 で、実数限定の %sin, %cos, %expt 等がなくなった件の対応
+;; (SRFI-94 (real-sin, real-cos, real-expt 等) ができたため)
+(define-macro (use-compat-real-elementary-functions)
+  (when (version>=? (gauche-version) "0.9.13_pre1")
+    `(use compat.real-elementary-functions)))
+(use-compat-real-elementary-functions)
 
 ;; 初期値に戻せる変数を定義
 ;; (暗黙の変数 sym-init-val-0 が定義される)
