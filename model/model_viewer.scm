@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデルビューワー
-;; 2019-6-19
+;; 2024-7-21
 ;;
 ;; ＜使い方＞
 ;;   gosh  model_viewer.scm  [modelXXXX.scm]
@@ -34,7 +34,7 @@
 (define *yrot*       0) ; Y軸を軸とする回転角(度)
 (define *zrot*       0) ; Z軸を軸とする回転角(度)
 (define *drot1*      2) ; 回転角の増分1(度)
-(define *drot2*     45) ; 回転角の増分2(度)
+(define *drot2*     10) ; 回転角の増分2(度)
 (define *backcolor*  #f32(0.0 0.0 0.3 1.0)) ; 背景色
 
 ;; ウィンドウ情報クラスのインスタンス生成

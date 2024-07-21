@@ -6,7 +6,7 @@
 |![image](image/image0501.png)|![image](image/image0601.png)|![image](image/image0701.png)|![image](image/image0801.png)|
 |![image](image/image0901.png)|![image](image/image1001.png)|![image](image/image1101.png)|![image](image/image1201.png)|
 |![image](image/image1301.png)|![image](image/image1401.png)|![image](image/image1501.png)|![image](image/image1601.png)|
-|![image](image/image1701.png)|![image](image/image1801.png)|||
+|![image](image/image1701.png)|![image](image/image1801.png)|![image](image/image1901.png)||
 
 ## 概要
 - Gauche-gl を使用したサンプルプログラム等です。  
@@ -156,6 +156,11 @@
     疑似3D風にしたものです。  
     ゲームの内容は、シューティングゲーム3 と同じです。
 
+19. 直方体オブジェ ( rectangular.scm )  
+    Gauche-gl を使用した、直方体オブジェを表示するプログラムです。  
+    矢印キーと[z]/[x]/[Ctrl]キーで少し操作できます。  
+    ESCキーを押すと終了します。
+
 
 ## その他 注意事項等
 1. 一部のサンプルは、以下のモジュールを使用しています。これらは、lib フォルダに格納しています。
@@ -240,9 +245,10 @@
 
 ## 環境等
 - OS
-  - Windows 10 (version 21H2) (64bit)
+  - Windows 10 (version 22H2) (64bit)
   - Windows 8.1 (64bit)
 - 言語
+  - Gauche v0.9.15
   - Gauche v0.9.11
   - Gauche v0.9.10
   - Gauche v0.9.9
@@ -252,6 +258,7 @@
   - Gauche v0.9.5
   - Gauche v0.9.4
 - 拡張ライブラリ
+  - Gauche-gl v0.7_pre3
   - Gauche-gl v0.6
   - Gauche-al v1.0
 - 効果音
@@ -261,4 +268,4 @@
 - 1001HISTORY.txt を参照ください。
 
 
-(2022-4-23)
+(2024-7-21)
