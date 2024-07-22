@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0601(自機)
-;; 2022-4-24
+;; 2024-7-22
 ;;
 (define-module model0601
   (use gl)
@@ -70,16 +70,8 @@
   (set! (~ vwinfo 'model-name)      "model0601")
   (set! (~ vwinfo 'text-vec-A 0)    "  type : 0")
   (set! (~ vwinfo 'text-vec-B 0)    "[z] : change type")
-  (set! (~ vwinfo 'viewer-init)     viewer-init)
   (set! (~ vwinfo 'viewer-disp)     viewer-disp)
   (set! (~ vwinfo 'viewer-keyboard) viewer-keyboard)
-  )
-
-;; 初期化
-(define (viewer-init vwinfo)
-  ;; 透過設定
-  (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
-  (gl-enable GL_BLEND)
   )
 
 ;; モデルの表示

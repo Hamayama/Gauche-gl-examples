@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; rectangular.scm
-;; 2024-7-21 v1.00
+;; 2024-7-22 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、直方体オブジェを表示するプログラムです。
@@ -22,12 +22,12 @@
 
 (define *wait*      20) ; ウェイト(msec)
 (define *title* "rectangular") ; ウィンドウのタイトル
-(define *width*    480) ; ウィンドウ上の画面幅(px)
+(define *width*    624) ; ウィンドウ上の画面幅(px)
 (define *height*   480) ; ウィンドウ上の画面高さ(px)
 (define *vangle*    90) ; 視野角(度)
 (define *tanvan*     (tan (* (/. *vangle* 2) pi/180))) ; 視野角/2のタンジェント(計算用)
 
-(define *wd/2*     400) ; 画面幅/2
+(define *wd/2*     520) ; 画面幅/2
 (define *ht/2*     400) ; 画面高さ/2
 (define *zd/2*     400) ; 画面奥行き/2
 
@@ -74,17 +74,21 @@
     (when (and i (< i *mr*))
       (let1 e1 (~ disp-objects i)
         (set! (~ e1 'useflag) #t)
-        (let loop ((count 0))
-          (set! (~ e1 'x) (randint (- *wd/2*) *wd/2*))
-          (set! (~ e1 'y) (randint (- *ht/2*) *ht/2*))
-          ;; 中央付近には生成しないようにする
-          (when (and (<= (/. (- *wd/2*) 2) (~ e1 'x) (/. *wd/2* 2))
-                     (<= (/. (- *ht/2*) 2) (~ e1 'y) (/. *ht/2* 2)))
-            (if (< count 10)
-              (loop (+ count 1))
-              (set! (~ e1 'useflag) #f))
-            ))
-        (set! (~ e1 'z)   *startz*)
+        ;; 中央付近には生成しないようにする
+        (let loop ()
+          (set! (~ e1 'x) (* (randint (- *wd/2*) *wd/2*) 0.5))
+          (set! (~ e1 'y) (* (randint (- *ht/2*) *ht/2*) 0.5))
+          (set! (~ e1 'x) (+ (~ e1 'x) (* *wd/2* 0.5 (sign-value2 (~ e1 'x)))))
+          (set! (~ e1 'y) (+ (~ e1 'y) (* *ht/2* 0.5 (sign-value2 (~ e1 'y)))))
+          (set! (~ e1 'x) (truncate (~ e1 'x)))
+          (set! (~ e1 'y) (truncate (~ e1 'y)))
+          ;; (確認用)
+          ;(if (and (< (- *wd/2*) (~ e1 'x) *wd/2*)
+          ;         (< (- *ht/2*) (~ e1 'y) *ht/2*))
+          ;  (loop)
+          ;  (print "(x, y) = (" (~ e1 'x) ", " (~ e1 'y) ")"))
+          )
+        (set! (~ e1 'z) *startz*)
         (set! (~ e1 'rot) 0)
         ))))
 

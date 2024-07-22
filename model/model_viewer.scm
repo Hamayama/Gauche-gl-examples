@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデルビューワー
-;; 2024-7-21
+;; 2024-7-22
 ;;
 ;; ＜使い方＞
 ;;   gosh  model_viewer.scm  [modelXXXX.scm]
@@ -83,6 +83,9 @@
   ;; 材質設定
   (gl-material GL_FRONT GL_SPECULAR #f32(1.0 1.0 1.0 1.0))
   (gl-material GL_FRONT GL_SHININESS 10.0)
+  ;; 透過設定
+  (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
+  (gl-enable GL_BLEND)
   ;; カスタマイズ用
   ((~ *vwinfo* 'viewer-init) *vwinfo*))
 

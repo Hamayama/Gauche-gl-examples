@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; モデル0701(直方体オブジェ)
-;; 2024-7-21
+;; 2024-7-22
 ;;
 (define-module model0701
   (use gl)
@@ -49,7 +49,7 @@
   ;; エンジン部分
   (gl-enable GL_LIGHTING)
   (gl-material GL_FRONT GL_DIFFUSE #f32(1.0 0.0 0.0 0.7))
-  (gl-translate   0 (+ c2 xe xe) 0)
+  (gl-translate 0 (+ c2 xe xe) 0)
   (box-model xe xe ze)
   (gl-pop-matrix))
 
@@ -64,16 +64,8 @@
   (set! (~ vwinfo 'model-name)      "model0701")
   (set! (~ vwinfo 'text-vec-A 0)    "  rotation : 0")
   (set! (~ vwinfo 'text-vec-B 0)    "[z] : rotate around self axis")
-  (set! (~ vwinfo 'viewer-init)     viewer-init)
   (set! (~ vwinfo 'viewer-disp)     viewer-disp)
   (set! (~ vwinfo 'viewer-keyboard) viewer-keyboard)
-  )
-
-;; 初期化
-(define (viewer-init vwinfo)
-  ;; 透過設定
-  (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
-  (gl-enable GL_BLEND)
   )
 
 ;; モデルの表示

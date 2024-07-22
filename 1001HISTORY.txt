@@ -571,6 +571,7 @@ shadow.scm
 
 rectangular.scm
   2024-7-21  v1.00  初版
+  2024-7-22  v1.01  画面サイズ変更等
 
 
 glmintool.scm
@@ -752,4 +753,4 @@ glwormkit.scm
   2022-4-23  v1.08  worm-dispに顔の回転の引数を追加
 
 
-(2024-7-21)
+(2024-7-22)
