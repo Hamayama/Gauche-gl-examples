@@ -64,8 +64,17 @@
   (set! (~ vwinfo 'model-name)      "model0701")
   (set! (~ vwinfo 'text-vec-A 0)    "  rotation : 0")
   (set! (~ vwinfo 'text-vec-B 0)    "[z] : rotate around self axis")
+  (set! (~ vwinfo 'viewer-init)     viewer-init)
   (set! (~ vwinfo 'viewer-disp)     viewer-disp)
   (set! (~ vwinfo 'viewer-keyboard) viewer-keyboard)
+  )
+
+;; 初期化
+(define (viewer-init vwinfo)
+  ;; 線の太さとアンチエイリアスの設定
+  (gl-enable GL_LINE_SMOOTH)
+  (gl-hint GL_LINE_SMOOTH_HINT GL_DONT_CARE)
+  (gl-line-width 1.5)
   )
 
 ;; モデルの表示

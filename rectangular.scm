@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; rectangular.scm
-;; 2024-7-22 v1.01
+;; 2024-7-22 v1.02
 ;;
 ;; ＜内容＞
 ;;   Gauche-gl を使用した、直方体オブジェを表示するプログラムです。
@@ -162,6 +162,10 @@
   ;; 透過設定
   (gl-blend-func GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (gl-enable GL_BLEND)
+  ;; 線の太さとアンチエイリアスの設定
+  (gl-enable GL_LINE_SMOOTH)
+  (gl-hint GL_LINE_SMOOTH_HINT GL_DONT_CARE)
+  (gl-line-width 1.5)
   )
 
 ;; 画面表示
